@@ -135,6 +135,7 @@ const Order = sequelize.define('Order', {
       order.order_number = `BSO/${year}${month}/${random}`;
     },
   },
+  tableName: 'orders',
 });
 
 module.exports = Order;

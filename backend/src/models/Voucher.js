@@ -64,6 +64,8 @@ const Voucher = sequelize.define('Voucher', {
     type: DataTypes.JSON,
     defaultValue: null,
   },
+}, {
+  tableName: 'vouchers',
 });
 
 module.exports = Voucher;

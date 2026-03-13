@@ -59,6 +59,8 @@ const Product = sequelize.define('Product', {
     type: DataTypes.JSON,
     defaultValue: [],
   },
+}, {
+  tableName: 'products',
 });
 
 module.exports = Product;

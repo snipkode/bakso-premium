@@ -44,6 +44,8 @@ const LoyaltyPoint = sequelize.define('LoyaltyPoint', {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
   },
+}, {
+  tableName: 'loyalty_points',
 });
 
 module.exports = LoyaltyPoint;

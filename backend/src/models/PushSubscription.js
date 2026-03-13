@@ -39,6 +39,8 @@ const PushSubscription = sequelize.define('PushSubscription', {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW,
   },
+}, {
+  tableName: 'push_subscriptions',
 });
 
 module.exports = PushSubscription;

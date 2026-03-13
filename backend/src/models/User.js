@@ -58,6 +58,7 @@ const User = sequelize.define('User', {
       }
     },
   },
+  tableName: 'users',
 });
 
 // Instance method to check if delivery is allowed

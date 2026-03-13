@@ -48,6 +48,8 @@ const OrderItem = sequelize.define('OrderItem', {
     type: DataTypes.JSON,
     defaultValue: [],
   },
+}, {
+  tableName: 'order_items',
 });
 
 module.exports = OrderItem;

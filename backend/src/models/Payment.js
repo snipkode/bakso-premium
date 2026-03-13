@@ -67,6 +67,8 @@ const Payment = sequelize.define('Payment', {
     type: DataTypes.TEXT,
     allowNull: true,
   },
+}, {
+  tableName: 'payments',
 });
 
 module.exports = Payment;

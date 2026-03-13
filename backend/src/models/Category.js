@@ -23,14 +23,17 @@ const Category = sequelize.define('Category', {
     type: DataTypes.STRING,
     allowNull: true,
   },
-  order: {
+  sort_order: {
     type: DataTypes.INTEGER,
     defaultValue: 0,
+    field: 'sort_order',
   },
   is_active: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
   },
+}, {
+  tableName: 'categories',
 });
 
 module.exports = Category;

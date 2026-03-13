@@ -32,6 +32,8 @@ const QueueSetting = sequelize.define('QueueSetting', {
     type: DataTypes.TEXT,
     allowNull: true,
   },
+}, {
+  tableName: 'queue_settings',
 });
 
 // Static method to get or create today's queue
