@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-03-13T16:18:07.126Z",
+  "base_url": "http://localhost:9000",
+  "results": {
+    "passed": 0,
+    "failed": 0,
+    "skipped": 0
+  },
+  "state": {
+    "adminToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjJiMTc1ZmIzLTFlZjgtMTFmMS04MmViLWZlNjYwNGRmNTJmZSIsInJvbGUiOiJhZG1pbiIsInBob25lIjoiMDgxMjM0NTY3ODkwIiwiaWF0IjoxNzczNDE4Njg2LCJleHAiOjE3NzYwMTA2ODZ9.8KiZPd_hIhn8Yxc35gjzn8SxC76Be_0FBReshhGtgTo",
+    "customerToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU3NTA1MTMzLTc5YjEtNGFmMi1hMzg3LTFiY2Y2NzFlOTdiNiIsInJvbGUiOiJjdXN0b21lciIsInBob25lIjoiMDgxMjM0NTY3ODk5IiwiaWF0IjoxNzczNDE4Njg2LCJleHAiOjE3NzYwMTA2ODZ9.gLFzqrD36RXXnfz4BfDW16_s4mFrlk5sgHk7c_6YwPQ",
+    "productId": "c52ddf95-8708-4592-88f1-deaedd2fb937",
+    "orderId": "fc63c42f-2bf2-48a8-8f95-91e36336968b",
+    "paymentId": "fd657f5c-b041-4bc6-83f7-35bbd9bb7da5"
+  }
+}

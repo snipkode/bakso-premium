@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-03-13T16:27:44.682Z",
+  "base_url": "http://localhost:9000",
+  "results": {
+    "passed": 33,
+    "failed": 0
+  },
+  "scenarios": {
+    "dine_in": {
+      "order_id": "d6bea3a6-2b0d-48a9-9edc-b4ecf5f6d24a",
+      "order_number": "BSO/202603/6387",
+      "payment_id": "e452379a-e1c9-4f76-b623-c2b31ba60d2d",
+      "status": "completed"
+    },
+    "takeaway": {
+      "order_id": "6da08b7b-87f8-4c07-b414-910ddcbe41a3",
+      "order_number": "BSO/202603/4968",
+      "payment_id": "ffd814ad-c53e-484e-841c-408c7beba706",
+      "status": "completed"
+    },
+    "delivery": null
+  }
+}

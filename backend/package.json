@@ -9,7 +9,8 @@
     "seed": "node src/utils/seed.js",
     "fix-auth": "node src/utils/fix-auth.js",
     "test": "jest --forceExit --detectOpenHandles",
-    "test:e2e": "node test-e2e.js http://localhost:9000"
+    "test:e2e": "node test-e2e.js http://localhost:9000",
+    "test:workflow": "node test-workflow-e2e.js http://localhost:9000"
   },
   "jest": {
     "testEnvironment": "node",
