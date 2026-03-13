@@ -117,36 +117,54 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Customizations */}
-          {product.customizations && product.customizations.length > 0 && (
+          {product.customizations && (
             <div className="space-y-4 mb-6">
               <h3 className="font-semibold text-text-primary flex items-center gap-2">
                 <Info className="w-4 h-4" />
                 Pilihan Customisasi
               </h3>
-              {product.customizations.map((custom, idx) => (
-                <div key={idx}>
-                  <label className="block text-sm font-medium text-text-secondary mb-2">
-                    {custom.name}
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {custom.options.map((option, optIdx) => (
-                      <Button
-                        key={optIdx}
-                        variant={
-                          selectedOptions[custom.name] === option
-                            ? 'primary'
-                            : 'secondary'
-                        }
-                        size="sm"
-                        onClick={() => handleOptionChange(custom.name, option)}
-                        className="text-sm"
-                      >
-                        {option}
-                      </Button>
-                    ))}
+              {(() => {
+                // Handle different customizations formats
+                let customizationsArray = [];
+                if (Array.isArray(product.customizations)) {
+                  customizationsArray = product.customizations;
+                } else if (typeof product.customizations === 'string') {
+                  try {
+                    customizationsArray = JSON.parse(product.customizations);
+                  } catch (e) {
+                    customizationsArray = [];
+                  }
+                } else if (typeof product.customizations === 'object') {
+                  customizationsArray = [product.customizations];
+                }
+                
+                if (customizationsArray.length === 0) return null;
+                
+                return customizationsArray.map((custom, idx) => (
+                  <div key={idx}>
+                    <label className="block text-sm font-medium text-text-secondary mb-2">
+                      {custom.name || 'Opsi'}
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {(Array.isArray(custom.options) ? custom.options : []).map((option, optIdx) => (
+                        <Button
+                          key={optIdx}
+                          variant={
+                            selectedOptions[custom.name || idx] === option
+                              ? 'primary'
+                              : 'secondary'
+                          }
+                          size="sm"
+                          onClick={() => handleOptionChange(custom.name || idx, option)}
+                          className="text-sm"
+                        >
+                          {option}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ));
+              })()}
             </div>
           )}
 
