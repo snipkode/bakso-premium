@@ -1,20 +1,21 @@
 import { useEffect, useState } from 'react';
+import { CheckCircle, XCircle, Clock, Upload, Search, Filter, RefreshCw } from 'lucide-react';
 import { paymentAPI, orderAPI } from '../../lib/api';
-import { Card, Button, Badge, LoadingSpinner } from '../../components/ui/BaseComponents';
+import { Card, Button, Badge, LoadingSpinner, Input } from '../../components/ui/BaseComponents';
 import { formatRupiah, formatDate } from '../../lib/utils';
 import { subscribeToPaymentUpdates } from '../../lib/socket';
-import { CheckCircle, XCircle, Clock, Upload } from 'lucide-react';
 
 export default function AdminPayments() {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(null);
   const [filter, setFilter] = useState('pending');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     loadPayments();
 
-    // Setup real-time payment updates (matching E2E: test-socket-e2e.js)
+    // Real-time updates
     const unsubscribe = subscribeToPaymentUpdates(() => {
       loadPayments();
     });
@@ -60,6 +61,13 @@ export default function AdminPayments() {
     }
   };
 
+  const filteredPayments = payments.filter(payment => {
+    const orderNumber = payment.order?.order_number || '';
+    const customerName = payment.order?.user?.name || payment.order?.customer_name || '';
+    return orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+           customerName.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -71,12 +79,30 @@ export default function AdminPayments() {
   const pendingCount = payments.filter(p => p.status === 'pending').length;
 
   return (
-    <div className="p-4 space-y-4 pb-20">
+    <div className="p-4 space-y-4 pb-24">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-text-primary">Verifikasi Pembayaran</h1>
-        <Badge variant={pendingCount > 0 ? 'warning' : 'success'}>
-          {pendingCount} pending
-        </Badge>
+        <div>
+          <h1 className="text-2xl font-bold text-text-primary">Verifikasi Pembayaran</h1>
+          <p className="text-text-tertiary text-sm">
+            {pendingCount} pembayaran pending
+          </p>
+        </div>
+        <Button variant="secondary" size="sm" onClick={loadPayments}>
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Refresh
+        </Button>
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-tertiary" />
+        <Input
+          placeholder="Cari order number atau nama..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
       </div>
 
       {/* Filter Tabs */}
@@ -95,19 +121,24 @@ export default function AdminPayments() {
             }`}
           >
             {status}
+            {status === 'pending' && pendingCount > 0 && (
+              <span className="ml-2 bg-error text-white text-xs px-2 py-0.5 rounded-full">
+                {pendingCount}
+              </span>
+            )}
           </button>
         ))}
       </div>
 
       {/* Payments List */}
       <div className="space-y-3">
-        {payments.length === 0 ? (
+        {filteredPayments.length === 0 ? (
           <Card className="p-8 text-center text-text-tertiary">
             <Clock className="w-12 h-12 mx-auto mb-2 opacity-50" />
             <p>Tidak ada pembayaran {filter}</p>
           </Card>
         ) : (
-          payments.map((payment) => (
+          filteredPayments.map((payment) => (
             <Card key={payment.id} className="p-4">
               {/* Header */}
               <div className="flex items-start justify-between mb-3">
@@ -118,7 +149,7 @@ export default function AdminPayments() {
                     </span>
                     <Badge variant={
                       payment.status === 'verified' ? 'success' :
-                      payment.status === 'rejected' ? 'danger' : 'warning'
+                      payment.status === 'rejected' ? 'error' : 'warning'
                     }>
                       {payment.status}
                     </Badge>
@@ -138,7 +169,7 @@ export default function AdminPayments() {
               </div>
 
               {/* Payment Details */}
-              <div className="bg-secondary rounded-lg p-3 mb-3 space-y-2">
+              <div className="bg-surface rounded-lg p-3 mb-3 space-y-2">
                 {payment.method === 'bank_transfer' && (
                   <>
                     <div className="flex justify-between text-sm">
@@ -177,6 +208,12 @@ export default function AdminPayments() {
                     {payment.order?.order_type || 'N/A'}
                   </span>
                 </div>
+                <div className="flex justify-between">
+                  <span className="text-text-tertiary">Items</span>
+                  <span className="text-text-primary">
+                    {payment.order?.items?.length || 0} item
+                  </span>
+                </div>
               </div>
 
               {/* Actions */}
@@ -195,7 +232,7 @@ export default function AdminPayments() {
                   )}
                   <Button
                     onClick={() => handleVerify(payment.id, 'rejected')}
-                    variant="danger"
+                    variant="error"
                     size="sm"
                     isLoading={verifying === payment.id}
                   >
@@ -216,14 +253,14 @@ export default function AdminPayments() {
               )}
 
               {payment.status === 'verified' && (
-                <div className="text-center text-success text-sm py-2">
+                <div className="text-center text-success text-sm py-2 bg-success/10 rounded-lg">
                   <CheckCircle className="w-5 h-5 inline mr-1" />
-                  Terverifikasi
+                  Terverifikasi - {formatDate(payment.verified_at)}
                 </div>
               )}
 
               {payment.status === 'rejected' && (
-                <div className="text-center text-danger text-sm py-2">
+                <div className="text-center text-error text-sm py-2 bg-error/10 rounded-lg">
                   <XCircle className="w-5 h-5 inline mr-1" />
                   Ditolak
                   {payment.rejection_reason && (
