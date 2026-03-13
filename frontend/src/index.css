@@ -1,0 +1,182 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Apple-style base styles */
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-text-primary font-sans antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Dark mode */
+  .dark {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+  }
+}
+
+@layer components {
+  /* iOS-style button */
+  .btn-ios {
+    @apply px-6 py-3 rounded-full font-medium text-base
+           transition-all duration-200 ease-out
+           active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-ios-primary {
+    @apply btn-ios bg-primary text-white
+           hover:bg-primary/90
+           shadow-ios-md hover:shadow-ios-lg;
+  }
+
+  .btn-ios-secondary {
+    @apply btn-ios bg-surface text-text-primary
+           hover:bg-surface/80
+           border border-border;
+  }
+
+  .btn-ios-ghost {
+    @apply btn-ios text-primary
+           hover:bg-primary/10;
+  }
+
+  /* iOS-style card */
+  .card-ios {
+    @apply bg-card rounded-ios-lg shadow-ios
+           border border-border
+           transition-all duration-200;
+  }
+
+  .dark .card-ios {
+    @apply bg-card-dark border-border-dark;
+  }
+
+  /* iOS-style input */
+  .input-ios {
+    @apply w-full px-4 py-3 rounded-ios
+           bg-surface border border-border
+           text-text-primary placeholder-text-tertiary
+           focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary
+           transition-all duration-200;
+  }
+
+  .dark .input-ios {
+    @apply bg-surface-dark border-border-dark;
+  }
+
+  /* iOS-style bottom sheet */
+  .bottom-sheet {
+    @apply fixed bottom-0 left-0 right-0
+           bg-card rounded-t-ios-xl
+           shadow-ios-lg
+           max-h-[90vh] overflow-hidden;
+  }
+
+  .dark .bottom-sheet {
+    @apply bg-card-dark;
+  }
+
+  /* iOS-style navigation bar */
+  .nav-bar-ios {
+    @apply sticky top-0 z-50
+           bg-background/80 backdrop-blur-xl
+           border-b border-border
+           h-14 flex items-center justify-between
+           px-4;
+  }
+
+  .dark .nav-bar-ios {
+    @apply bg-background-dark/80 border-border-dark;
+  }
+
+  /* iOS-style tab bar */
+  .tab-bar-ios {
+    @apply fixed bottom-0 left-0 right-0
+           bg-background/80 backdrop-blur-xl
+           border-t border-border
+           h-safe-bottom
+           flex items-center justify-around
+           px-2 pb-2;
+  }
+
+  .dark .tab-bar-ios {
+    @apply bg-background-dark/80 border-border-dark;
+  }
+
+  /* iOS-style list item */
+  .list-item-ios {
+    @apply flex items-center gap-3 p-4
+           bg-card border-b border-border
+           active:bg-surface
+           transition-colors duration-150;
+  }
+
+  .dark .list-item-ios {
+    @apply bg-card-dark border-border-dark active:bg-surface-dark;
+  }
+
+  /* iOS-style badge */
+  .badge-ios {
+    @apply inline-flex items-center px-2 py-0.5
+           rounded-full text-xs font-medium;
+  }
+
+  .badge-ios-primary {
+    @apply badge-ios bg-primary text-white;
+  }
+
+  .badge-ios-success {
+    @apply badge-ios bg-success text-white;
+  }
+
+  .badge-ios-warning {
+    @apply badge-ios bg-warning text-white;
+  }
+
+  .badge-ios-error {
+    @apply badge-ios bg-error text-white;
+  }
+
+  /* Safe area insets */
+  .h-safe-bottom {
+    height: calc(env(safe-area-inset-bottom) + 16px);
+  }
+
+  .pb-safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+@layer utilities {
+  /* Scrollbar hiding */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Line clamp */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Glass effect */
+  .glass {
+    @apply bg-background/80 backdrop-blur-xl;
+  }
+
+  .dark .glass {
+    @apply bg-background-dark/80;
+  }
+}

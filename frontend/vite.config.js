@@ -1,0 +1,32 @@
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import path from 'path'
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+  server: {
+    port: 9001,
+    allowedHosts: ['perumdati.tech'],
+    proxy: {
+      '/api': {
+        target: 'http://localhost:9000',
+        changeOrigin: true,
+      },
+      '/socket.io': {
+        target: 'http://localhost:9000',
+        changeOrigin: true,
+        ws: true,
+      },
+      '/uploads': {
+        target: 'http://localhost:9000',
+        changeOrigin: true,
+      },
+    },
+  },
+})
