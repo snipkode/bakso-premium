@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const moment = require('moment');
 const { sequelize, Order, User, Payment, OrderItem, Review } = require('../models');
-const { Op, fn, col, literal } = require('sequelize');
+const { Op, fn, col } = require('sequelize');
 
 class ReportGenerator {
   constructor() {
@@ -13,6 +13,9 @@ class ReportGenerator {
     if (!fs.existsSync(this.uploadsDir)) {
       fs.mkdirSync(this.uploadsDir, { recursive: true });
     }
+    
+    // Indonesian locale for moment
+    moment.locale('id');
   }
 
   // ==================== HELPER METHODS ====================
@@ -96,88 +99,48 @@ class ReportGenerator {
       },
     };
 
-    // Kitchen performance (orders prepared)
-    const kitchenStats = await User.findAll({
-      where: { role: 'kitchen' },
-      attributes: [
-        'id',
-        'name',
-        'phone',
-      ],
+    // Get all staff
+    const kitchenStaff = await User.findAll({ where: { role: 'kitchen' }, attributes: ['id', 'name', 'phone'] });
+    const driverStaff = await User.findAll({ where: { role: 'driver' }, attributes: ['id', 'name', 'phone'] });
+    const adminStaff = await User.findAll({ where: { role: 'admin' }, attributes: ['id', 'name', 'phone'] });
+
+    // Get counts
+    const totalKitchenOrders = await Order.count({
+      where: { status: 'completed', createdAt: where.createdAt },
     });
 
-    // Driver performance (deliveries completed)
-    const driverStats = await User.findAll({
-      where: { role: 'driver' },
-      attributes: [
-        'id',
-        'name',
-        'phone',
-      ],
+    const totalDeliveries = await Order.count({
+      where: { order_type: 'delivery', status: 'completed', createdAt: where.createdAt },
     });
 
-    // Admin performance (payments verified)
-    const adminStats = await User.findAll({
-      where: { role: 'admin' },
-      attributes: [
-        'id',
-        'name',
-        'phone',
-      ],
+    const totalPaymentsVerified = await Payment.count({
+      where: { status: 'verified', createdAt: where.createdAt },
     });
-
-    // Get order counts separately
-    const kitchenOrders = await Order.findAll({
-      where: {
-        status: 'completed',
-        createdAt: { [Op.gte]: startDate, [Op.lte]: endDate },
-      },
-      attributes: [[fn('COUNT', col('id')), 'count']],
-      raw: true,
-    });
-
-    const deliveryOrders = await Order.findAll({
-      where: {
-        order_type: 'delivery',
-        status: 'completed',
-        createdAt: { [Op.gte]: startDate, [Op.lte]: endDate },
-      },
-      attributes: [[fn('COUNT', col('id')), 'count']],
-      raw: true,
-    });
-
-    const verifiedPayments = await Payment.findAll({
-      where: {
-        status: 'verified',
-        createdAt: { [Op.gte]: startDate, [Op.lte]: endDate },
-      },
-      attributes: [[fn('COUNT', col('id')), 'count']],
-      raw: true,
-    });
-
-    const totalKitchenOrders = parseInt(kitchenOrders[0]?.count || '0');
-    const totalDeliveries = parseInt(deliveryOrders[0]?.count || '0');
-    const totalPayments = parseInt(verifiedPayments[0]?.count || '0');
 
     return {
-      kitchen: kitchenStats.map(s => ({
+      kitchen: kitchenStaff.map(s => ({
         id: s.id,
         name: s.name,
         phone: s.phone,
-        ordersPrepared: Math.floor(totalKitchenOrders / kitchenStats.length) || 0,
+        ordersPrepared: Math.floor(totalKitchenOrders / kitchenStaff.length) || 0,
       })),
-      driver: driverStats.map(s => ({
+      driver: driverStaff.map(s => ({
         id: s.id,
         name: s.name,
         phone: s.phone,
-        deliveriesCompleted: Math.floor(totalDeliveries / driverStats.length) || 0,
+        deliveriesCompleted: Math.floor(totalDeliveries / driverStaff.length) || 0,
       })),
-      admin: adminStats.map(s => ({
+      admin: adminStaff.map(s => ({
         id: s.id,
         name: s.name,
         phone: s.phone,
-        paymentsVerified: Math.floor(totalPayments / adminStats.length) || 0,
+        paymentsVerified: Math.floor(totalPaymentsVerified / adminStaff.length) || 0,
       })),
+      totals: {
+        kitchenOrders: totalKitchenOrders,
+        deliveries: totalDeliveries,
+        paymentsVerified: totalPaymentsVerified,
+      },
     };
   }
 
@@ -188,7 +151,15 @@ class ReportGenerator {
       const fileName = `report_${type}_${moment().format('YYYYMMDD_HHmmss')}.pdf`;
       const filePath = path.join(this.uploadsDir, fileName);
       
-      const doc = new PDFDocument({ margin: 50 });
+      const doc = new PDFDocument({ 
+        margin: 40,
+        size: 'A4',
+        info: {
+          Title: `Laporan ${type === 'sales' ? 'Penjualan' : 'Kinerja Staff'}`,
+          Author: 'Bakso Premium System',
+          Creator: 'Bakso Premium Reporting System',
+        }
+      });
       const stream = fs.createWriteStream(filePath);
       
       doc.pipe(stream);
@@ -205,8 +176,12 @@ class ReportGenerator {
         this.drawCombinedReport(doc, data);
       }
       
-      // Footer
-      this.drawFooter(doc);
+      // Footer with page numbers
+      const pages = doc.bufferedPageRange();
+      for (let i = 0; i < pages.count; i++) {
+        doc.switchToPage(i);
+        this.drawFooter(doc, i + 1, pages.count);
+      }
       
       doc.on('finish', () => {
         resolve({
@@ -229,99 +204,150 @@ class ReportGenerator {
       combined: 'LAPORAN LENGKAP RESTORAN',
     };
 
-    // Logo/Title
-    doc.fontSize(24).font('Helvetica-Bold').text('🍜 BAKSO PREMIUM', { align: 'center' });
+    // Save state
+    doc.save();
+    
+    // Background header bar
+    doc.rect(0, 0, doc.page.width, 100).fill('#007AFF');
+    
+    // White text on blue background
+    doc.fillColor('#FFFFFF');
+    
+    // Title
+    doc.fontSize(20).font('Helvetica-Bold').text('🍜 BAKSO PREMIUM', { align: 'center', top: 20 });
+    doc.moveDown(0.3);
+    doc.fontSize(14).text('Sistem Pelaporan Restoran', { align: 'center' });
+    
+    // Report type
     doc.moveDown(0.5);
-    doc.fontSize(16).font('Helvetica').text(titles[type], { align: 'center' });
-    doc.moveDown(0.5);
-    doc.fontSize(10).text(`Dicetak: ${moment().format('DD MMMM YYYY HH:mm:ss')}`, { align: 'center' });
+    doc.fontSize(16).text(titles[type], { align: 'center' });
+    
+    // Restore state for content
+    doc.restore();
+    
+    // Move cursor below header
+    doc.y = 120;
+    
+    // Period info
+    doc.fillColor('#333333');
+    doc.fontSize(11).font('Helvetica');
+    if (data && data.startDate) {
+      doc.text(`Periode: ${data.startDate} - ${data.endDate}`, { align: 'center' });
+    }
+    doc.text(`Tanggal Cetak: ${moment().format('DD MMMM YYYY HH:mm:ss')}`, { align: 'center' });
     doc.moveDown(1);
     
     // Line separator
-    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke('#007AFF');
-    doc.moveDown(1);
+    doc.moveTo(40, doc.y).lineTo(570, doc.y).stroke('#007AFF');
+    doc.moveDown(0.5);
   }
 
   drawSalesReport(doc, data) {
-    // Period info
-    doc.fontSize(12).font('Helvetica-Bold').text(`Periode: ${data.startDate} - ${data.endDate}`);
-    doc.fontSize(10).font('Helvetica').text(`Jenis Laporan: ${data.period.toUpperCase()}`);
-    doc.moveDown(1);
-
     // Summary Cards
-    doc.fontSize(14).font('Helvetica-Bold').text('📊 RINGKASAN', { underline: true });
+    doc.fontSize(14).font('Helvetica-Bold').fillColor('#007AFF').text('📊 RINGKASAN PENJUALAN', { underline: true });
     doc.moveDown(0.5);
     
-    doc.fontSize(11).font('Helvetica');
-    doc.text(`Total Pesanan: ${data.totalOrders} order`, 50, doc.y, { width: 200 });
-    doc.text(`Total Pendapatan: Rp ${data.totalRevenue.toLocaleString('id-ID')}`, 300, doc.y - 15, { width: 200 });
-    doc.moveDown(0.5);
-    doc.text(`Rata-rata per Order: Rp ${Math.round(data.averageOrderValue).toLocaleString('id-ID')}`, 50, doc.y);
-    doc.moveDown(1);
-
+    // Create summary boxes
+    const boxWidth = 160;
+    const boxHeight = 70;
+    const startY = doc.y;
+    const gap = 15;
+    
+    // Box 1: Total Orders
+    this.drawSummaryBox(doc, 40, startY, boxWidth, boxHeight, {
+      title: 'Total Pesanan',
+      value: `${data.totalOrders}`,
+      subtitle: 'order',
+      color: '#34C759',
+    });
+    
+    // Box 2: Total Revenue
+    this.drawSummaryBox(doc, 40 + boxWidth + gap, startY, boxWidth, boxHeight, {
+      title: 'Total Pendapatan',
+      value: `Rp ${data.totalRevenue.toLocaleString('id-ID')}`,
+      subtitle: 'rupiah',
+      color: '#007AFF',
+    });
+    
+    // Box 3: Average Order Value
+    this.drawSummaryBox(doc, 40 + (boxWidth + gap) * 2, startY, boxWidth, boxHeight, {
+      title: 'Rata-rata per Order',
+      value: `Rp ${Math.round(data.averageOrderValue).toLocaleString('id-ID')}`,
+      subtitle: 'rupiah',
+      color: '#FF9500',
+    });
+    
+    doc.y = startY + boxHeight + 20;
+    
     // Order Type Breakdown
-    doc.fontSize(12).font('Helvetica-Bold').text('📋 JENIS PESANAN', { underline: true });
+    doc.fontSize(12).font('Helvetica-Bold').fillColor('#007AFF').text('📋 JENIS PESANAN', { underline: true });
     doc.moveDown(0.5);
     
-    doc.fontSize(10).font('Helvetica');
-    doc.text(`🍽️  Dine-in: ${data.byType['dine-in']} order`, 50, doc.y);
-    doc.text(`🛍️  Takeaway: ${data.byType['takeaway']} order`, 250, doc.y - 15);
-    doc.text(`🛵  Delivery: ${data.byType['delivery']} order`, 450, doc.y - 30);
-    doc.moveDown(1);
-
-    // Top Products
-    doc.fontSize(12).font('Helvetica-Bold').text('⭐ PRODUK TERLARIS', { underline: true });
-    doc.moveDown(0.5);
+    const types = [
+      { icon: '🍽️', label: 'Dine-in (Makan di Tempat)', value: data.byType['dine-in'], color: '#5856D6' },
+      { icon: '🛍️', label: 'Takeaway (Dibawa Pulang)', value: data.byType['takeaway'], color: '#FF2D55' },
+      { icon: '🛵', label: 'Delivery (Diantar)', value: data.byType['delivery'], color: '#34C759' },
+    ];
     
-    doc.fontSize(9).font('Helvetica-Bold');
-    doc.text('No', 50, doc.y);
-    doc.text('Produk', 80, doc.y);
-    doc.text('Qty', 350, doc.y);
-    doc.text('Revenue', 420, doc.y);
-    doc.moveDown(0.3);
-    
-    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke('#ccc');
-    doc.moveDown(0.3);
-    
-    doc.fontSize(9).font('Helvetica');
-    data.topProducts.slice(0, 10).forEach((product, index) => {
-      const yPos = doc.y;
-      doc.text(`${index + 1}`, 50, yPos);
-      doc.text(product.name, 80, yPos, { width: 250 });
-      doc.text(product.quantity.toString(), 350, yPos);
-      doc.text(`Rp ${product.revenue.toLocaleString('id-ID')}`, 420, yPos);
+    types.forEach(type => {
+      doc.fontSize(10).font('Helvetica').fillColor('#333');
+      doc.text(`${type.icon} ${type.label}:`, 50, doc.y);
+      doc.font('Helvetica-Bold').fillColor(type.color).text(`${type.value} order`, 350, doc.y - 12);
       doc.moveDown(0.4);
     });
     doc.moveDown(0.5);
 
-    // Daily Sales Table (if not too many days)
-    const days = Object.keys(data.dailySales);
-    if (days.length <= 31) {
-      doc.fontSize(12).font('Helvetica-Bold').text('📅 PENJUALAN HARIAN', { underline: true });
+    // Top Products Table
+    doc.addPage();
+    this.drawHeader(doc, 'sales');
+    
+    doc.fontSize(12).font('Helvetica-Bold').fillColor('#007AFF').text('⭐ 10 PRODUK TERLARIS', { underline: true });
+    doc.moveDown(0.5);
+    
+    // Table header
+    const tableTop = doc.y;
+    this.drawTableHeader(doc, tableTop, ['No', 'Nama Produk', 'Qty Terjual', 'Total Pendapatan']);
+    
+    // Table rows
+    doc.fontSize(10).font('Helvetica').fillColor('#333');
+    data.topProducts.forEach((product, index) => {
+      const yPos = doc.y;
+      doc.text(`${index + 1}`, 50, yPos);
+      doc.text(product.name, 80, yPos, { width: 280, ellipsis: true });
+      doc.text(`${product.quantity}`, 370, yPos);
+      doc.text(`Rp ${product.revenue.toLocaleString('id-ID')}`, 460, yPos);
       doc.moveDown(0.5);
       
-      doc.fontSize(9).font('Helvetica-Bold');
-      doc.text('Tanggal', 50, doc.y);
-      doc.text('Order', 350, doc.y);
-      doc.text('Revenue', 420, doc.y);
-      doc.moveDown(0.3);
+      // Page break check
+      if (doc.y > 700) {
+        doc.addPage();
+        this.drawHeader(doc, 'sales');
+      }
+    });
+    
+    // Daily Sales (if not too many days)
+    const days = Object.keys(data.dailySales);
+    if (days.length <= 31 && days.length > 0) {
+      doc.addPage();
+      this.drawHeader(doc, 'sales');
       
-      doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke('#ccc');
-      doc.moveDown(0.3);
+      doc.fontSize(12).font('Helvetica-Bold').fillColor('#007AFF').text('📅 PENJUALAN HARIAN', { underline: true });
+      doc.moveDown(0.5);
       
-      doc.fontSize(9).font('Helvetica');
+      const tableTop2 = doc.y;
+      this.drawTableHeader(doc, tableTop2, ['Tanggal', 'Jumlah Order', 'Pendapatan']);
+      
+      doc.fontSize(10).font('Helvetica').fillColor('#333');
       days.sort().forEach(date => {
         const day = data.dailySales[date];
-        const yPos = doc.y;
-        doc.text(moment(date).format('DD MMM'), 50, yPos);
-        doc.text(day.count.toString(), 350, yPos);
-        doc.text(`Rp ${day.revenue.toLocaleString('id-ID')}`, 420, yPos);
-        doc.moveDown(0.4);
+        doc.text(moment(date).format('DD MMMM YYYY'), 50, doc.y);
+        doc.text(`${day.count}`, 370, doc.y);
+        doc.text(`Rp ${day.revenue.toLocaleString('id-ID')}`, 460, doc.y);
+        doc.moveDown(0.5);
         
-        // Add page break if needed
         if (doc.y > 700) {
           doc.addPage();
-          this.drawFooter(doc, true);
+          this.drawHeader(doc, 'sales');
         }
       });
     }
@@ -329,167 +355,213 @@ class ReportGenerator {
     // Recent Orders
     doc.addPage();
     this.drawHeader(doc, 'sales');
-    doc.fontSize(12).font('Helvetica-Bold').text('📦 PESANAN TERBARU', { underline: true });
+    
+    doc.fontSize(12).font('Helvetica-Bold').fillColor('#007AFF').text('📦 30 PESANAN TERBARU', { underline: true });
     doc.moveDown(0.5);
     
-    doc.fontSize(8).font('Helvetica-Bold');
-    doc.text('Order #', 50, doc.y);
-    doc.text('Customer', 130, doc.y);
-    doc.text('Type', 300, doc.y);
-    doc.text('Total', 380, doc.y);
-    doc.text('Tanggal', 460, doc.y);
-    doc.moveDown(0.3);
+    const tableTop3 = doc.y;
+    this.drawTableHeader(doc, tableTop3, ['No. Order', 'Pelanggan', 'Jenis', 'Total', 'Tanggal']);
     
-    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke('#ccc');
-    doc.moveDown(0.3);
-    
-    doc.fontSize(8).font('Helvetica');
-    data.orders.slice(0, 30).forEach(order => {
-      const yPos = doc.y;
-      doc.text(order.order_number, 50, yPos);
-      doc.text(order.user?.name || 'N/A', 130, yPos, { width: 150 });
-      doc.text(order.order_type, 300, yPos);
-      doc.text(`Rp ${order.total.toLocaleString('id-ID')}`, 380, yPos);
-      doc.text(moment(order.createdAt).format('DD/MM'), 460, yPos);
-      doc.moveDown(0.4);
+    doc.fontSize(9).font('Helvetica').fillColor('#333');
+    data.orders.slice(0, 30).forEach((order, index) => {
+      const typeLabel = order.order_type === 'dine-in' ? 'Dine-in' : 
+                        order.order_type === 'takeaway' ? 'Takeaway' : 'Delivery';
       
-      if (doc.y > 700) {
+      doc.text(order.order_number, 50, doc.y, { width: 100 });
+      doc.text(order.user?.name || 'Umum', 160, doc.y, { width: 120 });
+      doc.text(typeLabel, 290, doc.y);
+      doc.text(`Rp ${order.total.toLocaleString('id-ID')}`, 370, doc.y);
+      doc.text(moment(order.createdAt).format('DD/MM HH:mm'), 480, doc.y);
+      doc.moveDown(0.5);
+      
+      if (doc.y > 720) {
         doc.addPage();
-        this.drawFooter(doc, true);
+        this.drawHeader(doc, 'sales');
       }
     });
   }
 
+  drawSummaryBox(doc, x, y, width, height, config) {
+    // Box background
+    doc.roundedRect(x, y, width, height, 8).fill('#F8F9FA');
+    doc.roundedRect(x, y, width, height, 8).stroke(config.color);
+    
+    // Title
+    doc.fontSize(10).font('Helvetica').fillColor('#666666');
+    doc.text(config.title, x + 10, y + 10, { width: width - 20 });
+    
+    // Value
+    doc.fontSize(18).font('Helvetica-Bold').fillColor(config.color);
+    doc.text(config.value, x + 10, y + 30, { width: width - 20 });
+    
+    // Subtitle
+    doc.fontSize(9).font('Helvetica').fillColor('#999999');
+    doc.text(config.subtitle, x + 10, y + 52, { width: width - 20 });
+  }
+
+  drawTableHeader(doc, y, headers) {
+    const colors = {
+      header: '#007AFF',
+      headerText: '#FFFFFF',
+      border: '#E0E0E0',
+    };
+    
+    // Header background
+    doc.rect(40, y, 530, 25).fill(colors.header);
+    
+    // Header text
+    doc.fontSize(10).font('Helvetica-Bold').fillColor(colors.headerText);
+    const positions = [50, 80, 370, 460];
+    headers.forEach((header, i) => {
+      doc.text(header, positions[i] || 50, y + 7);
+    });
+    
+    // Bottom border
+    doc.moveTo(40, y + 25).lineTo(570, y + 25).stroke(colors.border);
+    
+    doc.y = y + 30;
+  }
+
   drawStaffReport(doc, data) {
-    // Kitchen Performance
-    doc.fontSize(14).font('Helvetica-Bold').text('👨‍🍳 KINERJA DAPUR (KITCHEN)', { underline: true });
+    // Summary totals
+    doc.fontSize(14).font('Helvetica-Bold').fillColor('#007AFF').text('📊 RINGKASAN KINERJA', { underline: true });
     doc.moveDown(0.5);
     
-    doc.fontSize(9).font('Helvetica-Bold');
-    doc.text('No', 50, doc.y);
-    doc.text('Nama', 80, doc.y);
-    doc.text('Telepon', 250, doc.y);
-    doc.text('Pesanan Disiapkan', 400, doc.y);
-    doc.moveDown(0.3);
+    const summaryData = [
+      { icon: '👨‍🍳', label: 'Total Pesanan Disiapkan Dapur', value: data.totals.kitchenOrders, color: '#FF9500' },
+      { icon: '🛵', label: 'Total Pengiriman Selesai', value: data.totals.deliveries, color: '#34C759' },
+      { icon: '💳', label: 'Total Pembayaran Diverifikasi', value: data.totals.paymentsVerified, color: '#007AFF' },
+    ];
     
-    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke('#ccc');
-    doc.moveDown(0.3);
-    
-    doc.fontSize(9).font('Helvetica');
-    data.kitchen.forEach((staff, index) => {
-      const yPos = doc.y;
-      doc.text(`${index + 1}`, 50, yPos);
-      doc.text(staff.name, 80, yPos);
-      doc.text(staff.phone, 250, yPos);
-      doc.text(`${staff.ordersPrepared} order`, 400, yPos);
+    summaryData.forEach(item => {
+      doc.fontSize(11).font('Helvetica').fillColor('#333');
+      doc.text(`${item.icon} ${item.label}:`, 50, doc.y);
+      doc.font('Helvetica-Bold').fillColor(item.color).text(`${item.value}`, 400, doc.y - 12);
       doc.moveDown(0.5);
     });
+    doc.moveDown(1);
+
+    // Kitchen Performance
+    doc.fontSize(13).font('Helvetica-Bold').fillColor('#FF9500').text('👨‍🍳 KINERJA STAFF DAPUR', { underline: true });
+    doc.moveDown(0.5);
+    
+    if (data.kitchen.length > 0) {
+      const tableTop = doc.y;
+      this.drawTableHeader(doc, tableTop, ['No', 'Nama Staff', 'Telepon', 'Pesanan Disiapkan']);
+      
+      doc.fontSize(10).font('Helvetica').fillColor('#333');
+      data.kitchen.forEach((staff, index) => {
+        doc.text(`${index + 1}`, 50, doc.y);
+        doc.text(staff.name, 80, doc.y);
+        doc.text(staff.phone, 250, doc.y);
+        doc.text(`${staff.ordersPrepared} order`, 400, doc.y);
+        doc.moveDown(0.5);
+      });
+    } else {
+      doc.fontSize(10).font('Helvetica').fillColor('#999').text('Tidak ada staff dapur', 50, doc.y);
+    }
     doc.moveDown(1);
 
     // Driver Performance
-    doc.fontSize(14).font('Helvetica-Bold').text('🛵 KINERJA PENGIRIMAN (DRIVER)', { underline: true });
+    doc.fontSize(13).font('Helvetica-Bold').fillColor('#34C759').text('🛵 KINERJA STAFF PENGIRIMAN', { underline: true });
     doc.moveDown(0.5);
     
-    doc.fontSize(9).font('Helvetica-Bold');
-    doc.text('No', 50, doc.y);
-    doc.text('Nama', 80, doc.y);
-    doc.text('Telepon', 250, doc.y);
-    doc.text('Pengiriman Selesai', 400, doc.y);
-    doc.moveDown(0.3);
-    
-    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke('#ccc');
-    doc.moveDown(0.3);
-    
-    doc.fontSize(9).font('Helvetica');
-    data.driver.forEach((staff, index) => {
-      const yPos = doc.y;
-      doc.text(`${index + 1}`, 50, yPos);
-      doc.text(staff.name, 80, yPos);
-      doc.text(staff.phone, 250, yPos);
-      doc.text(`${staff.deliveriesCompleted} delivery`, 400, yPos);
-      doc.moveDown(0.5);
-    });
+    if (data.driver.length > 0) {
+      const tableTop = doc.y;
+      this.drawTableHeader(doc, tableTop, ['No', 'Nama Driver', 'Telepon', 'Pengiriman Selesai']);
+      
+      doc.fontSize(10).font('Helvetica').fillColor('#333');
+      data.driver.forEach((staff, index) => {
+        doc.text(`${index + 1}`, 50, doc.y);
+        doc.text(staff.name, 80, doc.y);
+        doc.text(staff.phone, 250, doc.y);
+        doc.text(`${staff.deliveriesCompleted} delivery`, 400, doc.y);
+        doc.moveDown(0.5);
+      });
+    } else {
+      doc.fontSize(10).font('Helvetica').fillColor('#999').text('Tidak ada driver', 50, doc.y);
+    }
     doc.moveDown(1);
 
     // Admin Performance
-    doc.fontSize(14).font('Helvetica-Bold').text('💳 KINERJA ADMIN (VERIFIKASI)', { underline: true });
+    doc.fontSize(13).font('Helvetica-Bold').fillColor('#007AFF').text('💳 KINERJA STAFF ADMIN', { underline: true });
     doc.moveDown(0.5);
     
-    doc.fontSize(9).font('Helvetica-Bold');
-    doc.text('No', 50, doc.y);
-    doc.text('Nama', 80, doc.y);
-    doc.text('Telepon', 250, doc.y);
-    doc.text('Pembayaran Diverifikasi', 400, doc.y);
-    doc.moveDown(0.3);
-    
-    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke('#ccc');
-    doc.moveDown(0.3);
-    
-    doc.fontSize(9).font('Helvetica');
-    data.admin.forEach((staff, index) => {
-      const yPos = doc.y;
-      doc.text(`${index + 1}`, 50, yPos);
-      doc.text(staff.name, 80, yPos);
-      doc.text(staff.phone, 250, yPos);
-      doc.text(`${staff.paymentsVerified} pembayaran`, 400, yPos);
-      doc.moveDown(0.5);
-    });
+    if (data.admin.length > 0) {
+      const tableTop = doc.y;
+      this.drawTableHeader(doc, tableTop, ['No', 'Nama Admin', 'Telepon', 'Pembayaran Diverifikasi']);
+      
+      doc.fontSize(10).font('Helvetica').fillColor('#333');
+      data.admin.forEach((staff, index) => {
+        doc.text(`${index + 1}`, 50, doc.y);
+        doc.text(staff.name, 80, doc.y);
+        doc.text(staff.phone, 250, doc.y);
+        doc.text(`${staff.paymentsVerified} pembayaran`, 400, doc.y);
+        doc.moveDown(0.5);
+      });
+    } else {
+      doc.fontSize(10).font('Helvetica').fillColor('#999').text('Tidak ada admin', 50, doc.y);
+    }
 
-    // Summary
+    // Best Performers
     doc.addPage();
     this.drawHeader(doc, 'staff');
     
-    doc.fontSize(14).font('Helvetica-Bold').text('📊 RINGKASAN KINERJA', { underline: true });
+    doc.fontSize(14).font('Helvetica-Bold').fillColor('#FF9500').text('🏆 STAFF TERBAIK PERIODE INI', { underline: true });
     doc.moveDown(1);
-    
-    const totalKitchen = data.kitchen.reduce((sum, s) => sum + s.ordersPrepared, 0);
-    const totalDriver = data.driver.reduce((sum, s) => sum + s.deliveriesCompleted, 0);
-    const totalAdmin = data.admin.reduce((sum, s) => sum + s.paymentsVerified, 0);
-    
-    doc.fontSize(11).font('Helvetica');
-    doc.text(`Total Pesanan Disiapkan Dapur: ${totalKitchen} order`, 50, doc.y);
-    doc.moveDown(0.5);
-    doc.text(`Total Pengiriman Selesai: ${totalDriver} delivery`, 50, doc.y);
-    doc.moveDown(0.5);
-    doc.text(`Total Pembayaran Diverifikasi: ${totalAdmin} pembayaran`, 50, doc.y);
-    doc.moveDown(1);
-    
-    // Best Performers
-    doc.fontSize(12).font('Helvetica-Bold').text('🏆 STAFF TERBAIK', { underline: true });
-    doc.moveDown(0.5);
     
     const bestKitchen = data.kitchen.reduce((prev, current) => 
-      (current.ordersPrepared > prev.ordersPrepared) ? current : prev, { ordersPrepared: 0, name: 'N/A' });
+      (current.ordersPrepared > prev.ordersPrepared) ? current : prev, { ordersPrepared: 0, name: '-' });
     const bestDriver = data.driver.reduce((prev, current) => 
-      (current.deliveriesCompleted > prev.deliveriesCompleted) ? current : prev, { deliveriesCompleted: 0, name: 'N/A' });
+      (current.deliveriesCompleted > prev.deliveriesCompleted) ? current : prev, { deliveriesCompleted: 0, name: '-' });
     const bestAdmin = data.admin.reduce((prev, current) => 
-      (current.paymentsVerified > prev.paymentsVerified) ? current : prev, { paymentsVerified: 0, name: 'N/A' });
+      (current.paymentsVerified > prev.paymentsVerified) ? current : prev, { paymentsVerified: 0, name: '-' });
     
-    doc.fontSize(10).font('Helvetica');
-    doc.text(`👨‍🍳 Kitchen Terbaik: ${bestKitchen.name} (${bestKitchen.ordersPrepared} order)`, 50, doc.y);
-    doc.moveDown(0.5);
-    doc.text(`🛵 Driver Terbaik: ${bestDriver.name} (${bestDriver.deliveriesCompleted} delivery)`, 50, doc.y);
-    doc.moveDown(0.5);
-    doc.text(`💳 Admin Terbaik: ${bestAdmin.name} (${bestAdmin.paymentsVerified} pembayaran)`, 50, doc.y);
+    // Best Kitchen
+    doc.fontSize(12).font('Helvetica-Bold').fillColor('#FF9500').text('👨‍🍳 Kitchen Terbaik', 50, doc.y);
+    doc.fontSize(11).font('Helvetica').fillColor('#333');
+    doc.text(`Nama: ${bestKitchen.name}`, 70, doc.y + 15);
+    doc.text(`Pesanan Disiapkan: ${bestKitchen.ordersPrepared} order`, 70, doc.y + 30);
+    doc.moveDown(2);
+    
+    // Best Driver
+    doc.fontSize(12).font('Helvetica-Bold').fillColor('#34C759').text('🛵 Driver Terbaik', 50, doc.y);
+    doc.fontSize(11).font('Helvetica').fillColor('#333');
+    doc.text(`Nama: ${bestDriver.name}`, 70, doc.y + 15);
+    doc.text(`Pengiriman Selesai: ${bestDriver.deliveriesCompleted} delivery`, 70, doc.y + 30);
+    doc.moveDown(2);
+    
+    // Best Admin
+    doc.fontSize(12).font('Helvetica-Bold').fillColor('#007AFF').text('💳 Admin Terbaik', 50, doc.y);
+    doc.fontSize(11).font('Helvetica').fillColor('#333');
+    doc.text(`Nama: ${bestAdmin.name}`, 70, doc.y + 15);
+    doc.text(`Pembayaran Diverifikasi: ${bestAdmin.paymentsVerified} pembayaran`, 70, doc.y + 30);
   }
 
   drawCombinedReport(doc, data) {
-    // Sales Summary
+    // Sales section
     this.drawSalesReport(doc, data.sales);
     
-    // Add staff report on new page
+    // Staff section on new page
     doc.addPage();
     this.drawHeader(doc, 'staff');
     this.drawStaffReport(doc, data.staff);
   }
 
-  drawFooter(doc, includePageNumber = false) {
+  drawFooter(doc, currentPage, totalPages) {
+    doc.save();
+    
     const pageHeight = doc.page.height;
-    doc.fontSize(8).font('Helvetica').fillColor('#666');
-    doc.text('© 2026 Bakso Premium Ordering System', 50, pageHeight - 50, { width: 500, align: 'center' });
-    if (includePageNumber) {
-      doc.text(`Halaman ${doc.page.number}`, 50, pageHeight - 35, { width: 500, align: 'center' });
-    }
+    
+    // Footer background
+    doc.rect(0, pageHeight - 40, doc.page.width, 40).fill('#F8F9FA');
+    
+    // Footer text
+    doc.fontSize(8).font('Helvetica').fillColor('#999999');
+    doc.text('© 2026 Bakso Premium Ordering System', 40, pageHeight - 30, { width: 530, align: 'center' });
+    doc.text(`Halaman ${currentPage} dari ${totalPages}`, 40, pageHeight - 18, { width: 530, align: 'center' });
+    
+    doc.restore();
   }
 
   // ==================== PUBLIC METHODS ====================
@@ -499,16 +571,12 @@ class ReportGenerator {
     const end = moment(date).endOf('day').toDate();
     
     const salesData = await this.getSalesData('daily', start, end);
-    const staffData = await this.getStaffPerformance(start, end);
     
     const report = await this.generatePDF(salesData, 'sales');
     return {
       ...report,
       type: 'daily',
-      data: {
-        sales: salesData,
-        staff: staffData,
-      },
+      data: { sales: salesData },
     };
   }
 
@@ -517,16 +585,12 @@ class ReportGenerator {
     const end = moment(weekStart).endOf('week').toDate();
     
     const salesData = await this.getSalesData('weekly', start, end);
-    const staffData = await this.getStaffPerformance(start, end);
     
     const report = await this.generatePDF(salesData, 'sales');
     return {
       ...report,
       type: 'weekly',
-      data: {
-        sales: salesData,
-        staff: staffData,
-      },
+      data: { sales: salesData },
     };
   }
 
@@ -541,10 +605,7 @@ class ReportGenerator {
     return {
       ...report,
       type: 'monthly',
-      data: {
-        sales: salesData,
-        staff: staffData,
-      },
+      data: { sales: salesData, staff: staffData },
     };
   }
 
