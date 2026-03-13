@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { dashboardAPI } from '../../lib/api';
-import { Card, LoadingSpinner } from '../../components/ui/BaseComponents';
+import { Card, LoadingSpinner, Button } from '../../components/ui/BaseComponents';
 import { formatRupiah } from '../../lib/utils';
-import { Users, ShoppingBag, DollarSign, TrendingUp } from 'lucide-react';
+import { Users, ShoppingBag, DollarSign, TrendingUp, CheckCircle, Package, FileText, BarChart3 } from 'lucide-react';
 import { subscribeToUserCount } from '../../lib/socket';
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -92,18 +94,38 @@ export default function AdminDashboard() {
       <Card className="p-4">
         <h3 className="font-semibold mb-3">Quick Actions</h3>
         <div className="grid grid-cols-2 gap-3">
-          <a href="/admin/payments" className="p-3 bg-primary/10 text-primary rounded-xl font-medium hover:bg-primary/20 transition">
-            ✅ Verifikasi Pembayaran
-          </a>
-          <a href="/admin/products" className="p-3 bg-primary/10 text-primary rounded-xl font-medium hover:bg-primary/20 transition">
-            📦 Kelola Produk
-          </a>
-          <a href="/admin/orders" className="p-3 bg-primary/10 text-primary rounded-xl font-medium hover:bg-primary/20 transition">
-            📋 Lihat Orders
-          </a>
-          <a href="/admin/reports" className="p-3 bg-success/10 text-success rounded-xl font-medium hover:bg-success/20 transition">
-            📊 Generate Laporan
-          </a>
+          <Button
+            variant="secondary"
+            onClick={() => navigate('/admin/payments')}
+            className="flex flex-col items-center gap-2 p-4 h-auto"
+          >
+            <CheckCircle className="w-8 h-8" />
+            <span className="text-sm text-center">Verifikasi Pembayaran</span>
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => navigate('/admin/products')}
+            className="flex flex-col items-center gap-2 p-4 h-auto"
+          >
+            <Package className="w-8 h-8" />
+            <span className="text-sm text-center">Kelola Produk</span>
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => navigate('/admin/orders')}
+            className="flex flex-col items-center gap-2 p-4 h-auto"
+          >
+            <FileText className="w-8 h-8" />
+            <span className="text-sm text-center">Lihat Orders</span>
+          </Button>
+          <Button
+            variant="success"
+            onClick={() => navigate('/admin/reports')}
+            className="flex flex-col items-center gap-2 p-4 h-auto"
+          >
+            <BarChart3 className="w-8 h-8" />
+            <span className="text-sm text-center">Generate Laporan</span>
+          </Button>
         </div>
       </Card>
 

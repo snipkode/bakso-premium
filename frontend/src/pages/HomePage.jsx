@@ -11,15 +11,26 @@ export default function HomePage() {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuthStore();
   const { getTotalItems } = useCartStore();
-  
+
   const [categories, setCategories] = useState([]);
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
+    // Redirect staff to their dashboard
+    if (isAuthenticated && user?.role !== 'customer') {
+      const roleRoutes = {
+        admin: '/admin',
+        kitchen: '/kitchen',
+        driver: '/driver',
+      };
+      navigate(roleRoutes[user.role]);
+      return;
+    }
+    
     loadData();
-  }, []);
+  }, [isAuthenticated, user]);
 
   const loadData = async () => {
     try {
