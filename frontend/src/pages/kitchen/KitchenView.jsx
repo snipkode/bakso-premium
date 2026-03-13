@@ -1,28 +1,60 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, ChefHat, Clock, CheckCircle, Play, AlertCircle } from 'lucide-react';
 import { orderAPI } from '../../lib/api';
-import { Card, LoadingSpinner, Badge } from '../../components/ui/BaseComponents';
+import { useAuthStore } from '../../store';
+import { connectSocket } from '../../lib/socket';
+import { Button, Badge, LoadingSpinner, Card } from '../../components/ui/BaseComponents';
 import { formatRupiah } from '../../lib/utils';
-import { getSocket, subscribeToOrderUpdates } from '../../lib/socket';
-import { CheckCircle, Clock } from 'lucide-react';
+import { subscribeToOrderUpdates, emitStaffStatusUpdate } from '../../lib/socket';
 
 export default function KitchenView() {
+  const navigate = useNavigate();
+  const { user } = useAuthStore();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filterStatus, setFilterStatus] = useState('all');
+
+  // Initialize socket on mount
+  useEffect(() => {
+    if (user?.id) {
+      console.log('🔌 Initializing socket for kitchen:', user.id);
+      connectSocket(user.id, user.role, window.location.pathname);
+    }
+    
+    return () => {
+      console.log('🔌 Cleaning up socket');
+    };
+  }, [user?.id, user?.role]);
 
   useEffect(() => {
     loadOrders();
-
+    
     const unsubscribe = subscribeToOrderUpdates(() => {
       loadOrders();
     });
 
-    return () => unsubscribe();
+    // Update staff status
+    if (user?.id) {
+      emitStaffStatusUpdate(user.id, 'online', 'kitchen');
+    }
+
+    return () => {
+      unsubscribe();
+      if (user?.id) {
+        emitStaffStatusUpdate(user.id, 'offline', 'kitchen');
+      }
+    };
   }, []);
 
   const loadOrders = async () => {
     try {
-      const { data } = await orderAPI.getAllOrders({ status: 'paid,preparing,ready' });
-      setOrders(data.rows || data.orders || []);
+      const { data } = await orderAPI.getAllOrders({ 
+        status: 'paid,preparing,ready,completed',
+        limit: 50 
+      });
+      const ordersList = data.orders || data.rows || data || [];
+      setOrders(ordersList.filter(o => ['paid', 'preparing', 'ready', 'completed'].includes(o.status)));
     } catch (error) {
       console.error('Failed to load orders:', error);
     } finally {
@@ -47,121 +79,202 @@ export default function KitchenView() {
     );
   }
 
-  const pendingOrders = orders.filter((o) => o.status === 'paid');
-  const preparingOrders = orders.filter((o) => o.status === 'preparing');
-  const readyOrders = orders.filter((o) => o.status === 'ready');
-
-  return (
-    <div className="p-4 space-y-6">
-      <h1 className="text-2xl font-bold text-text-primary">Kitchen View</h1>
-
-      {/* Queue Stats */}
-      <div className="grid grid-cols-3 gap-3">
-        <Card className="p-3 text-center bg-warning/10">
-          <p className="text-2xl font-bold text-warning">{pendingOrders.length}</p>
-          <p className="text-xs text-text-tertiary">Pending</p>
-        </Card>
-        <Card className="p-3 text-center bg-primary/10">
-          <p className="text-2xl font-bold text-primary">{preparingOrders.length}</p>
-          <p className="text-xs text-text-tertiary">Preparing</p>
-        </Card>
-        <Card className="p-3 text-center bg-success/10">
-          <p className="text-2xl font-bold text-success">{readyOrders.length}</p>
-          <p className="text-xs text-text-tertiary">Ready</p>
-        </Card>
-      </div>
-
-      {/* Orders by Status */}
-      <div className="space-y-4">
-        {['paid', 'preparing', 'ready'].map((status) => {
-          const statusOrders = orders.filter((o) => o.status === status);
-          const statusColors = {
-            paid: 'warning',
-            preparing: 'primary',
-            ready: 'success',
-          };
-
-          return (
-            <div key={status}>
-              <h2 className="font-semibold mb-2 flex items-center gap-2">
-                <Badge variant={statusColors[status]}>{status.toUpperCase()}</Badge>
-                <span className="text-text-secondary">{statusOrders.length} orders</span>
-              </h2>
-              <div className="space-y-2">
-                {statusOrders.map((order) => (
-                  <Card key={order.id} className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg font-bold">#{order.queue_number}</span>
-                          <Badge variant={statusColors[status]}>{order.order_type}</Badge>
-                        </div>
-                        <p className="text-sm text-text-tertiary">{order.order_number}</p>
-                      </div>
-                      <span className="text-lg font-bold text-primary">{formatRupiah(order.total)}</span>
-                    </div>
-
-                    <div className="space-y-1 mb-3">
-                      {order.items?.map((item, idx) => (
-                        <div key={idx} className="text-sm">
-                          <span className="font-medium">{item.quantity}x</span> {item.product_name}
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="flex gap-2">
-                      {status === 'paid' && (
-                        <Button
-                          onClick={() => updateStatus(order.id, 'preparing')}
-                          className="flex-1"
-                          size="sm"
-                        >
-                          Start Preparing
-                        </Button>
-                      )}
-                      {status === 'preparing' && (
-                        <Button
-                          onClick={() => updateStatus(order.id, 'ready')}
-                          className="flex-1"
-                          size="sm"
-                        >
-                          Mark Ready
-                        </Button>
-                      )}
-                      {status === 'ready' && (
-                        <Button
-                          onClick={() => updateStatus(order.id, 'completed')}
-                          className="flex-1"
-                          size="sm"
-                          variant="success"
-                        >
-                          Complete
-                        </Button>
-                      )}
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function Button({ children, onClick, className, size = 'md', variant = 'primary' }) {
-  const variants = {
-    primary: 'bg-primary text-white',
-    success: 'bg-success text-white',
+  const stats = {
+    pending: orders.filter(o => o.status === 'paid').length,
+    preparing: orders.filter(o => o.status === 'preparing').length,
+    ready: orders.filter(o => o.status === 'ready').length,
+    completed: orders.filter(o => o.status === 'completed').length,
   };
 
+  const filteredOrders = filterStatus === 'all' 
+    ? orders 
+    : orders.filter(o => o.status === filterStatus);
+
   return (
-    <button
-      onClick={onClick}
-      className={`px-4 py-2 rounded-xl font-medium ${variants[variant]} ${size === 'sm' ? 'text-sm' : ''} ${className}`}
-    >
-      {children}
-    </button>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+        <div className="px-3 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate(-1)}
+                className="p-2 h-auto"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+              <div>
+                <h1 className="text-lg font-bold text-gray-900 dark:text-white">Kitchen View</h1>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Manage orders</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-success/10 rounded-full">
+                <div className="w-2 h-2 bg-success rounded-full animate-pulse" />
+                <span className="text-xs font-medium text-success">Online</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-4 gap-2 mt-3">
+            <div className="text-center p-2 bg-warning/10 rounded-lg">
+              <p className="text-lg font-bold text-warning">{stats.pending}</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">Pending</p>
+            </div>
+            <div className="text-center p-2 bg-primary/10 rounded-lg">
+              <p className="text-lg font-bold text-primary">{stats.preparing}</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">Cooking</p>
+            </div>
+            <div className="text-center p-2 bg-success/10 rounded-lg">
+              <p className="text-lg font-bold text-success">{stats.ready}</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">Ready</p>
+            </div>
+            <div className="text-center p-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
+              <p className="text-lg font-bold text-gray-600 dark:text-gray-400">{stats.completed}</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">Done</p>
+            </div>
+          </div>
+
+          {/* Filter Tabs */}
+          <div className="flex gap-1 mt-3 overflow-x-auto">
+            {[
+              { value: 'all', label: 'All', count: orders.length },
+              { value: 'paid', label: 'Pending', count: stats.pending },
+              { value: 'preparing', label: 'Cooking', count: stats.preparing },
+              { value: 'ready', label: 'Ready', count: stats.ready },
+            ].map((filter) => (
+              <button
+                key={filter.value}
+                onClick={() => setFilterStatus(filter.value)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                  filterStatus === filter.value
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                }`}
+              >
+                {filter.label} ({filter.count})
+              </button>
+            ))}
+          </div>
+        </div>
+      </header>
+
+      {/* Orders List */}
+      <main className="p-3 pb-20">
+        {filteredOrders.length === 0 ? (
+          <Card className="p-8 text-center">
+            <ChefHat className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+            <p className="text-gray-500 dark:text-gray-400 text-sm">No orders found</p>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {filteredOrders.map((order) => (
+              <Card key={order.id} className="p-3 shadow-sm">
+                {/* Header */}
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-bold text-gray-900 dark:text-white">
+                      #{order.queue_number || 'N/A'}
+                    </span>
+                    <Badge variant={
+                      order.status === 'completed' ? 'success' :
+                      order.status === 'ready' ? 'success' :
+                      order.status === 'preparing' ? 'primary' : 'warning'
+                    }>
+                      {order.status}
+                    </Badge>
+                  </div>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {order.order_type}
+                  </span>
+                </div>
+
+                {/* Order Info */}
+                <div className="mb-2 text-xs text-gray-600 dark:text-gray-400">
+                  <p className="font-medium">{order.order_number}</p>
+                  <div className="flex items-center gap-1 mt-1">
+                    <Clock className="w-3 h-3" />
+                    <span>{new Date(order.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
+                </div>
+
+                {/* Items */}
+                <div className="mb-3 space-y-1">
+                  {order.items?.slice(0, 3).map((item, idx) => (
+                    <div key={idx} className="text-xs text-gray-700 dark:text-gray-300">
+                      <span className="font-medium">{item.quantity}x</span> {item.product_name}
+                      {item.notes && (
+                        <p className="text-gray-500 dark:text-gray-500 text-xs mt-0.5">
+                          <AlertCircle className="w-3 h-3 inline mr-1" />
+                          {item.notes}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                  {order.items?.length > 3 && (
+                    <p className="text-xs text-gray-500 dark:text-gray-500">
+                      +{order.items.length - 3} more items
+                    </p>
+                  )}
+                </div>
+
+                {/* Total */}
+                <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-100 dark:border-gray-700">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Total</span>
+                  <span className="text-base font-bold text-primary">
+                    {formatRupiah(order.total)}
+                  </span>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2">
+                  {order.status === 'paid' && (
+                    <Button
+                      onClick={() => updateStatus(order.id, 'preparing')}
+                      className="flex-1 text-xs py-2 h-auto"
+                      size="sm"
+                    >
+                      <Play className="w-4 h-4 mr-1" />
+                      Start Cooking
+                    </Button>
+                  )}
+                  {order.status === 'preparing' && (
+                    <Button
+                      onClick={() => updateStatus(order.id, 'ready')}
+                      className="flex-1 text-xs py-2 h-auto"
+                      size="sm"
+                      variant="success"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-1" />
+                      Mark Ready
+                    </Button>
+                  )}
+                  {order.status === 'ready' && (
+                    <Button
+                      onClick={() => updateStatus(order.id, 'completed')}
+                      className="flex-1 text-xs py-2 h-auto"
+                      size="sm"
+                      variant="success"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-1" />
+                      Complete
+                    </Button>
+                  )}
+                  {order.status === 'completed' && (
+                    <div className="flex-1 text-center py-2 text-xs text-success bg-success/10 rounded-lg">
+                      <CheckCircle className="w-4 h-4 inline mr-1" />
+                      Completed
+                    </div>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+      </main>
+    </div>
   );
 }
