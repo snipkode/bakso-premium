@@ -23,6 +23,7 @@ import AdminUsers from './pages/admin/Users';
 import AdminReports from './pages/admin/Reports';
 import KitchenView from './pages/kitchen/KitchenView';
 import DriverView from './pages/driver/DriverView';
+import NotFoundPage from './pages/NotFoundPage';
 
 // Components
 import { BottomNav } from './components/BottomNav';
@@ -191,6 +192,9 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          {/* 404 Route - Catch all */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
 
         {/* Bottom Navigation for Customer */}
