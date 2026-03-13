@@ -5,16 +5,18 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:9000';
 let socket = null;
 
 export const connectSocket = (userId, role, page) => {
+  console.log('🔌 Connecting socket...', { userId, role, page });
+  
+  // Disconnect existing socket if any
+  if (socket) {
+    socket.disconnect();
+    socket = null;
+  }
+  
   // Validate required fields
   if (!userId) {
-    console.warn('⚠️ Socket connect attempted without userId');
+    console.warn('⚠️ Socket connect attempted without userId, skipping connection');
     return null;
-  }
-
-  if (socket?.connected) {
-    // Already connected, just join new room
-    socket.emit('join', { userId, role: role || 'customer', page: page || '/' });
-    return socket;
   }
 
   socket = io(API_URL, {
@@ -54,15 +56,13 @@ export const connectSocket = (userId, role, page) => {
 
 export const disconnectSocket = () => {
   if (socket) {
+    console.log('🔌 Disconnecting socket...');
     socket.disconnect();
     socket = null;
   }
 };
 
 export const getSocket = () => {
-  if (!socket) {
-    return connectSocket();
-  }
   return socket;
 };
 
@@ -80,42 +80,77 @@ export const emitStaffStatusUpdate = (userId, status, department) => {
 
 export const subscribeToOrderUpdates = (callback) => {
   const sock = getSocket();
+  if (!sock) {
+    console.warn('⚠️ Socket not initialized for order updates');
+    return () => {};
+  }
+  
   sock.on('order:updated', callback);
   return () => sock.off('order:updated', callback);
 };
 
 export const subscribeToPaymentUpdates = (callback) => {
   const sock = getSocket();
+  if (!sock) {
+    console.warn('⚠️ Socket not initialized for payment updates');
+    return () => {};
+  }
+  
   sock.on('payment:verified', callback);
   return () => sock.off('payment:verified', callback);
 };
 
 export const subscribeToQueueUpdates = (callback) => {
   const sock = getSocket();
+  if (!sock) {
+    console.warn('⚠️ Socket not initialized for queue updates');
+    return () => {};
+  }
+  
   sock.on('queue:updated', callback);
   return () => sock.off('queue:updated', callback);
 };
 
 export const subscribeToUserCount = (callback) => {
   const sock = getSocket();
+  if (!sock) {
+    console.warn('⚠️ Socket not initialized for user count');
+    return () => {};
+  }
+  
   sock.on('users:count', callback);
   return () => sock.off('users:count', callback);
 };
 
 export const subscribeToStaffStatus = (callback) => {
   const sock = getSocket();
+  if (!sock) {
+    console.warn('⚠️ Socket not initialized for staff status');
+    return () => {};
+  }
+  
   sock.on('staff:status', callback);
   return () => sock.off('staff:status', callback);
 };
 
 export const subscribeToUserActivity = (callback) => {
   const sock = getSocket();
+  if (!sock) {
+    console.warn('⚠️ Socket not initialized for user activity');
+    return () => {};
+  }
+  
   sock.on('user:activity', callback);
   return () => sock.off('user:activity', callback);
 };
 
 export const subscribeToNotifications = (callback) => {
   const sock = getSocket();
+  if (!sock) {
+    console.warn('⚠️ Socket not initialized for notifications');
+    return () => {};
+  }
+  
   sock.on('notification', callback);
   return () => sock.off('notification', callback);
 };
