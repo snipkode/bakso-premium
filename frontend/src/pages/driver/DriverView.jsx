@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Truck, MapPin, Phone, Navigation, CheckCircle, Clock } from 'lucide-react';
+import { ArrowLeft, LogOut, Truck, MapPin, Phone, Navigation, CheckCircle, Clock, ChefHat } from 'lucide-react';
 import { orderAPI } from '../../lib/api';
 import { useAuthStore } from '../../store';
 import { connectSocket } from '../../lib/socket';
@@ -10,7 +10,7 @@ import { subscribeToOrderUpdates, emitStaffStatusUpdate } from '../../lib/socket
 
 export default function DriverView() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('all');
@@ -26,6 +26,13 @@ export default function DriverView() {
       console.log('🔌 Cleaning up socket');
     };
   }, [user?.id, user?.role]);
+
+  const handleLogout = () => {
+    if (confirm('Logout dari driver?')) {
+      logout();
+      navigate('/login');
+    }
+  };
 
   useEffect(() => {
     loadOrders();
@@ -127,6 +134,14 @@ export default function DriverView() {
                 <div className="w-2 h-2 bg-success rounded-full animate-pulse" />
                 <span className="text-xs font-medium text-success">Online</span>
               </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+                className="p-2 h-auto text-error hover:bg-error/10"
+              >
+                <LogOut className="w-5 h-5" />
+              </Button>
             </div>
           </div>
 
@@ -304,6 +319,50 @@ export default function DriverView() {
           </div>
         )}
       </main>
+
+      {/* Role Switcher FAB (for admin only) */}
+      {user?.role === 'admin' && (
+        <div className="fixed bottom-20 right-4 z-50">
+          <div className="relative group">
+            <button className="w-14 h-14 bg-primary text-white rounded-full shadow-lg flex items-center justify-center hover:bg-primary/90 transition-all active:scale-95">
+              <LogOut className="w-6 h-6" />
+            </button>
+            <div className="absolute bottom-full right-0 mb-2 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden hidden group-hover:block">
+              <p className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                Switch View
+              </p>
+              <button
+                onClick={() => navigate('/admin-panel')}
+                className="w-full px-4 py-3 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3"
+              >
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <span className="text-lg">📊</span>
+                </div>
+                <span className="text-gray-900 dark:text-white">Admin Panel</span>
+              </button>
+              <button
+                onClick={() => navigate('/kitchen')}
+                className="w-full px-4 py-3 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3"
+              >
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <ChefHat className="w-5 h-5 text-primary" />
+                </div>
+                <span className="text-gray-900 dark:text-white">Kitchen View</span>
+              </button>
+              <button
+                onClick={() => navigate('/driver')}
+                className="w-full px-4 py-3 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 bg-primary/5"
+              >
+                <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center">
+                  <Truck className="w-5 h-5 text-success" />
+                </div>
+                <span className="text-primary font-medium">Driver View</span>
+                <span className="ml-auto text-xs text-primary">(Current)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
