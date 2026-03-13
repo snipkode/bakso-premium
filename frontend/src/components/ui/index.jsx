@@ -1,6 +1,6 @@
 export * from './BaseComponents';
 
-import { Card, Badge, IconButton, Avatar } from './BaseComponents';
+import { Card, Badge, IconButton, Avatar, ImageWithFallback } from './BaseComponents';
 import { formatRupiah, getStatusLabel, getStatusColor } from '@/lib/utils';
 import { Minus, Plus, Trash2 } from 'lucide-react';
 
@@ -11,17 +11,12 @@ export function ProductCard({ product, onClick }) {
       className="overflow-hidden cursor-pointer group"
     >
       <div className="aspect-square bg-surface relative">
-        {product.image ? (
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-4xl">
-            🍜
-          </div>
-        )}
+        <ImageWithFallback
+          src={product.image}
+          alt={product.name}
+          className=""
+          fallbackType="bowl"
+        />
         {product.is_featured && (
           <Badge variant="primary" className="absolute top-2 left-2">
             ⭐ Featured
@@ -116,13 +111,12 @@ export function CartItem({ item, onIncrease, onDecrease, onRemove }) {
   return (
     <Card className="p-3 flex gap-3">
       <div className="w-20 h-20 rounded-lg bg-surface flex-shrink-0 overflow-hidden">
-        {item.image ? (
-          <img src={item.image} alt={item.product_name} className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-2xl">
-            🍜
-          </div>
-        )}
+        <ImageWithFallback
+          src={item.image}
+          alt={item.product_name}
+          className="rounded-lg"
+          fallbackType="bowl"
+        />
       </div>
 
       <div className="flex-1 min-w-0">
