@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { 
   Users, Search, Plus, Edit, Trash2, MoreVertical, 
   Shield, ChefHat, Truck, User, Phone, Mail, 
@@ -7,6 +8,8 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../../store';
 import { Card, Button, Badge, LoadingSpinner, Input } from '../../components/ui/BaseComponents';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:9000/api';
 
 export default function AdminUsers() {
   const navigate = useNavigate();
@@ -20,82 +23,60 @@ export default function AdminUsers() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
 
-  // Mock data for now (will be replaced with API)
+  const loadUsers = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/users`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUsers(response.data.users || []);
+    } catch (error) {
+      console.error('Failed to load users:', error);
+      alert('Failed to load users');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadUsers();
   }, []);
 
-  const loadUsers = async () => {
-    // TODO: Replace with API call
-    // const response = await api.get('/users');
-    // setUsers(response.data.users);
-    
-    // Mock data for demonstration
-    setUsers([
-      {
-        id: '1',
-        name: 'Admin User',
-        phone: '081234567890',
-        email: 'admin@bakso.com',
-        role: 'admin',
-        status: 'active',
-        createdAt: '2024-01-01',
-        lastActive: '2024-03-14',
-      },
-      {
-        id: '2',
-        name: 'Kitchen Staff',
-        phone: '081234567891',
-        email: 'kitchen@bakso.com',
-        role: 'kitchen',
-        status: 'active',
-        createdAt: '2024-01-02',
-        lastActive: '2024-03-14',
-      },
-      {
-        id: '3',
-        name: 'Driver One',
-        phone: '081234567892',
-        email: 'driver@bakso.com',
-        role: 'driver',
-        status: 'active',
-        createdAt: '2024-01-03',
-        lastActive: '2024-03-14',
-      },
-      {
-        id: '4',
-        name: 'John Customer',
-        phone: '081234567893',
-        email: 'john@example.com',
-        role: 'customer',
-        status: 'active',
-        createdAt: '2024-02-01',
-        lastActive: '2024-03-13',
-      },
-      {
-        id: '5',
-        name: 'Jane Customer',
-        phone: '081234567894',
-        email: 'jane@example.com',
-        role: 'customer',
-        status: 'inactive',
-        createdAt: '2024-02-02',
-        lastActive: '2024-02-15',
-      },
-    ]);
-    setLoading(false);
+  const handleToggleStatus = async (userId, currentStatus) => {
+    try {
+      const token = localStorage.getItem('token');
+      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+      
+      await axios.patch(
+        `${API_URL}/users/${userId}/status`,
+        { status: newStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      setUsers(users.map(u => u.id === userId ? { ...u, status: newStatus } : u));
+      alert(`User ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`);
+    } catch (error) {
+      console.error('Toggle status error:', error);
+      alert(error.response?.data?.error || 'Failed to update status');
+    }
   };
 
-  const handleToggleStatus = (userId, currentStatus) => {
-    // TODO: API call to toggle status
-    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-    setUsers(users.map(u => u.id === userId ? { ...u, status: newStatus } : u));
-  };
-
-  const handleDeleteUser = (userId) => {
+  const handleDeleteUser = async (userId) => {
     if (!confirm('Delete this user?')) return;
-    // TODO: API call to delete user
-    setUsers(users.filter(u => u.id !== userId));
+    
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API_URL}/users/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      setUsers(users.filter(u => u.id !== userId));
+      alert('User deleted successfully');
+    } catch (error) {
+      console.error('Delete user error:', error);
+      alert(error.response?.data?.error || 'Failed to delete user');
+    }
   };
 
   const filteredUsers = users.filter(user => {
