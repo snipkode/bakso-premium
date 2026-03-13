@@ -14,11 +14,11 @@
     <script type="module" src="/src/main.jsx"></script>
     <script>
       // Eruda - Mobile debugging console for development mode
-      if (import.meta.env.DEV) {
-        const script = document.createElement('script');
+      (function() {
+        var script = document.createElement('script');
         script.src = 'https://cdn.jsdelivr.net/npm/eruda';
-        script.onload = () => {
-          setTimeout(() => {
+        script.onload = function() {
+          setTimeout(function() {
             if (window.eruda) {
               eruda.init();
               console.log('Eruda initialized for development');
@@ -26,7 +26,7 @@
           }, 500);
         };
         document.head.appendChild(script);
-      }
+      })();
     </script>
   </body>
 </html>
