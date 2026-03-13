@@ -49,7 +49,11 @@ exports.generateWeeklyReport = async (req, res) => {
     const { weekStart } = req.query;
     const reportDate = weekStart ? new Date(weekStart) : new Date();
     
+    console.log('📊 Generating weekly report for:', reportDate);
+    
     const report = await reportGenerator.generateWeeklyReport(reportDate);
+    
+    console.log('✅ Weekly report generated:', report.fileName);
     
     res.json({
       success: true,
@@ -69,8 +73,12 @@ exports.generateWeeklyReport = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Generate weekly report error:', error);
-    res.status(500).json({ error: 'Failed to generate weekly report' });
+    console.error('Generate weekly report error:', error.message);
+    console.error('Stack:', error.stack);
+    res.status(500).json({ 
+      error: 'Failed to generate weekly report',
+      details: error.message 
+    });
   }
 };
 

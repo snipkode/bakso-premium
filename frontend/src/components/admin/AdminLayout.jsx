@@ -19,6 +19,7 @@ import {
   Sun,
 } from 'lucide-react';
 import { useAuthStore, useAppStore } from '../../store';
+import { connectSocket } from '../../lib/socket';
 import { Button } from '../ui/BaseComponents';
 
 export default function AdminLayout() {
@@ -30,6 +31,18 @@ export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Initialize socket on mount
+  useEffect(() => {
+    if (user?.id) {
+      console.log('🔌 Initializing socket for admin:', user.id);
+      connectSocket(user.id, user.role, window.location.pathname);
+    }
+    
+    return () => {
+      console.log('🔌 Cleaning up socket');
+    };
+  }, [user?.id, user?.role]);
 
   // Close sidebar on mobile by default
   useEffect(() => {
