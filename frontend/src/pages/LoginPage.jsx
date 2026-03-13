@@ -20,7 +20,7 @@ export default function LoginPage() {
     e.preventDefault();
     try {
       await customerAuth(formData.name, formData.phone);
-      navigate('/');
+      navigate('/menu'); // Customer goes to menu
     } catch (error) {
       console.error('Customer auth failed:', error);
     }
@@ -29,8 +29,19 @@ export default function LoginPage() {
   const handleStaffLogin = async (e) => {
     e.preventDefault();
     try {
-      await staffLogin(formData.phone, formData.password);
-      navigate('/');
+      const result = await staffLogin(formData.phone, formData.password);
+      
+      // Redirect based on role
+      const role = result?.user?.role;
+      if (role === 'admin') {
+        navigate('/admin');
+      } else if (role === 'kitchen') {
+        navigate('/kitchen');
+      } else if (role === 'driver') {
+        navigate('/driver');
+      } else {
+        navigate('/');
+      }
     } catch (error) {
       console.error('Staff login failed:', error);
     }
