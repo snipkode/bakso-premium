@@ -20,6 +20,7 @@ const loyaltyRoutes = require('./routes/loyaltyRoutes');
 const pushRoutes = require('./routes/pushRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const queueRoutes = require('./routes/queueRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -57,6 +58,7 @@ app.use('/api/loyalty', loyaltyRoutes);
 app.use('/api/push', pushRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/queue', queueRoutes);
+app.use('/api/reports', reportRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
