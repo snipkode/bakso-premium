@@ -1,0 +1,9 @@
+{
+  "timestamp": "2026-03-13T17:19:31.473Z",
+  "base_url": "http://localhost:9001",
+  "api_url": "http://localhost:9000/api",
+  "results": {
+    "passed": 22,
+    "failed": 0
+  }
+}
