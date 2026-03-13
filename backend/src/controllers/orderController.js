@@ -207,7 +207,8 @@ exports.getUserOrders = async (req, res) => {
 
     res.json({ success: true, ...orders });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to get orders' });
+    console.error('Get user orders error:', error);
+    res.status(500).json({ error: 'Failed to get orders', details: error.message });
   }
 };
 

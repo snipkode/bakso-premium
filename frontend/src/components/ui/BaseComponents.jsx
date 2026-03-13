@@ -1,4 +1,75 @@
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
+
+// SVG Bowl Icon for image fallbacks
+function BowlIcon({ className = "w-8 h-8" }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 100 100"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/* Bowl */}
+      <ellipse cx="50" cy="70" rx="35" ry="12" fill="#E5E7EB" />
+      <path
+        d="M15 70C15 70 20 90 50 90C80 90 85 70 85 70"
+        fill="#D1D5DB"
+      />
+      {/* Steam */}
+      <path
+        d="M35 55C35 55 38 45 35 40M50 55C50 55 53 45 50 40M65 55C65 55 68 45 65 40"
+        stroke="#9CA3AF"
+        strokeWidth="3"
+        strokeLinecap="round"
+        fill="none"
+        opacity="0.6"
+      />
+      {/* Noodles */}
+      <ellipse cx="50" cy="65" rx="30" ry="8" fill="#FCD34D" />
+      <path
+        d="M25 65C25 65 35 60 50 60C65 60 75 65 75 65"
+        stroke="#F59E0B"
+        strokeWidth="2"
+        fill="none"
+      />
+    </svg>
+  );
+}
+
+export function ImageWithFallback({
+  src,
+  alt,
+  className,
+  fallbackType = 'bowl',
+  ...props
+}) {
+  const [error, setError] = useState(false);
+
+  if (!src || error) {
+    return (
+      <div className={cn('bg-surface flex items-center justify-center', className)}>
+        {fallbackType === 'bowl' ? (
+          <BowlIcon className="w-1/2 h-1/2" />
+        ) : (
+          <div className="w-1/2 h-1/2 flex items-center justify-center text-4xl">
+            🍜
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={cn('w-full h-full object-cover', className)}
+      onError={() => setError(true)}
+      {...props}
+    />
+  );
+}
 
 export function Button({
   children,
@@ -128,13 +199,18 @@ export function Avatar({ src, name, size = 'md', className }) {
   return (
     <div
       className={cn(
-        'rounded-full bg-primary text-white flex items-center justify-center font-medium',
+        'rounded-full bg-primary text-white flex items-center justify-center font-medium overflow-hidden',
         sizes[size],
         className
       )}
     >
       {src ? (
-        <img src={src} alt={name} className="w-full h-full object-cover rounded-full" />
+        <ImageWithFallback
+          src={src}
+          alt={name}
+          className="rounded-full"
+          fallbackType="emoji"
+        />
       ) : (
         initials
       )}

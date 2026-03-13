@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ShoppingBag, Trash2, ArrowLeft, Plus, Minus } from 'lucide-react';
 import { useCartStore } from '../store';
-import { Button, Card, EmptyState, IconButton } from '../components/ui/BaseComponents';
+import { Button, Card, EmptyState, IconButton, ImageWithFallback } from '../components/ui/BaseComponents';
 import { formatRupiah } from '../lib/utils';
 
 export default function CartPage() {
@@ -79,11 +79,12 @@ export default function CartPage() {
           >
             <Card className="p-3 flex gap-3">
               <div className="w-20 h-20 rounded-lg bg-surface flex-shrink-0 overflow-hidden">
-                {item.image ? (
-                  <img src={item.image} alt={item.product_name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-2xl">🍜</div>
-                )}
+                <ImageWithFallback
+                  src={item.image}
+                  alt={item.product_name}
+                  className="rounded-lg"
+                  fallbackType="bowl"
+                />
               </div>
 
               <div className="flex-1 min-w-0">

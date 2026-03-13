@@ -40,6 +40,56 @@ const seedDatabase = async () => {
     });
     console.log('✅ Driver created');
 
+    // Create demo customers
+    await User.bulkCreate([
+      {
+        name: 'Budi Santoso',
+        phone: '081234567893',
+        password: await bcrypt.hash('customer123', 10),
+        role: 'customer',
+        status: 'active',
+        completed_orders: 5,
+        loyalty_points: 500,
+      },
+      {
+        name: 'Siti Nurhaliza',
+        phone: '081234567894',
+        password: await bcrypt.hash('customer123', 10),
+        role: 'customer',
+        status: 'active',
+        completed_orders: 3,
+        loyalty_points: 300,
+      },
+      {
+        name: 'Ahmad Rizki',
+        phone: '081234567895',
+        password: await bcrypt.hash('customer123', 10),
+        role: 'customer',
+        status: 'active',
+        completed_orders: 10,
+        loyalty_points: 1000,
+      },
+      {
+        name: 'Dewi Lestari',
+        phone: '081234567896',
+        password: await bcrypt.hash('customer123', 10),
+        role: 'customer',
+        status: 'active',
+        completed_orders: 1,
+        loyalty_points: 100,
+      },
+      {
+        name: 'Eko Prasetyo',
+        phone: '081234567897',
+        password: await bcrypt.hash('customer123', 10),
+        role: 'customer',
+        status: 'active',
+        completed_orders: 0,
+        loyalty_points: 0,
+      },
+    ]);
+    console.log('✅ Demo customers created');
+
     // Create categories
     const categories = await Category.bulkCreate([
       {
@@ -227,9 +277,14 @@ const seedDatabase = async () => {
 
     console.log('\n🎉 Database seeded successfully!\n');
     console.log('📋 Login credentials:');
-    console.log('   Admin:    081234567890 / admin123');
-    console.log('   Kitchen:  081234567891 / kitchen123');
-    console.log('   Driver:   081234567892 / driver123');
+    console.log('   Admin:     081234567890 / admin123');
+    console.log('   Kitchen:   081234567891 / kitchen123');
+    console.log('   Driver:    081234567892 / driver123');
+    console.log('   Customer:  081234567893 / customer123 (Budi)');
+    console.log('   Customer:  081234567894 / customer123 (Siti)');
+    console.log('   Customer:  081234567895 / customer123 (Ahmad)');
+    console.log('   Customer:  081234567896 / customer123 (Dewi)');
+    console.log('   Customer:  081234567897 / customer123 (Eko)');
     console.log('');
 
     process.exit(0);

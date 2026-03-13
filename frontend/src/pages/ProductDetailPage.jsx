@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Plus, Minus, Info } from 'lucide-react';
 import { productAPI } from '../lib/api';
 import { useCartStore } from '../store';
-import { Button, Card, LoadingSpinner } from '../components/ui/BaseComponents';
+import { Button, Card, LoadingSpinner, ImageWithFallback } from '../components/ui/BaseComponents';
 import { formatRupiah } from '../lib/utils';
 
 export default function ProductDetailPage() {
@@ -71,17 +71,12 @@ export default function ProductDetailPage() {
       {/* Header Image */}
       <div className="relative">
         <div className="aspect-square bg-surface">
-          {product.image ? (
-            <img
-              src={product.image}
-              alt={product.name}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-6xl">
-              🍜
-            </div>
-          )}
+          <ImageWithFallback
+            src={product.image}
+            alt={product.name}
+            className=""
+            fallbackType="bowl"
+          />
         </div>
         <Button
           variant="secondary"
