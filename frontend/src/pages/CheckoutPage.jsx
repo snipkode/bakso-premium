@@ -8,7 +8,7 @@ import { orderAPI, paymentAPI } from '../lib/api';
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const { user, updateUser } = useAuthStore();
   const { items, getSubtotal, orderType, notes, voucherCode, clearCart, setOrderType } = useCartStore();
 
   const [loading, setLoading] = useState(false);
@@ -18,13 +18,23 @@ export default function CheckoutPage() {
   const [eWalletType, setEWalletType] = useState('GoPay');
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [tableNumber, setTableNumber] = useState('');
+  
+  // Customer data fields (for guest checkout or update)
+  const [customerName, setCustomerName] = useState(user?.name || '');
+  const [customerPhone, setCustomerPhone] = useState(user?.phone || '');
 
   const subtotal = getSubtotal();
   const deliveryFee = orderType === 'delivery' ? 15000 : 0;
   const total = subtotal + deliveryFee;
 
   const handlePlaceOrder = async () => {
-    // Validation
+    // Validation - Customer Data
+    if (!customerName || !customerPhone) {
+      alert('Mohon isi nama dan nomor telepon');
+      return;
+    }
+    
+    // Validation - Order Type
     if (orderType === 'dine-in' && !tableNumber) {
       alert('Mohon isi nomor meja');
       return;
@@ -40,6 +50,11 @@ export default function CheckoutPage() {
 
     setLoading(true);
     try {
+      // Update user data if changed
+      if (user && (user.name !== customerName || user.phone !== customerPhone)) {
+        updateUser({ name: customerName, phone: customerPhone });
+      }
+
       // Step 1: Create Order (matching E2E test: test-workflow-e2e.js)
       const orderData = {
         order_type: orderType,
@@ -98,6 +113,42 @@ export default function CheckoutPage() {
       </div>
 
       <div className="px-4 py-4 space-y-4">
+        {/* Customer Data Form */}
+        <Card className="p-4">
+          <h3 className="font-semibold mb-3 flex items-center gap-2">
+            <span>👤</span> Data Pelanggan
+          </h3>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium mb-1 text-text-secondary">
+                Nama Lengkap
+              </label>
+              <Input
+                placeholder="Masukkan nama Anda"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1 text-text-secondary">
+                Nomor Telepon / WhatsApp
+              </label>
+              <Input
+                type="tel"
+                placeholder="081234567890"
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+                className="w-full"
+                pattern="[0-9]*"
+              />
+              <p className="text-xs text-text-tertiary mt-1">
+                Nomor akan digunakan untuk notifikasi pesanan
+              </p>
+            </div>
+          </div>
+        </Card>
+
         {/* Order Type Selection */}
         <Card className="p-4">
           <h3 className="font-semibold mb-3">Tipe Pesanan</h3>

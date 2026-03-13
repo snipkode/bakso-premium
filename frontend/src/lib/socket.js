@@ -5,8 +5,15 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:9000';
 let socket = null;
 
 export const connectSocket = (userId, role, page) => {
+  // Validate required fields
+  if (!userId) {
+    console.warn('⚠️ Socket connect attempted without userId');
+    return null;
+  }
+
   if (socket?.connected) {
-    socket.emit('join', { userId, role, page });
+    // Already connected, just join new room
+    socket.emit('join', { userId, role: role || 'customer', page: page || '/' });
     return socket;
   }
 
@@ -15,13 +22,19 @@ export const connectSocket = (userId, role, page) => {
     reconnection: true,
     reconnectionDelay: 1000,
     reconnectionAttempts: 5,
+    auth: {
+      token: localStorage.getItem('token'),
+    },
   });
 
   socket.on('connect', () => {
     console.log('🟢 Socket connected:', socket.id);
-    if (userId && role) {
-      socket.emit('join', { userId, role, page });
-    }
+    // Emit join event with validated data
+    socket.emit('join', {
+      userId: userId,
+      role: role || 'customer',
+      page: page || window.location.pathname || '/',
+    });
   });
 
   socket.on('disconnect', () => {
@@ -29,7 +42,11 @@ export const connectSocket = (userId, role, page) => {
   });
 
   socket.on('connect_error', (error) => {
-    console.error('Socket connection error:', error);
+    console.error('❌ Socket connection error:', error.message);
+  });
+
+  socket.on('error', (error) => {
+    console.error('❌ Socket error:', error);
   });
 
   return socket;

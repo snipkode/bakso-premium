@@ -17,6 +17,12 @@ export const useAuthStore = create(
         set({ isLoading: true, error: null });
         try {
           const { data } = await authAPI.customerAuth(name, phone);
+          
+          // Validate user data
+          if (!data.user || !data.user.id) {
+            throw new Error('Invalid user data from server');
+          }
+          
           set({
             user: data.user,
             token: data.token,
@@ -25,10 +31,10 @@ export const useAuthStore = create(
           });
           localStorage.setItem('token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
-          
-          // Connect socket
-          connectSocket(data.user.id, data.user.role, window.location.pathname);
-          
+
+          // Connect socket with validated user data
+          connectSocket(data.user.id, data.user.role || 'customer', window.location.pathname);
+
           return data;
         } catch (error) {
           set({
@@ -44,6 +50,12 @@ export const useAuthStore = create(
         set({ isLoading: true, error: null });
         try {
           const { data } = await authAPI.staffLogin(phone, password);
+          
+          // Validate user data
+          if (!data.user || !data.user.id) {
+            throw new Error('Invalid user data from server');
+          }
+          
           set({
             user: data.user,
             token: data.token,
@@ -52,10 +64,10 @@ export const useAuthStore = create(
           });
           localStorage.setItem('token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
-          
-          // Connect socket
+
+          // Connect socket with validated user data
           connectSocket(data.user.id, data.user.role, window.location.pathname);
-          
+
           return data;
         } catch (error) {
           set({
