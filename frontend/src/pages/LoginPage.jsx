@@ -34,7 +34,7 @@ export default function LoginPage() {
       // Redirect based on role
       const role = result?.user?.role;
       if (role === 'admin') {
-        navigate('/admin');
+        navigate('/admin-panel');
       } else if (role === 'kitchen') {
         navigate('/kitchen');
       } else if (role === 'driver') {

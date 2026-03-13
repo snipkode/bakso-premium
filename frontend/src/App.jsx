@@ -21,6 +21,7 @@ import AdminProducts from './pages/admin/Products';
 import AdminPayments from './pages/admin/Payments';
 import AdminUsers from './pages/admin/Users';
 import AdminReports from './pages/admin/Reports';
+import AdminLayout from './components/admin/AdminLayout';
 import KitchenView from './pages/kitchen/KitchenView';
 import DriverView from './pages/driver/DriverView';
 import NotFoundPage from './pages/NotFoundPage';
@@ -172,6 +173,23 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          {/* Admin Layout Routes (with sidebar) */}
+          <Route
+            path="/admin-panel"
+            element={
+              <ProtectedRoute roles={['admin']}>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<AdminDashboard />} />
+            <Route path="orders" element={<AdminOrders />} />
+            <Route path="payments" element={<AdminPayments />} />
+            <Route path="products" element={<AdminProducts />} />
+            <Route path="reports" element={<AdminReports />} />
+            <Route path="users" element={<AdminUsers />} />
+          </Route>
 
           {/* Kitchen Routes */}
           <Route
