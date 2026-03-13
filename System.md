@@ -138,15 +138,17 @@ Digital ordering system for Bakso restaurant with:
 |------------|---------|
 | **Node.js 18+** | Runtime Environment |
 | **Express.js** | Web Framework |
-| **Sequelize** | ORM (SQLite/MySQL/PostgreSQL) |
-| **SQLite** | Database (Development) |
+| **Sequelize** | ORM (MySQL/MariaDB) |
+| **MySQL/MariaDB** | Database (Production) |
 | **Socket.io** | Real-time WebSocket |
 | **JWT** | Authentication (Staff) |
 | **Multer** | File Upload Handler |
 | **web-push** | Push Notification Service |
-| **bcryptjs** | Password Hashing |
+| **bcryptjs** | Password Hashing (10 salt rounds) |
 | **cors** | Cross-origin Resource Sharing |
 | **dotenv** | Environment Variables |
+
+**Important:** All database models use `createdAt` and `updatedAt` (camelCase) timestamp fields. Controllers must reference these fields using camelCase notation when querying.
 
 ---
 
@@ -1162,6 +1164,71 @@ VITE_SOCKET_URL=http://localhost:5000
 --shadow-lg: 0 10px 15px rgba(0,0,0,0.1)
 --shadow-xl: 0 20px 25px rgba(0,0,0,0.15)
 ```
+
+---
+
+## 📝 IMPORTANT DEVELOPMENT NOTES
+
+### Timestamp Field Naming Convention
+
+All database models use **camelCase** timestamp fields (`createdAt`, `updatedAt`). When querying in controllers, always use camelCase:
+
+```javascript
+// ✅ CORRECT
+where: { createdAt: { [Op.gte]: startDate } }
+order: [['createdAt', 'DESC']]
+
+// ❌ WRONG
+where: { created_at: { [Op.gte]: startDate } }
+order: [['created_at', 'DESC']]
+```
+
+### Password Hashing
+
+Password hashing uses **bcryptjs** with **10 salt rounds**. The seed script uses raw SQL queries to ensure password hashes are stored correctly without Sequelize transformation:
+
+```javascript
+// Seed script pattern
+const hash = await bcrypt.hash('password123', 10);
+await sequelize.query(`INSERT INTO user (password) VALUES ('${hash}')`);
+
+// Controller verification pattern
+const isMatch = await bcrypt.compare(password, user.password);
+```
+
+### Database Configuration
+
+The system uses **MySQL/MariaDB** for production. Ensure the following:
+
+1. Database uses `utf8mb4` charset for emoji support
+2. Table names are lowercase (e.g., `user`, `order`, `category`)
+3. Foreign keys reference exact table names (`user.id`, not `users.id`)
+
+### Order Creation Logic
+
+When creating orders with `product_id`, the controller automatically fetches product details:
+
+```javascript
+// Client sends
+{ product_id: 'uuid', quantity: 2 }
+
+// Server auto-fetches
+const product = await Product.findByPk(product_id);
+// Uses product.name and product.price for order items
+```
+
+### E2E Testing
+
+Run E2E tests with:
+```bash
+cd backend
+npm run test:e2e
+```
+
+Ensure:
+1. Backend server is running on port 9000
+2. Database is seeded with `npm run seed`
+3. PM2 is managing the backend process
 
 ---
 

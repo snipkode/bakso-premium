@@ -44,12 +44,13 @@ A premium digital ordering system for bakso (Indonesian meatball) restaurants wi
 
 ### Backend
 - **Node.js** + **Express.js** - Server framework
-- **SQLite** - Database (dev)
+- **MySQL/MariaDB** - Database (Production)
 - **Sequelize** - ORM
 - **Socket.io** - Real-time communication
 - **JWT** - Authentication
 - **Multer** - File uploads
 - **Web Push** - Browser notifications
+- **bcryptjs** - Password hashing (10 salt rounds)
 
 ### Frontend
 - **React** - UI library
@@ -320,7 +321,9 @@ After running `npm run seed`, you can login with:
 9. **loyalty_points** - Reward points
 10. **push_subscriptions** - Browser push tokens
 11. **queue_settings** - Daily queue management
-12. **(timestamps auto)** - created_at, updated_at
+12. **(timestamps auto)** - createdAt, updatedAt
+
+**Note:** All models use `createdAt` and `updatedAt` timestamp fields (camelCase) for consistency with Sequelize defaults.
 
 ---
 
