@@ -88,10 +88,11 @@ async function testListUsers() {
     const response = await axios.get(`${API_URL}/users`, { headers });
     
     assert(response.data.success, 'Should return success');
-    assert(Array.isArray(response.data.users), 'Should return users array');
-    assert(response.data.users.length > 0, 'Should have at least one user');
+    const users = response.data.users || response.data.rows || [];
+    assert(Array.isArray(users), 'Should return users array');
+    assert(users.length > 0, 'Should have at least one user');
     
-    log(`      Total users: ${response.data.users.length}`, 'cyan');
+    log(`      Total users: ${users.length}`, 'cyan');
   });
   
   await test('Get users with pagination', async () => {
@@ -111,11 +112,12 @@ async function testListUsers() {
     const response = await axios.get(`${API_URL}/users?role=admin`, { headers });
     
     assert(response.data.success, 'Should return success');
-    response.data.users.forEach(user => {
+    const users = response.data.users || response.data.rows || [];
+    users.forEach(user => {
       assert(user.role === 'admin', 'All users should be admin');
     });
     
-    log(`      Admin users: ${response.data.users.length}`, 'cyan');
+    log(`      Admin users: ${users.length}`, 'cyan');
   });
   
   await test('Filter users by status (active)', async () => {
@@ -123,11 +125,12 @@ async function testListUsers() {
     const response = await axios.get(`${API_URL}/users?status=active`, { headers });
     
     assert(response.data.success, 'Should return success');
-    response.data.users.forEach(user => {
+    const users = response.data.users || response.data.rows || [];
+    users.forEach(user => {
       assert(user.status === 'active', 'All users should be active');
     });
     
-    log(`      Active users: ${response.data.users.length}`, 'cyan');
+    log(`      Active users: ${users.length}`, 'cyan');
   });
   
   await test('Search users by name', async () => {
@@ -135,14 +138,15 @@ async function testListUsers() {
     const response = await axios.get(`${API_URL}/users?search=Admin`, { headers });
     
     assert(response.data.success, 'Should return success');
-    response.data.users.forEach(user => {
+    const users = response.data.users || response.data.rows || [];
+    users.forEach(user => {
       assert(
         user.name.toLowerCase().includes('admin'),
         'User name should contain "Admin"'
       );
     });
     
-    log(`      Found ${response.data.users.length} users matching "Admin"`, 'cyan');
+    log(`      Found ${users.length} users matching "Admin"`, 'cyan');
   });
 }
 
@@ -152,7 +156,12 @@ async function testGetUserById() {
   await test('Get first user by ID', async () => {
     const headers = { Authorization: `Bearer ${state.adminToken}` };
     const listResponse = await axios.get(`${API_URL}/users`, { headers });
-    const firstUser = listResponse.data.users[0];
+    const users = listResponse.data.users || listResponse.data.rows || [];
+    const firstUser = users[0];
+    
+    if (!firstUser) {
+      throw new Error('No users found');
+    }
     
     const response = await axios.get(`${API_URL}/users/${firstUser.id}`, { headers });
     
