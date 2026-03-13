@@ -1,9 +1,10 @@
 export * from './BaseComponents';
 
-export function ProductCard({ product, onClick }) {
-  const { Card, Badge } = require('./BaseComponents');
-  const { formatRupiah } = require('../lib/utils');
+import { Card, Badge, IconButton, Avatar } from './BaseComponents';
+import { formatRupiah, getStatusLabel, getStatusColor } from '@/lib/utils';
+import { Minus, Plus, Trash2 } from 'lucide-react';
 
+export function ProductCard({ product, onClick }) {
   return (
     <Card
       onClick={onClick}
@@ -57,9 +58,6 @@ export function ProductCard({ product, onClick }) {
 }
 
 export function OrderCard({ order, onClick }) {
-  const { Card, Badge } = require('./BaseComponents');
-  const { formatRupiah, getStatusLabel, getStatusColor } = require('../lib/utils');
-
   return (
     <Card onClick={onClick} className="p-4 cursor-pointer">
       <div className="flex items-start justify-between mb-3">
@@ -115,10 +113,6 @@ export function OrderCard({ order, onClick }) {
 }
 
 export function CartItem({ item, onIncrease, onDecrease, onRemove }) {
-  const { Card, IconButton } = require('./BaseComponents');
-  const { formatRupiah } = require('../lib/utils');
-  const { Minus, Plus, Trash2 } = require('lucide-react');
-
   return (
     <Card className="p-3 flex gap-3">
       <div className="w-20 h-20 rounded-lg bg-surface flex-shrink-0 overflow-hidden">
@@ -171,9 +165,7 @@ export function CartItem({ item, onIncrease, onDecrease, onRemove }) {
 }
 
 export function StaffStatusCard({ department, staff }) {
-  const { Card, Badge, Avatar } = require('./BaseComponents');
-
-  const getStatusColor = (status) => {
+  const getBadgeColor = (status) => {
     if (status === 'online') return 'success';
     if (status === 'busy') return 'warning';
     return 'secondary';
@@ -192,7 +184,7 @@ export function StaffStatusCard({ department, staff }) {
                 <Avatar name={s.name} size="sm" />
                 <span className="text-sm text-text-primary">{s.name}</span>
               </div>
-              <Badge variant={getStatusColor(s.status)}>
+              <Badge variant={getBadgeColor(s.status)}>
                 {s.status === 'online' ? '🟢' : s.status === 'busy' ? '🟡' : '⚪'}
               </Badge>
             </div>
