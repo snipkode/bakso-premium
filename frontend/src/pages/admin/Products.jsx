@@ -1,9 +1,85 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Edit, Trash2, Search, Filter, Image as ImageIcon, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Filter, ToggleLeft, ToggleRight } from 'lucide-react';
 import { productAPI } from '../../lib/api';
 import { Card, Button, Input, Badge, LoadingSpinner } from '../../components/ui/BaseComponents';
 import { formatRupiah } from '../../lib/utils';
+
+// Bakso SVG Placeholder Component
+function BaksoPlaceholder() {
+  return (
+    <svg
+      viewBox="0 0 100 100"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className="w-full h-full"
+    >
+      {/* Bowl */}
+      <ellipse cx="50" cy="75" rx="40" ry="15" fill="#E5E7EB" />
+      <path
+        d="M10 75C10 75 15 95 50 95C85 95 90 75 90 75"
+        fill="#D1D5DB"
+      />
+      
+      {/* Soup */}
+      <ellipse cx="50" cy="70" rx="35" ry="12" fill="#FCD34D" />
+      
+      {/* Bakso Balls */}
+      <circle cx="35" cy="65" r="12" fill="#92400E" />
+      <circle cx="65" cy="65" r="12" fill="#92400E" />
+      <circle cx="50" cy="55" r="12" fill="#92400E" />
+      
+      {/* Highlights on bakso */}
+      <circle cx="38" cy="62" r="4" fill="#B45309" opacity="0.6" />
+      <circle cx="68" cy="62" r="4" fill="#B45309" opacity="0.6" />
+      <circle cx="53" cy="52" r="4" fill="#B45309" opacity="0.6" />
+      
+      {/* Noodles */}
+      <path
+        d="M20 70C20 70 35 65 50 65C65 65 80 70 80 70"
+        stroke="#F59E0B"
+        strokeWidth="3"
+        strokeLinecap="round"
+        fill="none"
+      />
+      <path
+        d="M25 75C25 75 40 70 50 70C60 70 75 75 75 75"
+        stroke="#F59E0B"
+        strokeWidth="3"
+        strokeLinecap="round"
+        fill="none"
+      />
+      
+      {/* Steam */}
+      <path
+        d="M30 45C30 45 33 35 30 25M50 40C50 40 53 30 50 20M70 45C70 45 73 35 70 25"
+        stroke="#9CA3AF"
+        strokeWidth="3"
+        strokeLinecap="round"
+        fill="none"
+        opacity="0.6"
+      />
+      
+      {/* Chopsticks */}
+      <rect
+        x="75"
+        y="30"
+        width="6"
+        height="60"
+        fill="#78350F"
+        transform="rotate(30 75 30)"
+      />
+      <rect
+        x="82"
+        y="30"
+        width="6"
+        height="60"
+        fill="#92400E"
+        transform="rotate(30 82 30)"
+      />
+    </svg>
+  );
+}
 
 export default function AdminProducts() {
   const navigate = useNavigate();
@@ -115,8 +191,8 @@ export default function AdminProducts() {
               {product.image ? (
                 <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
               ) : (
-                <div className="flex items-center justify-center h-full">
-                  <ImageIcon className="w-12 h-12 text-text-tertiary" />
+                <div className="flex items-center justify-center h-full p-4">
+                  <BaksoPlaceholder />
                 </div>
               )}
               
