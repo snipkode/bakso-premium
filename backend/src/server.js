@@ -29,8 +29,16 @@ initializeSocket(server);
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: [
+    'http://localhost:9001',
+    'http://localhost:5173',
+    'http://127.0.0.1:9001',
+    'http://127.0.0.1:5173',
+    'https://perumdati.tech',
+  ],
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
