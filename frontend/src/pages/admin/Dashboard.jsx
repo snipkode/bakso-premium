@@ -92,18 +92,35 @@ export default function AdminDashboard() {
       <Card className="p-4">
         <h3 className="font-semibold mb-3">Quick Actions</h3>
         <div className="grid grid-cols-2 gap-3">
-          <button className="p-3 bg-primary/10 text-primary rounded-xl font-medium">
-            Verify Payments
-          </button>
-          <button className="p-3 bg-primary/10 text-primary rounded-xl font-medium">
-            Manage Products
-          </button>
-          <button className="p-3 bg-primary/10 text-primary rounded-xl font-medium">
-            View Orders
-          </button>
-          <button className="p-3 bg-primary/10 text-primary rounded-xl font-medium">
-            Send Notification
-          </button>
+          <a href="/admin/payments" className="p-3 bg-primary/10 text-primary rounded-xl font-medium hover:bg-primary/20 transition">
+            ✅ Verifikasi Pembayaran
+          </a>
+          <a href="/admin/products" className="p-3 bg-primary/10 text-primary rounded-xl font-medium hover:bg-primary/20 transition">
+            📦 Kelola Produk
+          </a>
+          <a href="/admin/orders" className="p-3 bg-primary/10 text-primary rounded-xl font-medium hover:bg-primary/20 transition">
+            📋 Lihat Orders
+          </a>
+          <a href="/admin/reports" className="p-3 bg-success/10 text-success rounded-xl font-medium hover:bg-success/20 transition">
+            📊 Generate Laporan
+          </a>
+        </div>
+      </Card>
+
+      {/* Staff Status */}
+      <Card className="p-4">
+        <h3 className="font-semibold mb-3">Status Staff</h3>
+        <div className="space-y-2">
+          {stats?.staff?.admin?.map((staff) => (
+            <div key={staff.id} className="flex items-center justify-between text-sm">
+              <span className="text-text-secondary">{staff.name}</span>
+              <span className={`px-2 py-1 rounded text-xs ${
+                staff.status === 'online' ? 'bg-success/10 text-success' : 'bg-secondary text-text-tertiary'
+              }`}>
+                {staff.status}
+              </span>
+            </div>
+          ))}
         </div>
       </Card>
     </div>

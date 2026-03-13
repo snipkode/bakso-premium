@@ -20,6 +20,7 @@ import AdminOrders from './pages/admin/Orders';
 import AdminProducts from './pages/admin/Products';
 import AdminPayments from './pages/admin/Payments';
 import AdminUsers from './pages/admin/Users';
+import AdminReports from './pages/admin/Reports';
 import KitchenView from './pages/kitchen/KitchenView';
 import DriverView from './pages/driver/DriverView';
 
@@ -159,6 +160,14 @@ function App() {
             element={
               <ProtectedRoute roles={['admin']}>
                 <AdminUsers />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/reports"
+            element={
+              <ProtectedRoute roles={['admin']}>
+                <AdminReports />
               </ProtectedRoute>
             }
           />

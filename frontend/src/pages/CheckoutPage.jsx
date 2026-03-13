@@ -4,48 +4,83 @@ import { useCartStore, useAuthStore } from '../store';
 import { Button, Input, Card } from '../components/ui/BaseComponents';
 import { formatRupiah } from '../lib/utils';
 import { useState } from 'react';
-import { orderAPI } from '../lib/api';
+import { orderAPI, paymentAPI } from '../lib/api';
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { items, getSubtotal, orderType, notes, voucherCode, clearCart } = useCartStore();
-  
+  const { items, getSubtotal, orderType, notes, voucherCode, clearCart, setOrderType } = useCartStore();
+
   const [loading, setLoading] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
+  const [bankName, setBankName] = useState('BCA');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [eWalletType, setEWalletType] = useState('GoPay');
   const [deliveryAddress, setDeliveryAddress] = useState('');
-  
+  const [tableNumber, setTableNumber] = useState('');
+
   const subtotal = getSubtotal();
   const deliveryFee = orderType === 'delivery' ? 15000 : 0;
   const total = subtotal + deliveryFee;
 
   const handlePlaceOrder = async () => {
+    // Validation
+    if (orderType === 'dine-in' && !tableNumber) {
+      alert('Mohon isi nomor meja');
+      return;
+    }
     if (orderType === 'delivery' && !deliveryAddress) {
       alert('Mohon isi alamat pengiriman');
+      return;
+    }
+    if (items.length === 0) {
+      alert('Keranjang kosong');
       return;
     }
 
     setLoading(true);
     try {
+      // Step 1: Create Order (matching E2E test: test-workflow-e2e.js)
       const orderData = {
         order_type: orderType,
+        table_number: orderType === 'dine-in' ? tableNumber : undefined,
+        delivery_address: orderType === 'delivery' ? deliveryAddress : undefined,
         items: items.map(item => ({
           product_id: item.product_id,
-          product_name: item.product_name,
           quantity: item.quantity,
-          price: item.price,
-          customizations: item.customizations,
-          notes: item.notes,
+          notes: item.notes || '',
         })),
         notes,
-        voucher_code: voucherCode,
-        delivery_address: orderType === 'delivery' ? deliveryAddress : null,
       };
 
-      const { data } = await orderAPI.createOrder(orderData);
+      const orderResponse = await orderAPI.createOrder(orderData);
+      const orderId = orderResponse.data.order.id;
+
+      // Step 2: Create Payment (matching E2E test workflow)
+      const paymentData = {
+        order_id: orderId,
+        method: paymentMethod,
+        bank_name: paymentMethod === 'bank_transfer' ? bankName : undefined,
+        account_number: paymentMethod === 'bank_transfer' ? accountNumber : undefined,
+        e_wallet_type: paymentMethod === 'e_wallet' ? eWalletType : undefined,
+        transaction_id: `TRX${Date.now()}`,
+      };
+
+      await paymentAPI.createPayment(paymentData);
+
+      // Success - clear cart and navigate
       clearCart();
-      navigate(`/order-success/${data.order.id}`);
+      navigate(`/order-success/${orderId}`);
     } catch (error) {
-      alert(error.response?.data?.error || 'Gagal membuat pesanan');
+      const errorMessage = error.response?.data?.error || 'Gagal membuat pesanan';
+      
+      // Handle business rule: New customers can't order delivery
+      if (error.response?.status === 403) {
+        alert('Untuk pesanan delivery, silakan lakukan pesanan takeaway/dine-in terlebih dahulu.');
+        setOrderType('takeaway');
+      } else {
+        alert(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
@@ -63,28 +98,58 @@ export default function CheckoutPage() {
       </div>
 
       <div className="px-4 py-4 space-y-4">
-        {/* Customer Info */}
+        {/* Order Type Selection */}
         <Card className="p-4">
-          <h3 className="font-semibold mb-3">Informasi Pemesan</h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-text-tertiary">Nama</span>
-              <span className="text-text-primary">{user?.name}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-text-tertiary">Telepon</span>
-              <span className="text-text-primary">{user?.phone}</span>
-            </div>
+          <h3 className="font-semibold mb-3">Tipe Pesanan</h3>
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              onClick={() => setOrderType('dine-in')}
+              className={`p-3 rounded-lg border-2 ${
+                orderType === 'dine-in'
+                  ? 'border-primary bg-primary/10'
+                  : 'border-border'
+              }`}
+            >
+              <div className="text-2xl mb-1">🍽️</div>
+              <div className="text-xs font-medium">Dine-in</div>
+            </button>
+            <button
+              onClick={() => setOrderType('takeaway')}
+              className={`p-3 rounded-lg border-2 ${
+                orderType === 'takeaway'
+                  ? 'border-primary bg-primary/10'
+                  : 'border-border'
+              }`}
+            >
+              <div className="text-2xl mb-1">🛍️</div>
+              <div className="text-xs font-medium">Takeaway</div>
+            </button>
+            <button
+              onClick={() => setOrderType('delivery')}
+              className={`p-3 rounded-lg border-2 ${
+                orderType === 'delivery'
+                  ? 'border-primary bg-primary/10'
+                  : 'border-border'
+              }`}
+            >
+              <div className="text-2xl mb-1">🛵</div>
+              <div className="text-xs font-medium">Delivery</div>
+            </button>
           </div>
         </Card>
 
-        {/* Order Type */}
-        <Card className="p-4">
-          <h3 className="font-semibold mb-3">Tipe Pesanan</h3>
-          <p className="text-text-primary capitalize">{orderType.replace('-', ' ')}</p>
-        </Card>
+        {/* Conditional Fields */}
+        {orderType === 'dine-in' && (
+          <Card className="p-4">
+            <h3 className="font-semibold mb-3">Nomor Meja</h3>
+            <Input
+              placeholder="Contoh: 5"
+              value={tableNumber}
+              onChange={(e) => setTableNumber(e.target.value)}
+            />
+          </Card>
+        )}
 
-        {/* Delivery Address */}
         {orderType === 'delivery' && (
           <Card className="p-4">
             <h3 className="font-semibold mb-3">Alamat Pengiriman</h3>
@@ -93,7 +158,84 @@ export default function CheckoutPage() {
               value={deliveryAddress}
               onChange={(e) => setDeliveryAddress(e.target.value)}
               multiline
+              rows={3}
             />
+          </Card>
+        )}
+
+        {/* Payment Method */}
+        <Card className="p-4">
+          <h3 className="font-semibold mb-3">Metode Pembayaran</h3>
+          <div className="space-y-2">
+            {[
+              { value: 'bank_transfer', label: 'Transfer Bank', icon: '🏦' },
+              { value: 'qris', label: 'QRIS', icon: '📱' },
+              { value: 'e_wallet', label: 'E-Wallet', icon: '💳' },
+              { value: 'cod', label: 'Bayar di Tempat', icon: '💵' },
+            ].map((method) => (
+              <button
+                key={method.value}
+                onClick={() => setPaymentMethod(method.value)}
+                className={`w-full p-3 rounded-lg border-2 flex items-center gap-3 ${
+                  paymentMethod === method.value
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border'
+                }`}
+              >
+                <span className="text-2xl">{method.icon}</span>
+                <span className="font-medium">{method.label}</span>
+              </button>
+            ))}
+          </div>
+        </Card>
+
+        {/* Payment Details */}
+        {paymentMethod === 'bank_transfer' && (
+          <Card className="p-4 space-y-3">
+            <div>
+              <label className="block text-sm font-medium mb-1">Nama Bank</label>
+              <select
+                value={bankName}
+                onChange={(e) => setBankName(e.target.value)}
+                className="w-full p-2 border rounded-lg"
+              >
+                <option value="BCA">BCA</option>
+                <option value="BNI">BNI</option>
+                <option value="BRI">BRI</option>
+                <option value="Mandiri">Mandiri</option>
+                <option value="Permata">Permata</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Nomor Rekening</label>
+              <Input
+                placeholder="Contoh: 1234567890"
+                value={accountNumber}
+                onChange={(e) => setAccountNumber(e.target.value)}
+                type="tel"
+              />
+            </div>
+          </Card>
+        )}
+
+        {paymentMethod === 'e_wallet' && (
+          <Card className="p-4">
+            <label className="block text-sm font-medium mb-1">Pilih E-Wallet</label>
+            <div className="grid grid-cols-2 gap-2">
+              {['GoPay', 'OVO', 'Dana', 'ShopeePay'].map((wallet) => (
+                <button
+                  key={wallet}
+                  onClick={() => setEWalletType(wallet)}
+                  className={`p-2 rounded-lg border-2 ${
+                    eWalletType === wallet
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border'
+                  }`}
+                >
+                  {wallet}
+                </button>
+              ))}
+            </div>
           </Card>
         )}
 
@@ -153,8 +295,14 @@ export default function CheckoutPage() {
             <p className="text-sm text-text-tertiary">Total</p>
             <p className="text-xl font-bold text-primary">{formatRupiah(total)}</p>
           </div>
-          <Button onClick={handlePlaceOrder} className="flex-1 max-w-xs" size="lg" isLoading={loading}>
-            Buat Pesanan
+          <Button 
+            onClick={handlePlaceOrder} 
+            className="flex-1 max-w-xs" 
+            size="lg" 
+            isLoading={loading}
+            disabled={items.length === 0}
+          >
+            {loading ? 'Memproses...' : 'Buat Pesanan'}
           </Button>
         </div>
       </div>
