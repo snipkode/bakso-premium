@@ -1,23 +1,27 @@
 {
-  "timestamp": "2026-03-13T16:27:44.682Z",
+  "timestamp": "2026-03-13T16:34:14.457Z",
   "base_url": "http://localhost:9000",
   "results": {
-    "passed": 33,
+    "passed": 24,
     "failed": 0
   },
   "scenarios": {
     "dine_in": {
-      "order_id": "d6bea3a6-2b0d-48a9-9edc-b4ecf5f6d24a",
-      "order_number": "BSO/202603/6387",
-      "payment_id": "e452379a-e1c9-4f76-b623-c2b31ba60d2d",
+      "order_id": "550333a4-f416-4e72-9074-25d59a608581",
+      "order_number": "BSO/202603/2143",
+      "payment_id": "be468d7c-b656-4cb1-baa8-d8c97c27c64e",
       "status": "completed"
     },
     "takeaway": {
-      "order_id": "6da08b7b-87f8-4c07-b414-910ddcbe41a3",
-      "order_number": "BSO/202603/4968",
-      "payment_id": "ffd814ad-c53e-484e-841c-408c7beba706",
+      "order_id": "91dd0245-9f42-4705-ab8a-534ddd7291fb",
+      "order_number": "BSO/202603/3391",
+      "payment_id": "0a9c1286-fae0-478a-b764-6a8a3d8b7cd8",
       "status": "completed"
     },
-    "delivery": null
+    "delivery": {
+      "order_id": "550333a4-f416-4e72-9074-25d59a608581",
+      "order_number": "BSO/202603/2143",
+      "status": "completed"
+    }
   }
 }
