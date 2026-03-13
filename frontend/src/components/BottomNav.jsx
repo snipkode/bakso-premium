@@ -16,6 +16,7 @@ export function BottomNav() {
           <NavLink
             key={item.path}
             to={item.path}
+            data-testid={`nav-${item.label.toLowerCase()}`}
             className={({ isActive }) =>
               `flex flex-col items-center py-3 px-4 transition-all ${
                 isActive ? 'text-primary' : 'text-text-tertiary'

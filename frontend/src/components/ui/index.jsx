@@ -8,6 +8,7 @@ export function ProductCard({ product, onClick }) {
   return (
     <Card
       onClick={onClick}
+      data-testid="product-card"
       className="overflow-hidden cursor-pointer group"
     >
       <div className="aspect-square bg-surface relative">
