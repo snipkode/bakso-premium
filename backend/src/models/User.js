@@ -2,7 +2,7 @@ const { DataTypes } = require('sequelize');
 const bcrypt = require('bcryptjs');
 const sequelize = require('../config/database');
 
-const User = sequelize.define('User', {
+const User = sequelize.define('user', {
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
@@ -58,7 +58,6 @@ const User = sequelize.define('User', {
       }
     },
   },
-  tableName: 'users',
 });
 
 // Instance method to check if delivery is allowed

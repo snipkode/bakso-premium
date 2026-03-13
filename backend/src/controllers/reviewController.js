@@ -57,7 +57,7 @@ exports.getProductReviews = async (req, res) => {
       ],
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['created_at', 'DESC']],
+      order: [['createdAt', 'DESC']],
     });
 
     // Calculate average rating
@@ -90,7 +90,7 @@ exports.getUserReviews = async (req, res) => {
       ],
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['created_at', 'DESC']],
+      order: [['createdAt', 'DESC']],
     });
 
     res.json({ success: true, ...reviews });
@@ -117,7 +117,7 @@ exports.getAllReviews = async (req, res) => {
       ],
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['created_at', 'DESC']],
+      order: [['createdAt', 'DESC']],
     });
 
     res.json({ success: true, ...reviews });

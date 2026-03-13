@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-const QueueSetting = sequelize.define('QueueSetting', {
+const QueueSetting = sequelize.define('queueSetting', {
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
@@ -32,8 +32,6 @@ const QueueSetting = sequelize.define('QueueSetting', {
     type: DataTypes.TEXT,
     allowNull: true,
   },
-}, {
-  tableName: 'queue_settings',
 });
 
 // Static method to get or create today's queue

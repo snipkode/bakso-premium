@@ -187,7 +187,7 @@ exports.getPendingPayments = async (req, res) => {
           attributes: ['id', 'name', 'phone'],
         }],
       }],
-      order: [['created_at', 'DESC']],
+      order: [['createdAt', 'DESC']],
     });
 
     res.json({ success: true, payments });
@@ -218,7 +218,7 @@ exports.getAllPayments = async (req, res) => {
       }],
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['created_at', 'DESC']],
+      order: [['createdAt', 'DESC']],
     });
 
     res.json({ success: true, ...payments });

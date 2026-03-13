@@ -128,7 +128,7 @@ exports.updateVoucher = async (req, res) => {
     }
 
     Object.keys(updateData).forEach((key) => {
-      if (key !== 'id' && key !== 'created_at' && key !== 'updated_at') {
+      if (key !== 'id' && key !== 'createdAt' && key !== 'updatedAt') {
         voucher[key] = updateData[key];
       }
     });

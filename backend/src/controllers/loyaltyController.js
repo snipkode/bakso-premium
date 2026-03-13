@@ -8,7 +8,7 @@ exports.getLoyaltyPoints = async (req, res) => {
 
     const points = await LoyaltyPoint.findAll({
       where: { user_id: req.user.id },
-      order: [['created_at', 'DESC']],
+      order: [['createdAt', 'DESC']],
       limit: 50,
     });
 
@@ -40,7 +40,7 @@ exports.getAllLoyaltyPoints = async (req, res) => {
       }],
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['created_at', 'DESC']],
+      order: [['createdAt', 'DESC']],
     });
 
     res.json({ success: true, ...points });

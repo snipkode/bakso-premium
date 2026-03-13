@@ -103,24 +103,26 @@ async function testAuth() {
 
 async function testProducts() {
   logTest('Products & Categories');
-  
+
   // Get Categories
   await test('Get Categories', async () => {
     const response = await axios.get(`${API_URL}/categories`);
     assert(response.status === 200, 'Status should be 200');
-    assert(Array.isArray(response.data), 'Should return array');
-    log(`   Found ${response.data.length} categories`, 'green');
+    assert(Array.isArray(response.data.categories || response.data), 'Should return array');
+    const categories = response.data.categories || response.data;
+    log(`   Found ${categories.length} categories`, 'green');
   });
-  
+
   // Get Products
   await test('Get Products', async () => {
     const response = await axios.get(`${API_URL}/products`);
     assert(response.status === 200, 'Status should be 200');
-    assert(Array.isArray(response.data), 'Should return array');
-    if (response.data.length > 0) {
-      state.productId = response.data[0].id;
-      log(`   Found ${response.data.length} products`, 'green');
-      log(`   First product: ${response.data[0].name}`, 'green');
+    assert(Array.isArray(response.data.products || response.data), 'Should return array');
+    const products = response.data.products || response.data;
+    if (products.length > 0) {
+      state.productId = products[0].id;
+      log(`   Found ${products.length} products`, 'green');
+      log(`   First product: ${products[0].name}`, 'green');
     }
   });
 }
@@ -163,8 +165,9 @@ async function testOrders() {
   await test('Get My Orders', async () => {
     const response = await axios.get(`${API_URL}/orders/my-orders`, { headers });
     assert(response.status === 200, 'Status should be 200');
-    assert(Array.isArray(response.data), 'Should return array');
-    log(`   Found ${response.data.length} orders`, 'green');
+    assert(Array.isArray(response.data.rows || response.data), 'Should return array');
+    const orders = response.data.rows || response.data;
+    log(`   Found ${orders.length} orders`, 'green');
   });
 }
 
@@ -182,10 +185,10 @@ async function testPayments() {
   await test('Create Payment', async () => {
     const response = await axios.post(`${API_URL}/payments`, {
       order_id: state.orderId,
-      payment_method: 'qris',
+      method: 'qris',
       proof_image: 'data:image/png;base64,test',
     }, { headers });
-    
+
     assert(response.status === 200 || response.status === 201, 'Status should be 200 or 201');
     assert(response.data.payment, 'Payment should exist');
     state.paymentId = response.data.payment.id;
@@ -208,8 +211,9 @@ async function testAdmin() {
   await test('Get Pending Payments', async () => {
     const response = await axios.get(`${API_URL}/payments/pending`, { headers });
     assert(response.status === 200, 'Status should be 200');
-    assert(Array.isArray(response.data), 'Should return array');
-    log(`   Found ${response.data.length} pending payments`, 'green');
+    assert(Array.isArray(response.data.payments || response.data), 'Should return array');
+    const payments = response.data.payments || response.data;
+    log(`   Found ${payments.length} pending payments`, 'green');
   });
   
   // Verify Payment
@@ -247,6 +251,8 @@ async function testVouchers() {
   await test('Create Voucher', async () => {
     const response = await axios.post(`${API_URL}/vouchers`, {
       code: `TEST${Date.now()}`,
+      name: 'Test Voucher',
+      description: 'Test voucher from E2E',
       type: 'percentage',
       value: 10,
       min_purchase: 50000,
@@ -255,17 +261,18 @@ async function testVouchers() {
       valid_from: new Date().toISOString(),
       valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     }, { headers });
-    
+
     assert(response.status === 200 || response.status === 201, 'Status should be 200 or 201');
     log(`   Voucher created: ${response.data.voucher?.code || 'N/A'}`, 'green');
   });
   
   // Get Vouchers (customer)
   await test('Get Available Vouchers', async () => {
-    const response = await axios.get(`${API_URL}/vouchers/available`);
+    const response = await axios.get(`${API_URL}/vouchers`);
     assert(response.status === 200, 'Status should be 200');
-    assert(Array.isArray(response.data), 'Should return array');
-    log(`   Found ${response.data.length} available vouchers`, 'green');
+    assert(Array.isArray(response.data.vouchers || response.data), 'Should return array');
+    const vouchers = response.data.vouchers || response.data;
+    log(`   Found ${vouchers.length} available vouchers`, 'green');
   });
 }
 
@@ -299,28 +306,28 @@ async function testReviews() {
   
   // Get Product Reviews
   await test('Get Product Reviews', async () => {
-    const response = await axios.get(`${API_URL}/reviews/product/${state.productId || 1}`);
+    const response = await axios.get(`${API_URL}/reviews/products?product_id=${state.productId || 1}`);
     assert(response.status === 200, 'Status should be 200');
-    assert(Array.isArray(response.data), 'Should return array');
-    log(`   Found ${response.data.length} reviews`, 'green');
+    assert(Array.isArray(response.data.rows || response.data), 'Should return array');
+    log(`   Found ${response.data.count || response.data.length || 0} reviews`, 'green');
   });
 }
 
 async function testLoyalty() {
   logTest('Loyalty Points');
-  
+
   if (!state.customerToken) {
     log('   ⚠️  Skipping - No customer token', 'yellow');
     return;
   }
-  
+
   const headers = { Authorization: `Bearer ${state.customerToken}` };
-  
+
   // Get My Points
   await test('Get My Loyalty Points', async () => {
-    const response = await axios.get(`${API_URL}/loyalty/my-points`, { headers });
+    const response = await axios.get(`${API_URL}/loyalty`, { headers });
     assert(response.status === 200, 'Status should be 200');
-    log(`   Points: ${response.data.points || 0}`, 'green');
+    log(`   Points: ${response.data.total_points || 0}`, 'green');
   });
 }
 
@@ -349,8 +356,8 @@ async function testProfile() {
   await test('Get Profile', async () => {
     const response = await axios.get(`${API_URL}/profile`, { headers });
     assert(response.status === 200, 'Status should be 200');
-    log(`   Name: ${response.data.name}`, 'green');
-    log(`   Phone: ${response.data.phone}`, 'green');
+    log(`   Name: ${response.data.user?.name || 'N/A'}`, 'green');
+    log(`   Phone: ${response.data.user?.phone || 'N/A'}`, 'green');
   });
   
   // Update Profile

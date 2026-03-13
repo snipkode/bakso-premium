@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-const Payment = sequelize.define('Payment', {
+const Payment = sequelize.define('payment', {
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
@@ -11,7 +11,7 @@ const Payment = sequelize.define('Payment', {
     type: DataTypes.UUID,
     allowNull: false,
     references: {
-      model: 'orders',
+      model: 'order',
       key: 'id',
     },
   },
@@ -51,7 +51,7 @@ const Payment = sequelize.define('Payment', {
     type: DataTypes.UUID,
     allowNull: true,
     references: {
-      model: 'users',
+      model: 'user',
       key: 'id',
     },
   },
@@ -67,8 +67,6 @@ const Payment = sequelize.define('Payment', {
     type: DataTypes.TEXT,
     allowNull: true,
   },
-}, {
-  tableName: 'payments',
 });
 
 module.exports = Payment;

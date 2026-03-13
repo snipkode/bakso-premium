@@ -14,6 +14,14 @@ const sequelize = new Sequelize({
     idle: 10000,
   },
   logging: process.env.NODE_ENV === 'development' ? console.log : false,
+  // Fix case sensitivity - use exact table names
+  define: {
+    timestamps: true,
+    underscored: false,
+    freezeTableName: true, // Use exact model name as table name
+    charset: 'utf8mb4',
+    collate: 'utf8mb4_unicode_ci',
+  },
 });
 
 module.exports = sequelize;

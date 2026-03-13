@@ -12,7 +12,7 @@ exports.getCategories = async (req, res) => {
         where: { is_available: true },
         required: false,
       }],
-      order: [['order', 'ASC']],
+      order: [['sort_order', 'ASC']],
     });
 
     res.json({ success: true, categories });
@@ -211,7 +211,7 @@ exports.updateProduct = async (req, res) => {
 
     // Update fields
     Object.keys(updateData).forEach((key) => {
-      if (key !== 'id' && key !== 'created_at' && key !== 'updated_at') {
+      if (key !== 'id' && key !== 'createdAt' && key !== 'updatedAt') {
         product[key] = updateData[key];
       }
     });

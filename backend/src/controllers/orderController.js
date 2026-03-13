@@ -26,6 +26,35 @@ exports.createOrder = async (req, res) => {
       return res.status(400).json({ error: 'Order items are required' });
     }
 
+    // Fetch product details and calculate subtotal
+    const { Product } = require('../models');
+    let subtotal = 0;
+    const itemsWithDetails = [];
+
+    for (const item of items) {
+      let product;
+      if (item.product_id) {
+        product = await Product.findByPk(item.product_id);
+        if (!product) {
+          return res.status(400).json({ error: `Product not found: ${item.product_id}` });
+        }
+        itemsWithDetails.push({
+          product_id: product.id,
+          product_name: product.name,
+          price: product.price,
+          quantity: item.quantity,
+          notes: item.notes,
+          customizations: item.customizations || [],
+        });
+        subtotal += product.price * item.quantity;
+      } else if (item.price && item.product_name) {
+        itemsWithDetails.push(item);
+        subtotal += item.price * item.quantity;
+      } else {
+        return res.status(400).json({ error: 'Item must have product_id or product_name and price' });
+      }
+    }
+
     // Validate delivery eligibility
     if (order_type === 'delivery') {
       const canOrderDelivery = await user.canOrderDelivery(0);
@@ -34,12 +63,6 @@ exports.createOrder = async (req, res) => {
           error: 'Delivery not available for first-time orders. Please choose dine-in or takeaway.',
         });
       }
-    }
-
-    // Calculate totals
-    let subtotal = 0;
-    for (const item of items) {
-      subtotal += item.price * item.quantity;
     }
 
     // Apply voucher
@@ -107,7 +130,7 @@ exports.createOrder = async (req, res) => {
     }, { transaction });
 
     // Create order items
-    for (const item of items) {
+    for (const item of itemsWithDetails) {
       await OrderItem.create({
         order_id: order.id,
         product_id: item.product_id,
@@ -202,7 +225,7 @@ exports.getUserOrders = async (req, res) => {
       ],
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['created_at', 'DESC']],
+      order: [['createdAt', 'DESC']],
     });
 
     res.json({ success: true, ...orders });
@@ -221,7 +244,7 @@ exports.getAllOrders = async (req, res) => {
     if (status) where.status = status;
     if (order_type) where.order_type = order_type;
     if (date) {
-      where.created_at = {
+      where.createdAt = {
         [Op.gte]: new Date(date + 'T00:00:00'),
         [Op.lt]: new Date(date + 'T23:59:59'),
       };
@@ -236,7 +259,7 @@ exports.getAllOrders = async (req, res) => {
       ],
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['created_at', 'DESC']],
+      order: [['createdAt', 'DESC']],
     });
 
     res.json({ success: true, ...orders });

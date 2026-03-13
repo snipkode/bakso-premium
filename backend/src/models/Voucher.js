@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-const Voucher = sequelize.define('Voucher', {
+const Voucher = sequelize.define('voucher', {
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
@@ -64,8 +64,6 @@ const Voucher = sequelize.define('Voucher', {
     type: DataTypes.JSON,
     defaultValue: null,
   },
-}, {
-  tableName: 'vouchers',
 });
 
 module.exports = Voucher;

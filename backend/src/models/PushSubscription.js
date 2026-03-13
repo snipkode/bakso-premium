@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-const PushSubscription = sequelize.define('PushSubscription', {
+const PushSubscription = sequelize.define('pushSubscription', {
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
@@ -11,7 +11,7 @@ const PushSubscription = sequelize.define('PushSubscription', {
     type: DataTypes.UUID,
     allowNull: false,
     references: {
-      model: 'users',
+      model: 'user',
       key: 'id',
     },
   },
@@ -39,8 +39,6 @@ const PushSubscription = sequelize.define('PushSubscription', {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW,
   },
-}, {
-  tableName: 'push_subscriptions',
 });
 
 module.exports = PushSubscription;

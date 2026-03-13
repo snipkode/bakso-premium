@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-const OrderItem = sequelize.define('OrderItem', {
+const OrderItem = sequelize.define('orderItem', {
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
@@ -11,7 +11,7 @@ const OrderItem = sequelize.define('OrderItem', {
     type: DataTypes.UUID,
     allowNull: false,
     references: {
-      model: 'orders',
+      model: 'order',
       key: 'id',
     },
   },
@@ -19,7 +19,7 @@ const OrderItem = sequelize.define('OrderItem', {
     type: DataTypes.UUID,
     allowNull: false,
     references: {
-      model: 'products',
+      model: 'product',
       key: 'id',
     },
   },
@@ -48,8 +48,6 @@ const OrderItem = sequelize.define('OrderItem', {
     type: DataTypes.JSON,
     defaultValue: [],
   },
-}, {
-  tableName: 'order_items',
 });
 
 module.exports = OrderItem;

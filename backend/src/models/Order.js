@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-const Order = sequelize.define('Order', {
+const Order = sequelize.define('order', {
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
@@ -23,7 +23,7 @@ const Order = sequelize.define('Order', {
     type: DataTypes.UUID,
     allowNull: false,
     references: {
-      model: 'users',
+      model: 'user',
       key: 'id',
     },
   },
@@ -135,7 +135,6 @@ const Order = sequelize.define('Order', {
       order.order_number = `BSO/${year}${month}/${random}`;
     },
   },
-  tableName: 'orders',
 });
 
 module.exports = Order;

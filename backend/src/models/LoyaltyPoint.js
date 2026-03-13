@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-const LoyaltyPoint = sequelize.define('LoyaltyPoint', {
+const LoyaltyPoint = sequelize.define('loyaltyPoint', {
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
@@ -11,7 +11,7 @@ const LoyaltyPoint = sequelize.define('LoyaltyPoint', {
     type: DataTypes.UUID,
     allowNull: false,
     references: {
-      model: 'users',
+      model: 'user',
       key: 'id',
     },
   },
@@ -24,7 +24,7 @@ const LoyaltyPoint = sequelize.define('LoyaltyPoint', {
     type: DataTypes.UUID,
     allowNull: true,
     references: {
-      model: 'orders',
+      model: 'order',
       key: 'id',
     },
   },
@@ -44,8 +44,6 @@ const LoyaltyPoint = sequelize.define('LoyaltyPoint', {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
   },
-}, {
-  tableName: 'loyalty_points',
 });
 
 module.exports = LoyaltyPoint;

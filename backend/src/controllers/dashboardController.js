@@ -18,7 +18,7 @@ exports.getDashboardStats = async (req, res) => {
     // Today's orders
     const todayOrders = await Order.count({
       where: {
-        created_at: {
+        createdAt: {
           [Op.gte]: todayStart,
           [Op.lt]: todayEnd,
         },
@@ -39,7 +39,7 @@ exports.getDashboardStats = async (req, res) => {
     const revenueToday = await Order.sum('total', {
       where: {
         status: 'completed',
-        created_at: {
+        createdAt: {
           [Op.gte]: todayStart,
           [Op.lt]: todayEnd,
         },
@@ -126,16 +126,16 @@ exports.getSalesAnalytics = async (req, res) => {
     // Daily sales
     const dailySales = await Order.findAll({
       attributes: [
-        [fn('DATE', col('created_at')), 'date'],
+        [fn('DATE', col('createdAt')), 'date'],
         [fn('COUNT', col('id')), 'orders'],
         [fn('SUM', col('total')), 'revenue'],
       ],
       where: {
         status: 'completed',
-        created_at: { [Op.gte]: startDate },
+        createdAt: { [Op.gte]: startDate },
       },
-      group: [fn('DATE', col('created_at'))],
-      order: [[fn('DATE', col('created_at')), 'ASC']],
+      group: [fn('DATE', col('createdAt'))],
+      order: [[fn('DATE', col('createdAt')), 'ASC']],
       raw: true,
     });
 
@@ -151,7 +151,7 @@ exports.getSalesAnalytics = async (req, res) => {
         as: 'items',
         attributes: [],
       }],
-      where: { status: 'completed', created_at: { [Op.gte]: startDate } },
+      where: { status: 'completed', createdAt: { [Op.gte]: startDate } },
       group: ['$items.product_name$'],
       order: [[fn('SUM', col('items.quantity')), 'DESC']],
       limit: 10,

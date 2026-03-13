@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-const Review = sequelize.define('Review', {
+const Review = sequelize.define('review', {
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
@@ -11,7 +11,7 @@ const Review = sequelize.define('Review', {
     type: DataTypes.UUID,
     allowNull: false,
     references: {
-      model: 'orders',
+      model: 'order',
       key: 'id',
     },
   },
@@ -19,7 +19,7 @@ const Review = sequelize.define('Review', {
     type: DataTypes.UUID,
     allowNull: false,
     references: {
-      model: 'users',
+      model: 'user',
       key: 'id',
     },
   },
@@ -27,7 +27,7 @@ const Review = sequelize.define('Review', {
     type: DataTypes.UUID,
     allowNull: true,
     references: {
-      model: 'products',
+      model: 'product',
       key: 'id',
     },
   },
@@ -59,8 +59,6 @@ const Review = sequelize.define('Review', {
     type: DataTypes.DATE,
     allowNull: true,
   },
-}, {
-  tableName: 'reviews',
 });
 
 module.exports = Review;
