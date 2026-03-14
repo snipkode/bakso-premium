@@ -46,18 +46,39 @@ export default function OrdersPage() {
   ];
 
   // Get orders that can be tracked (active orders)
+  // pending_payment orders show payment prompt, others show tracking
   const trackableOrders = orders.filter(
-    (order) => ['paid', 'preparing', 'ready', 'delivering'].includes(order.status)
+    (order) => ['pending_payment', 'paid', 'preparing', 'ready', 'delivering'].includes(order.status)
   );
 
   const getStatusLabelShort = (status) => {
     const labels = {
+      pending_payment: 'Belum Bayar',
       paid: 'Dibayar',
       preparing: 'Disiapkan',
       ready: 'Siap Diantar',
       delivering: 'Dikirim',
     };
     return labels[status] || getStatusLabel(status);
+  };
+
+  const getTrackCardText = (status) => {
+    if (status === 'pending_payment') {
+      return 'Perlu pembayaran';
+    }
+    if (status === 'paid') {
+      return 'Menunggu verifikasi';
+    }
+    if (status === 'preparing') {
+      return 'Sedang disiapkan';
+    }
+    if (status === 'ready') {
+      return 'Siap diantrar';
+    }
+    if (status === 'delivering') {
+      return 'Sedang dikirim';
+    }
+    return getStatusLabelShort(status);
   };
 
   if (loading) {
@@ -90,7 +111,7 @@ export default function OrdersPage() {
                 <div>
                   <h3 className="font-bold text-lg">Lacak Pesanan</h3>
                   <p className="text-sm text-white/90">
-                    #{trackableOrders[0].order_number} - {getStatusLabelShort(trackableOrders[0].status)}
+                    #{trackableOrders[0].order_number} - {getTrackCardText(trackableOrders[0].status)}
                   </p>
                 </div>
               </div>
