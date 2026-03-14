@@ -132,10 +132,24 @@ export default function LoginPage() {
       return;
     }
 
+    // For login page, we don't have phone yet - user needs to provide it
+    const userPhone = prompt(
+      '📱 Masukkan Nomor HP\n\n' +
+      'Untuk keamanan, kami perlu memverifikasi nomor HP Anda:\n\n' +
+      'Format: 08xxxxxxxxxx'
+    );
+
+    if (!userPhone || !/^08[0-9]{8,}$/.test(userPhone)) {
+      alert('Nomor HP tidak valid');
+      return;
+    }
+
     try {
       setResetLoading(true);
       console.log('📧 Sending reset PIN email to:', resetEmail);
-      const response = await customerPINAPI.forgotPIN(resetEmail);
+      console.log('📊 Phone:', userPhone);
+      
+      const response = await customerPINAPI.forgotPIN(userPhone, resetEmail);
       console.log('✅ Reset email sent:', response.data);
       setResetSent(true);
     } catch (error) {

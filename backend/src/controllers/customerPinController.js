@@ -11,8 +11,8 @@ exports.setPIN = async (req, res) => {
 
     // Validate PIN (6 digits)
     if (!pin || !/^\d{6}$/.test(pin)) {
-      return res.status(400).json({ 
-        error: 'PIN harus 6 digit angka' 
+      return res.status(400).json({
+        error: 'PIN harus 6 digit angka'
       });
     }
 
@@ -31,9 +31,9 @@ exports.setPIN = async (req, res) => {
     user.is_pin_set = true;
     await user.save();
 
-    res.json({ 
-      success: true, 
-      message: 'PIN berhasil diatur' 
+    res.json({
+      success: true,
+      message: 'PIN berhasil diatur'
     });
   } catch (error) {
     console.error('Set PIN error:', error);
@@ -48,8 +48,8 @@ exports.verifyPIN = async (req, res) => {
 
     // Validate input
     if (!phone || !pin) {
-      return res.status(400).json({ 
-        error: 'Nomor HP dan PIN harus diisi' 
+      return res.status(400).json({
+        error: 'Nomor HP dan PIN harus diisi'
       });
     }
 
@@ -63,7 +63,7 @@ exports.verifyPIN = async (req, res) => {
     }
 
     if (!user.is_pin_set) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'PIN belum diatur. Silakan set PIN terlebih dahulu.',
         requires_pin_setup: true
       });
@@ -101,40 +101,64 @@ exports.verifyPIN = async (req, res) => {
   }
 };
 
-// Request PIN reset via email
+// Request PIN reset via email (PUBLIC - requires phone + email for validation)
 exports.requestPINReset = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { phone, email } = req.body;
 
-    if (!email) {
-      return res.status(400).json({ error: 'Email harus diisi' });
-    }
-
-    const user = await User.findOne({ where: { email } });
-    if (!user) {
-      // Don't reveal if email exists or not for security
-      return res.json({ 
-        success: true, 
-        message: 'Jika email terdaftar, Anda akan menerima link reset PIN' 
-      });
-    }
-
-    if (user.role !== 'customer') {
-      return res.status(400).json({ error: 'Hanya customer yang bisa reset PIN' });
-    }
-
-    // Check if user has email set
-    if (!user.email) {
+    if (!phone || !email) {
       return res.status(400).json({ 
-        error: 'Email belum ditambahkan pada akun Anda. Silakan tambahkan email di halaman profile terlebih dahulu.',
-        requires_email: true
+        error: 'Nomor HP dan email harus diisi' 
       });
     }
+
+    // Find user by phone (must be customer)
+    const user = await User.findOne({ 
+      where: { 
+        phone,
+        role: 'customer'
+      } 
+    });
+
+    if (!user) {
+      // Don't reveal if user exists
+      return res.json({
+        success: true,
+        message: 'Jika data cocok, link reset PIN akan dikirim ke email Anda'
+      });
+    }
+
+    // Verify email matches
+    if (user.email !== email) {
+      return res.status(400).json({ 
+        error: 'Email tidak cocok dengan nomor HP ini' 
+      });
+    }
+
+    // Rate limiting: Max 5 requests per 24 hours
+    const now = new Date();
+    const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+    
+    if (user.last_reset_request && user.last_reset_request > twentyFourHoursAgo) {
+      if (user.pin_reset_attempts >= 5) {
+        return res.status(429).json({ 
+          error: 'Terlalu banyak permintaan reset. Silakan coba lagi besok atau hubungi support.',
+          retry_after: '24 hours'
+        });
+      }
+    } else {
+      // Reset attempts after 24 hours
+      user.pin_reset_attempts = 0;
+    }
+
+    // Increment attempt counter
+    user.pin_reset_attempts += 1;
+    user.last_reset_request = now;
 
     // Generate reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
     const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
-    const resetExpires = new Date(Date.now() + 3600000); // 1 hour
+    const resetExpires = new Date(now.getTime() + 3600000); // 1 hour
 
     user.pin_reset_token = resetTokenHash;
     user.pin_reset_expires = resetExpires;
@@ -148,17 +172,19 @@ exports.requestPINReset = async (req, res) => {
       // Continue anyway - token is still valid
     }
 
-    // Generate reset link for frontend (development/testing)
+    // Generate reset link for frontend
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const resetLink = `${frontendUrl}/reset-pin?token=${resetToken}&email=${encodeURIComponent(email)}`;
     console.log('📧 PIN Reset Link:', resetLink);
-    
-    res.json({ 
-      success: true, 
+    console.log(`📊 Reset attempts: ${user.pin_reset_attempts}/5 in 24h`);
+
+    res.json({
+      success: true,
       message: 'Link reset PIN telah dikirim ke email Anda',
-      // Include reset link for development/testing
+      // Include reset link for development/testing only
       reset_link: resetLink,
-      reset_token: resetToken // Also return token directly for easier testing
+      reset_token: resetToken,
+      attempts_remaining: 5 - user.pin_reset_attempts
     });
   } catch (error) {
     console.error('Request PIN reset error:', error);
@@ -172,8 +198,8 @@ exports.resetPIN = async (req, res) => {
     const { token, email, new_pin } = req.body;
 
     if (!token || !email || !new_pin) {
-      return res.status(400).json({ 
-        error: 'Token, email, dan PIN baru harus diisi' 
+      return res.status(400).json({
+        error: 'Token, email, dan PIN baru harus diisi'
       });
     }
 
@@ -209,6 +235,7 @@ exports.resetPIN = async (req, res) => {
     user.is_pin_set = true;
     user.pin_reset_token = null;
     user.pin_reset_expires = null;
+    user.pin_reset_attempts = 0; // Reset attempts after successful reset
     await user.save();
 
     res.json({ 

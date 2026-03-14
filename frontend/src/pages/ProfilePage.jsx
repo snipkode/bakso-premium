@@ -108,19 +108,35 @@ export default function ProfilePage() {
 
     try {
       setResetLoading(true);
-      console.log('📧 Sending reset PIN email to:', user.email);
-      const response = await customerPINAPI.forgotPIN(user.email);
+      console.log('📧 Sending reset PIN request...');
+      console.log('📊 Phone:', user.phone);
+      console.log('📊 Email:', user.email);
+      
+      // Send phone and email for validation
+      const response = await customerPINAPI.forgotPIN(user.phone, user.email);
       console.log('✅ Reset email sent:', response.data);
+      
+      const attemptsRemaining = response.data.attempts_remaining;
       
       alert(
         '✅ Email Terkirim!\n\n' +
         `Link reset PIN telah dikirim ke:\n${user.email}\n\n` +
+        (attemptsRemaining !== undefined 
+          ? `Percobaan tersisa: ${attemptsRemaining}/5 dalam 24 jam\n\n`
+          : '') +
         'Cek inbox dan spam folder Anda.\n' +
         'Link berlaku selama 1 jam.'
       );
     } catch (error) {
       console.error('❌ Failed to send reset email:', error);
-      alert(error.response?.data?.error || 'Gagal mengirim link reset PIN');
+      const errorMsg = error.response?.data?.error || 'Gagal mengirim link reset PIN';
+      
+      // Handle rate limiting
+      if (error.response?.status === 429) {
+        alert('⚠️ ' + errorMsg);
+      } else {
+        alert(errorMsg);
+      }
     } finally {
       setResetLoading(false);
     }

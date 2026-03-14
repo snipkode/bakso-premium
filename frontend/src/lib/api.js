@@ -57,7 +57,7 @@ export const authAPI = {
 export const customerPINAPI = {
   verifyPIN: (phone, pin) => api.post('/customer-pin/verify', { phone, pin }),
   setPIN: (pin) => api.post('/customer-pin/set', { pin }),
-  forgotPIN: (email) => api.post('/customer-pin/forgot', { email }),
+  forgotPIN: (phone, email) => api.post('/customer-pin/forgot', { phone, email }),
   resetPIN: (token, email, new_pin) => api.post('/customer-pin/reset', { token, email, new_pin }),
   checkStatus: () => api.get('/customer-pin/status'),
 };

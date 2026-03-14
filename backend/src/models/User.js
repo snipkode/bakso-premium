@@ -57,6 +57,14 @@ const User = sequelize.define('user', {
     type: DataTypes.DATE,
     allowNull: true,
   },
+  pin_reset_attempts: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  },
+  last_reset_request: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
   is_pin_set: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
