@@ -53,8 +53,7 @@ export function StaffPasswordSetupModal({ isOpen, onClose, onComplete }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-end sm:items-center justify-center pointer-events-auto"
-          onClick={onClose} // Still allow close by clicking overlay (but we'll remove X button)
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-end sm:items-center justify-center"
         >
           {/* Slide-up modal */}
           <motion.div
@@ -62,7 +61,6 @@ export function StaffPasswordSetupModal({ isOpen, onClose, onComplete }) {
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            onClick={(e) => e.stopPropagation()} // Prevent close when clicking modal content
             className="bg-white dark:bg-gray-900 rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-md overflow-hidden max-h-[90vh] flex flex-col"
           >
             {/* Header - No close button */}
