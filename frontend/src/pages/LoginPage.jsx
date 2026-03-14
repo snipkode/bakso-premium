@@ -16,6 +16,9 @@ export default function LoginPage() {
   const [customerSubTab, setCustomerSubTab] = useState('new');
   const [showPassword, setShowPassword] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showExistingUserModal, setShowExistingUserModal] = useState(false);
+  const [existingUserData, setExistingUserData] = useState(null);
+  const [redirectTimer, setRedirectTimer] = useState(4);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -36,9 +39,6 @@ export default function LoginPage() {
       const result = await customerAuth(formData.name, formData.phone);
       
       console.log('📊 Login result:', result);
-      console.log('📊 is_existing_user:', result?.is_existing_user);
-      console.log('📊 has_pin:', result?.user?.is_pin_set);
-      console.log('📊 message:', result?.message);
       
       // New user - proceed with onboarding
       const shouldShowOnboarding = !result?.user?.is_pin_set;
@@ -57,27 +57,26 @@ export default function LoginPage() {
         const hasPIN = data.has_pin;
         
         console.log('👋 Existing user detected!');
-        console.log('📊 Has PIN:', hasPIN);
-        console.log('📊 Message:', data.message);
         
-        // Switch to existing customer tab
-        setCustomerSubTab('existing');
-        setFormData({ ...formData, pin: '' });
+        // Store user data and show modal with timer
+        setExistingUserData({ hasPIN, message: data.message });
+        setRedirectTimer(4);
+        setShowExistingUserModal(true);
         
-        // Show info message
-        if (hasPIN) {
-          alert(
-            '🔒 Akun Sudah Terdaftar\n\n' +
-            'Nomor ini sudah memiliki PIN.\n\n' +
-            'Silakan login dengan PIN untuk keamanan akun Anda.'
-          );
-        } else {
-          alert(
-            '👋 Selamat Datang Kembali!\n\n' +
-            'Nomor ini sudah terdaftar sebelumnya.\n\n' +
-            'Silakan lanjutkan untuk mengatur PIN.'
-          );
-        }
+        // Start countdown timer
+        const timer = setInterval(() => {
+          setRedirectTimer(prev => {
+            if (prev <= 1) {
+              clearInterval(timer);
+              // Auto redirect to PIN login
+              setCustomerSubTab('existing');
+              setFormData(prevData => ({ ...prevData, pin: '' }));
+              setShowExistingUserModal(false);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
       } else {
         // Other errors
         alert(error.response?.data?.error || 'Terjadi kesalahan. Silakan coba lagi.');
@@ -546,6 +545,96 @@ export default function LoginPage() {
         onClose={() => setShowOnboarding(false)}
         onComplete={handleOnboardingComplete}
       />
+
+      {/* Existing User Modal with Timer */}
+      {showExistingUserModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden"
+          >
+            {/* Header */}
+            <div className="relative bg-gradient-to-br from-orange-500 to-amber-500 p-6 text-white">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                  <span className="text-3xl">👋</span>
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold">Selamat Datang Kembali!</h2>
+                  <p className="text-sm text-white/90">Nomor ini sudah terdaftar</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              {existingUserData?.hasPIN ? (
+                <>
+                  <div className="mb-6">
+                    <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <KeyRound className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                    </div>
+                    <p className="text-center text-gray-700 dark:text-gray-300 mb-2">
+                      Akun Anda sudah memiliki PIN
+                    </p>
+                    <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+                      Login dengan PIN lebih cepat dan praktis
+                    </p>
+                  </div>
+
+                  <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl p-4 mb-4">
+                    <p className="text-sm text-orange-800 dark:text-orange-300 text-center font-semibold">
+                      ⏱️ Redirect otomatis dalam <span className="text-2xl text-orange-600 dark:text-orange-400 mx-1">{redirectTimer}</span> detik
+                    </p>
+                  </div>
+
+                  <Button
+                    onClick={() => {
+                      setCustomerSubTab('existing');
+                      setShowExistingUserModal(false);
+                    }}
+                    className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg shadow-orange-500/30"
+                  >
+                    Login dengan PIN Sekarang
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <div className="mb-6">
+                    <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Shield className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <p className="text-center text-gray-700 dark:text-gray-300 mb-2">
+                      Akun Anda belum memiliki PIN
+                    </p>
+                    <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+                      Atur PIN untuk login lebih cepat dan aman
+                    </p>
+                  </div>
+
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-4">
+                    <p className="text-sm text-blue-800 dark:text-blue-300 text-center font-semibold">
+                      ⏱️ Redirect otomatis dalam <span className="text-2xl text-blue-600 dark:text-blue-400 mx-1">{redirectTimer}</span> detik
+                    </p>
+                  </div>
+
+                  <Button
+                    onClick={() => {
+                      setCustomerSubTab('existing');
+                      setShowExistingUserModal(false);
+                    }}
+                    className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg shadow-orange-500/30"
+                  >
+                    Lanjutkan Atur PIN
+                  </Button>
+                </>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
