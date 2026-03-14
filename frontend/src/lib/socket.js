@@ -81,10 +81,23 @@ export const emitStaffStatusUpdate = (userId, status, department) => {
 export const subscribeToOrderUpdates = (callback) => {
   const sock = getSocket();
   if (!sock) {
-    console.warn('⚠️ Socket not initialized for order updates');
+    // Socket not ready yet, will retry on next render
+    console.log('⚠️ Socket not initialized yet, waiting for connection...');
     return () => {};
   }
-  
+
+  if (!sock.connected) {
+    // Socket exists but not connected, wait for connection
+    const connectHandler = () => {
+      sock.on('order:updated', callback);
+    };
+    sock.once('connect', connectHandler);
+    return () => {
+      sock.off('connect', connectHandler);
+      sock.off('order:updated', callback);
+    };
+  }
+
   sock.on('order:updated', callback);
   return () => sock.off('order:updated', callback);
 };
