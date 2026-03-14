@@ -15,6 +15,15 @@ import { getSocket, subscribeToOrderUpdates } from '@/lib/socket';
 import { OrderDetailSkeleton } from '@/components/ui/Skeletons.jsx';
 import { FadeIn, SlideUp } from '@/components/ui/Animations';
 
+// Format payment method: 'bank_transfer' → 'Bank Transfer'
+function formatPaymentMethod(method) {
+  if (!method) return '';
+  return method
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
 // Order status configuration with icons and colors
 const STATUS_CONFIG = {
   pending_payment: {
@@ -531,7 +540,7 @@ export default function OrderDetailPage() {
                 <ShoppingBag className="w-5 h-5 text-white" strokeWidth={2.5} />
               </div>
               <span>Item Pesanan</span>
-              <Badge variant="secondary" className="ml-auto font-bold px-3 py-1 text-xs">
+              <Badge variant="secondary" className="ml-auto font-bold px-3 py-1 text-xs bg-gray-100 dark:bg-gray-800">
                 {orderItems.length} item
               </Badge>
             </h3>
@@ -567,7 +576,7 @@ export default function OrderDetailPage() {
                       <span className="text-xs">{item.quantity}x</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-gray-900 dark:text-white truncate">{item.product_name}</p>
+                      <p className="font-bold text-gray-900 dark:text-white text-base tracking-tight truncate">{item.product_name}</p>
                       {item.notes && (
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 flex items-center gap-1">
                           <span className="inline-block">📝</span> {item.notes}
@@ -576,14 +585,14 @@ export default function OrderDetailPage() {
                       {customizations.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 mt-2">
                           {customizations.map((custom, i) => (
-                            <Badge key={i} variant="secondary" className="text-xs font-medium px-2.5 py-1">
+                            <Badge key={i} variant="secondary" className="text-xs font-semibold px-2.5 py-1 bg-white dark:bg-gray-700">
                               {custom}
                             </Badge>
                           ))}
                         </div>
                       )}
                     </div>
-                    <p className="text-orange-600 dark:text-orange-400 font-bold text-base whitespace-nowrap">
+                    <p className="text-orange-600 dark:text-orange-400 font-extrabold text-base whitespace-nowrap">
                       {formatRupiah(item.price * item.quantity)}
                     </p>
                   </motion.div>
@@ -605,7 +614,7 @@ export default function OrderDetailPage() {
 
             <div className="space-y-3">
               <div className="flex justify-between items-center py-3 px-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Subtotal</span>
+                <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">Subtotal</span>
                 <span className="text-sm font-bold text-gray-900 dark:text-white">
                   {formatRupiah(order.subtotal)}
                 </span>
@@ -613,7 +622,7 @@ export default function OrderDetailPage() {
 
               {order.discount > 0 && (
                 <div className="flex justify-between items-center py-3 px-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900/30">
-                  <span className="text-sm font-medium text-green-700 dark:text-green-400">Diskon</span>
+                  <span className="text-sm font-semibold text-green-700 dark:text-green-400">Diskon</span>
                   <span className="text-sm font-bold text-green-600 dark:text-green-400">
                     -{formatRupiah(order.discount)}
                   </span>
@@ -622,7 +631,7 @@ export default function OrderDetailPage() {
 
               {order.delivery_fee > 0 && (
                 <div className="flex justify-between items-center py-3 px-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Ongkir</span>
+                  <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">Ongkir</span>
                   <span className="text-sm font-bold text-gray-900 dark:text-white">
                     {formatRupiah(order.delivery_fee)}
                   </span>
@@ -631,7 +640,7 @@ export default function OrderDetailPage() {
 
               {order.loyalty_points_used > 0 && (
                 <div className="flex justify-between items-center py-3 px-4 rounded-xl bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-900/30">
-                  <span className="text-sm font-medium text-orange-700 dark:text-orange-400">Poin Loyalty</span>
+                  <span className="text-sm font-semibold text-orange-700 dark:text-orange-400">Poin Loyalty</span>
                   <span className="text-sm font-bold text-orange-600 dark:text-orange-400">
                     -{order.loyalty_points_used} pts
                   </span>
@@ -640,9 +649,9 @@ export default function OrderDetailPage() {
 
               <div className="border-t-2 border-gray-200 dark:border-gray-700 pt-4 mt-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-base font-bold text-gray-900 dark:text-white">Total Bayar</span>
+                  <span className="text-lg font-extrabold text-gray-900 dark:text-white">Total Bayar</span>
                   <div className="text-right">
-                    <span className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                    <span className="text-2xl font-extrabold text-orange-600 dark:text-orange-400 tracking-tight">
                       {formatRupiah(order.total)}
                     </span>
                   </div>
@@ -654,13 +663,13 @@ export default function OrderDetailPage() {
               <div className="mt-4 p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-white dark:bg-gray-700 flex items-center justify-center shadow-sm">
-                      <CreditCard className="w-4 h-4 text-gray-500 dark:text-gray-400" strokeWidth={2} />
+                    <div className="w-9 h-9 rounded-lg bg-white dark:bg-gray-700 flex items-center justify-center shadow-sm">
+                      <CreditCard className="w-5 h-5 text-gray-600 dark:text-gray-400" strokeWidth={2} />
                     </div>
-                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Metode Pembayaran</span>
+                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Metode Pembayaran</span>
                   </div>
-                  <span className="text-sm font-bold text-gray-900 dark:text-white capitalize">
-                    {order.payment_method}
+                  <span className="text-base font-bold text-gray-900 dark:text-white tracking-wide">
+                    {formatPaymentMethod(order.payment_method)}
                   </span>
                 </div>
               </div>
