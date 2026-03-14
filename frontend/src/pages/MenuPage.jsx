@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, SlidersHorizontal, X, Utensils, Flame, Star } from 'lucide-react';
+import { Search, SlidersHorizontal, X, Utensils, Flame, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuthStore, useCartStore } from '@/store';
 import { productAPI } from '@/lib/api';
 import { Button, Input, Card, Badge, LoadingSpinner } from '@/components/ui/BaseComponents';
 import { FadeIn, StaggerGrid, ScaleOnHover, PulseBadge } from '@/components/ui/Animations';
+import { HomePageSkeleton } from '@/components/ui/Skeletons';
+import { BaksoLoadingAnimation } from '@/components/ui/LoadingAnimation';
 
 export default function MenuPage() {
   const navigate = useNavigate();
@@ -19,27 +21,66 @@ export default function MenuPage() {
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'all');
   const [showFilters, setShowFilters] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 8, // Default for mobile
+    total: 0,
+    totalPages: 0,
+  });
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    setPagination(prev => ({
+      ...prev,
+      limit: isMobile ? 8 : 12,
+      page: 1,
+    }));
+  }, [isMobile]);
 
   useEffect(() => {
     loadData();
-  }, [selectedCategory]);
+  }, [selectedCategory, pagination.page]);
 
   const loadData = async () => {
     try {
       setLoading(true);
+      const params = {
+        page: pagination.page,
+        limit: pagination.limit,
+        category: selectedCategory !== 'all' ? selectedCategory : undefined,
+        search: searchQuery || undefined,
+      };
+      
       const [categoriesRes, productsRes] = await Promise.all([
         productAPI.getCategories(),
-        productAPI.getProducts({
-          category: selectedCategory !== 'all' ? selectedCategory : undefined,
-          search: searchQuery || undefined,
-        }),
+        productAPI.getProducts(params),
       ]);
+      
       setCategories(categoriesRes.data.categories || []);
       setProducts(productsRes.data.products || productsRes.data.rows || []);
+      setPagination(prev => ({
+        ...prev,
+        total: productsRes.data?.total || 0,
+        totalPages: productsRes.data?.totalPages || 0,
+      }));
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      setPagination(prev => ({ ...prev, page: newPage }));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -152,17 +193,10 @@ export default function MenuPage() {
 
       {/* Content */}
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="relative">
-            <LoadingSpinner size="lg" />
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-              className="absolute inset-0"
-            >
-              <Flame className="w-16 h-16 text-primary opacity-20" />
-            </motion.div>
-          </div>
+        <div className="px-4 py-6">
+          <Card className="p-6 bg-gradient-to-b from-white to-orange-50/50 dark:from-gray-800 dark:to-gray-800/50 border-0 shadow-xl">
+            <BaksoLoadingAnimation size="md" text="Menyiapkan menu lezat..." />
+          </Card>
         </div>
       ) : (
         <div className="px-4 py-4">
@@ -266,6 +300,81 @@ export default function MenuPage() {
                 ))}
               </div>
             </StaggerGrid>
+
+            {/* Pagination - Responsive */}
+            {pagination.totalPages > 1 && (
+              <div className="pt-6 pb-8">
+                <Card className="p-4 bg-gradient-to-r from-orange-50 to-orange-100/50 dark:from-gray-800 dark:to-gray-700 border-orange-200 dark:border-gray-600 shadow-lg">
+                  <div className="flex items-center justify-between gap-2">
+                    {/* Previous Button */}
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handlePageChange(pagination.page - 1)}
+                      disabled={pagination.page === 1}
+                      className="flex items-center gap-1 bg-white dark:bg-gray-800 hover:bg-orange-50 dark:hover:bg-gray-600"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      <span className="hidden sm:inline text-xs font-medium">Prev</span>
+                    </Button>
+
+                    {/* Page Numbers */}
+                    <div className="flex items-center gap-1.5 overflow-x-auto">
+                      {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                        let pageNum;
+                        if (pagination.totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (pagination.page <= 3) {
+                          pageNum = i + 1;
+                        } else if (pagination.page >= pagination.totalPages - 2) {
+                          pageNum = pagination.totalPages - 4 + i;
+                        } else {
+                          pageNum = pagination.page - 2 + i;
+                        }
+
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => handlePageChange(pageNum)}
+                            className={`w-9 h-9 rounded-full text-xs font-bold transition-all flex-shrink-0 ${
+                              pagination.page === pageNum
+                                ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF8C42] text-white shadow-lg shadow-orange-500/30 scale-110'
+                                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-orange-100 dark:border-gray-700 hover:border-orange-300 dark:hover:border-gray-600 hover:bg-orange-50 dark:hover:bg-gray-700'
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Next Button */}
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handlePageChange(pagination.page + 1)}
+                      disabled={pagination.page === pagination.totalPages}
+                      className="flex items-center gap-1 bg-white dark:bg-gray-800 hover:bg-orange-50 dark:hover:bg-gray-600"
+                    >
+                      <span className="hidden sm:inline text-xs font-medium">Next</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+
+                  {/* Page Info */}
+                  <div className="mt-3 pt-3 border-t border-orange-100 dark:border-gray-600 text-center">
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      <span className="font-bold text-primary">Halaman {pagination.page}</span> dari{' '}
+                      <span className="font-bold text-primary">{pagination.totalPages}</span>
+                      {' '}({pagination.total} menu)
+                    </p>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-500 mt-1">
+                      Menampilkan {Math.min((pagination.page - 1) * pagination.limit + 1, pagination.total)}-{Math.min(pagination.page * pagination.limit, pagination.total)} dari {pagination.total} menu
+                    </p>
+                  </div>
+                </Card>
+              </div>
+            )}
           ) : (
             <FadeIn>
               <div className="text-center py-20">
