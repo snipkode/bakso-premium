@@ -69,6 +69,11 @@ const Product = sequelize.define('product', {
     defaultValue: 10, // Low stock alert threshold
     allowNull: false,
   },
+  total_sold: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    allowNull: false,
+  },
 });
 
 module.exports = Product;

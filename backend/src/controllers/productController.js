@@ -112,13 +112,23 @@ exports.deleteCategory = async (req, res) => {
 // Get all products
 exports.getProducts = async (req, res) => {
   try {
-    const { category_id, search, is_featured, limit = 50 } = req.query;
+    const { category_id, search, is_featured, limit = 50, sort_by } = req.query;
 
     const where = { is_available: true };
     if (category_id) where.category_id = category_id;
     if (is_featured !== undefined) where.is_featured = is_featured === 'true';
     if (search) {
       where.name = { [Op.like]: `%${search}%` };
+    }
+
+    // Add order based on sort_by
+    let order = [];
+    if (sort_by === 'bestseller') {
+      order = [['total_sold', 'DESC']];
+    } else if (sort_by === 'featured') {
+      order = [['is_featured', 'DESC'], ['name', 'ASC']];
+    } else {
+      order = [['name', 'ASC']];
     }
 
     const products = await Product.findAll({
@@ -129,7 +139,7 @@ exports.getProducts = async (req, res) => {
         attributes: ['id', 'name', 'icon'],
       }],
       limit: parseInt(limit),
-      order: [['is_featured', 'DESC'], ['name', 'ASC']],
+      order,
     });
 
     res.json({ success: true, products });

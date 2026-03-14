@@ -154,10 +154,17 @@ exports.createOrder = async (req, res) => {
         notes: item.notes,
         customizations: item.customizations || [],
       }, { transaction });
-      
+
       // Reduce product stock
       if (item.product_id) {
         await Product.decrement('stock', {
+          by: item.quantity,
+          where: { id: item.product_id },
+          transaction,
+        });
+        
+        // Increment total_sold (only for completed/paid orders)
+        await Product.increment('total_sold', {
           by: item.quantity,
           where: { id: item.product_id },
           transaction,

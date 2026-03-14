@@ -11,8 +11,10 @@ export default function HomePage() {
   const { getTotalItems } = useCartStore();
 
   const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [bestSellerProducts, setBestSellerProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('featured'); // 'featured' or 'bestseller'
 
   useEffect(() => {
     // Redirect staff to their dashboard
@@ -31,8 +33,13 @@ export default function HomePage() {
 
   const loadData = async () => {
     try {
-      const productsRes = await productAPI.getProducts({ is_featured: true, limit: 6 });
-      setFeaturedProducts(productsRes.data.products || productsRes.data.rows || []);
+      setLoading(true);
+      const [featuredRes, bestSellerRes] = await Promise.all([
+        productAPI.getProducts({ is_featured: true, limit: 6, sort_by: 'featured' }),
+        productAPI.getProducts({ limit: 6, sort_by: 'bestseller' }),
+      ]);
+      setFeaturedProducts(featuredRes.data.products || featuredRes.data.rows || []);
+      setBestSellerProducts(bestSellerRes.data.products || bestSellerRes.data.rows || []);
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {
@@ -157,7 +164,7 @@ export default function HomePage() {
             </Card>
           </section>
 
-          {/* Featured Products */}
+          {/* Featured Products with Tabs */}
           <section>
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -174,8 +181,34 @@ export default function HomePage() {
                 <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
             </div>
+
+            {/* Tabs */}
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => setActiveTab('featured')}
+                className={`px-4 py-2 rounded-full text-xs font-medium transition-colors ${
+                  activeTab === 'featured'
+                    ? 'bg-primary text-white'
+                    : 'bg-secondary text-gray-600 dark:text-gray-400 hover:bg-secondary/80'
+                }`}
+              >
+                ⭐ Featured
+              </button>
+              <button
+                onClick={() => setActiveTab('bestseller')}
+                className={`px-4 py-2 rounded-full text-xs font-medium transition-colors ${
+                  activeTab === 'bestseller'
+                    ? 'bg-primary text-white'
+                    : 'bg-secondary text-gray-600 dark:text-gray-400 hover:bg-secondary/80'
+                }`}
+              >
+                🔥 Best Seller
+              </button>
+            </div>
+
+            {/* Products Grid */}
             <div className="grid grid-cols-2 gap-3">
-              {featuredProducts.map((product) => (
+              {(activeTab === 'featured' ? featuredProducts : bestSellerProducts).map((product) => (
                 <Card
                   key={product.id}
                   onClick={() => navigate(`/product/${product.id}`)}
@@ -197,7 +230,17 @@ export default function HomePage() {
                         <img src="/placeholder.svg" alt="placeholder" />
                       </div>
                     )}
-                    <Badge className="absolute top-2 right-2 text-xs">⭐</Badge>
+                    {activeTab === 'featured' && (
+                      <Badge className="absolute top-2 right-2 text-xs">⭐</Badge>
+                    )}
+                    {activeTab === 'bestseller' && (
+                      <Badge variant="warning" className="absolute top-2 right-2 text-xs">🔥</Badge>
+                    )}
+                    {!product.is_available && (
+                      <Badge variant="error" className="absolute top-2 left-2 text-xs">
+                        Unavailable
+                      </Badge>
+                    )}
                   </div>
                   <div className="p-3">
                     <h3 className="font-semibold text-sm text-gray-900 dark:text-white line-clamp-2 mb-1">
@@ -210,6 +253,11 @@ export default function HomePage() {
                       <span className="text-xs text-gray-500 dark:text-gray-400">
                         Stock: {product.stock}
                       </span>
+                      {activeTab === 'bestseller' && product.total_sold > 0 && (
+                        <span className="text-xs text-orange-600 font-medium">
+                          Sold: {product.total_sold}
+                        </span>
+                      )}
                       {product.spicy_level > 0 && (
                         <span className="text-xs">{'🌶️'.repeat(product.spicy_level)}</span>
                       )}
