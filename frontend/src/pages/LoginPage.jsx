@@ -19,6 +19,12 @@ export default function LoginPage() {
   const [showExistingUserModal, setShowExistingUserModal] = useState(false);
   const [existingUserData, setExistingUserData] = useState(null);
   const [redirectTimer, setRedirectTimer] = useState(4);
+  const [formErrors, setFormErrors] = useState({
+    name: '',
+    phone: '',
+    pin: '',
+    password: '',
+  });
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -26,12 +32,100 @@ export default function LoginPage() {
     pin: '',
   });
 
+  // Validation functions
+  const validateName = (name) => {
+    if (!name || name.trim() === '') {
+      return 'Nama lengkap wajib diisi';
+    }
+    if (name.length < 3) {
+      return 'Nama minimal 3 karakter';
+    }
+    return '';
+  };
+
+  const validatePhone = (phone) => {
+    if (!phone || phone.trim() === '') {
+      return 'Nomor WhatsApp wajib diisi';
+    }
+    if (!/^08[0-9]{8,}$/.test(phone)) {
+      return 'Format nomor tidak valid (gunakan 08xxxxxxxxxx)';
+    }
+    return '';
+  };
+
+  const validatePIN = (pin) => {
+    if (!pin || pin.length === 0) {
+      return 'PIN wajib diisi';
+    }
+    if (!/^\d{6}$/.test(pin)) {
+      return 'PIN harus 6 digit angka';
+    }
+    return '';
+  };
+
+  const validatePassword = (password) => {
+    if (!password || password.trim() === '') {
+      return 'Password wajib diisi';
+    }
+    if (password.length < 6) {
+      return 'Password minimal 6 karakter';
+    }
+    return '';
+  };
+
+  const validateField = (field, value) => {
+    let error = '';
+    switch (field) {
+      case 'name':
+        error = validateName(value);
+        break;
+      case 'phone':
+        error = validatePhone(value);
+        break;
+      case 'pin':
+        error = validatePIN(value);
+        break;
+      case 'password':
+        error = validatePassword(value);
+        break;
+      default:
+        break;
+    }
+    setFormErrors(prev => ({ ...prev, [field]: error }));
+    return error === '';
+  };
+
+  const validateForm = (type) => {
+    let isValid = true;
+    const errors = { name: '', phone: '', pin: '', password: '' };
+
+    if (type === 'new-customer') {
+      const nameError = validateName(formData.name);
+      const phoneError = validatePhone(formData.phone);
+      errors.name = nameError;
+      errors.phone = phoneError;
+      if (nameError || phoneError) isValid = false;
+    } else if (type === 'existing-customer') {
+      const pinError = validatePIN(formData.pin);
+      errors.pin = pinError;
+      if (pinError) isValid = false;
+    } else if (type === 'staff') {
+      const phoneError = validatePhone(formData.phone);
+      const passwordError = validatePassword(formData.password);
+      errors.phone = phoneError;
+      errors.password = passwordError;
+      if (phoneError || passwordError) isValid = false;
+    }
+
+    setFormErrors(errors);
+    return isValid;
+  };
+
   const handleCustomerAuth = async (e) => {
     e.preventDefault();
     
-    // Validate phone format
-    if (!/^08[0-9]{8,}$/.test(formData.phone)) {
-      alert('Nomor WhatsApp tidak valid. Gunakan format 08xxxxxxxxxx');
+    // Validate form
+    if (!validateForm('new-customer')) {
       return;
     }
     
@@ -86,6 +180,12 @@ export default function LoginPage() {
 
   const handlePINLogin = async (e) => {
     e.preventDefault();
+    
+    // Validate form
+    if (!validateForm('existing-customer')) {
+      return;
+    }
+    
     try {
       console.log('🔑 Attempting PIN login...');
       const result = await customerPINLogin(formData.phone, formData.pin);
@@ -123,6 +223,12 @@ export default function LoginPage() {
 
   const handleStaffLogin = async (e) => {
     e.preventDefault();
+    
+    // Validate form
+    if (!validateForm('staff')) {
+      return;
+    }
+    
     try {
       const result = await staffLogin(formData.phone, formData.password);
       const role = result?.user?.role;
@@ -328,11 +434,20 @@ export default function LoginPage() {
                           label="Nama Lengkap"
                           placeholder="Masukkan nama Anda"
                           value={formData.name}
-                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          onChange={(e) => {
+                            setFormData({ ...formData, name: e.target.value });
+                            validateField('name', e.target.value);
+                          }}
                           required
                           className="pl-11"
                         />
                         <User className="absolute left-3 top-9 w-5 h-5 text-gray-400" />
+                        {formErrors.name && (
+                          <p className="text-xs text-red-600 dark:text-red-400 mt-1 ml-3 flex items-center gap-1">
+                            <span>⚠️</span>
+                            <span>{formErrors.name}</span>
+                          </p>
+                        )}
                       </div>
                       <div className="relative">
                         <Input
@@ -340,11 +455,20 @@ export default function LoginPage() {
                           placeholder="081234567890"
                           type="tel"
                           value={formData.phone}
-                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          onChange={(e) => {
+                            setFormData({ ...formData, phone: e.target.value });
+                            validateField('phone', e.target.value);
+                          }}
                           required
                           className="pl-11"
                         />
                         <Phone className="absolute left-3 top-9 w-5 h-5 text-gray-400" />
+                        {formErrors.phone && (
+                          <p className="text-xs text-red-600 dark:text-red-400 mt-1 ml-3 flex items-center gap-1">
+                            <span>⚠️</span>
+                            <span>{formErrors.phone}</span>
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -401,11 +525,18 @@ export default function LoginPage() {
                             // Only allow numbers
                             const value = e.target.value.replace(/\D/g, '');
                             setFormData({ ...formData, pin: value });
+                            validateField('pin', value);
                           }}
                           required
                           className="pl-11"
                         />
                         <KeyRound className="absolute left-3 top-9 w-5 h-5 text-gray-400" />
+                        {formErrors.pin && (
+                          <p className="text-xs text-red-600 dark:text-red-400 mt-1 ml-3 flex items-center gap-1">
+                            <span>⚠️</span>
+                            <span>{formErrors.pin}</span>
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -470,7 +601,10 @@ export default function LoginPage() {
                         placeholder="Masukkan password"
                         type={showPassword ? 'text' : 'password'}
                         value={formData.password}
-                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        onChange={(e) => {
+                          setFormData({ ...formData, password: e.target.value });
+                          validateField('password', e.target.value);
+                        }}
                         required
                         className="pl-11 pr-11"
                       />
@@ -482,6 +616,12 @@ export default function LoginPage() {
                       >
                         {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
+                      {formErrors.password && (
+                        <p className="text-xs text-red-600 dark:text-red-400 mt-1 ml-3 flex items-center gap-1">
+                          <span>⚠️</span>
+                          <span>{formErrors.password}</span>
+                        </p>
+                      )}
                     </div>
                   </div>
 
