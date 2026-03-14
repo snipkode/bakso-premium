@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, ShoppingBag, MapPin, Clock, Star, ChevronRight, Utensils, Truck, Flame } from 'lucide-react';
 import { useAuthStore, useCartStore } from '@/store';
 import { productAPI } from '@/lib/api';
-import { Button, Input, Card, Badge } from '@/components/ui/BaseComponents';
+import { Button, Input, Card, Badge, ImageWithFallback } from '@/components/ui/BaseComponents';
 import { HomePageSkeleton } from '@/components/ui/Skeletons';
 import { BaksoLoadingAnimation } from '@/components/ui/LoadingAnimation';
 
@@ -249,21 +249,12 @@ export default function HomePage() {
                     className="overflow-hidden cursor-pointer hover:shadow-xl transition-all transform hover:scale-105 bg-white dark:bg-gray-800 border-0"
                   >
                     <div className="aspect-square bg-gradient-to-br from-orange-50 to-orange-100 dark:from-gray-700 dark:to-gray-600 relative">
-                      {product.image ? (
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.nextElementSibling?.classList.remove('hidden');
-                          }}
-                        />
-                      ) : (
-                        <div className="hidden">
-                          <img src="/placeholder.svg" alt="placeholder" />
-                        </div>
-                      )}
+                      <ImageWithFallback
+                        src={product.image}
+                        alt={product.name}
+                        className="w-full h-full object-cover"
+                        fallbackType={product.category?.name?.toLowerCase().includes('minum') ? 'drink' : 'food'}
+                      />
                       {activeTab === 'featured' && (
                         <Badge className="absolute top-2 right-2 text-xs bg-gradient-to-r from-blue-500 to-cyan-500 border-0 shadow-md">⭐</Badge>
                       )}

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
-// SVG Bowl Icon for image fallbacks
-function BowlIcon({ className = "w-8 h-8" }) {
+// SVG Bowl Icon for image fallbacks - More detailed design
+function BowlIcon({ className = "w-16 h-16" }) {
   return (
     <svg
       className={className}
@@ -10,12 +10,21 @@ function BowlIcon({ className = "w-8 h-8" }) {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
+      {/* Background Circle */}
+      <circle cx="50" cy="50" r="48" fill="#FEF3C7" opacity="0.5"/>
+      
       {/* Bowl */}
-      <ellipse cx="50" cy="70" rx="35" ry="12" fill="#E5E7EB" />
+      <ellipse cx="50" cy="70" rx="35" ry="12" fill="#FDE68A" />
       <path
         d="M15 70C15 70 20 90 50 90C80 90 85 70 85 70"
-        fill="#D1D5DB"
+        fill="#FCD34D"
       />
+      <path
+        d="M15 70C15 70 20 85 50 85C80 85 85 70 85 70"
+        fill="#FBBF24"
+        opacity="0.5"
+      />
+      
       {/* Steam */}
       <path
         d="M35 55C35 55 38 45 35 40M50 55C50 55 53 45 50 40M65 55C65 55 68 45 65 40"
@@ -24,7 +33,10 @@ function BowlIcon({ className = "w-8 h-8" }) {
         strokeLinecap="round"
         fill="none"
         opacity="0.6"
-      />
+      >
+        <animate attributeName="d" values="M35 55C35 55 38 45 35 40M50 55C50 55 53 45 50 40M65 55C65 55 68 45 65 40;M35 53C35 53 38 43 35 38M50 53C50 53 53 43 50 38M65 53C65 53 68 43 65 38;M35 55C35 55 38 45 35 40M50 55C50 55 53 45 50 40M65 55C65 55 68 45 65 40" dur="2s" repeatCount="indefinite"/>
+      </path>
+      
       {/* Noodles */}
       <ellipse cx="50" cy="65" rx="30" ry="8" fill="#FCD34D" />
       <path
@@ -33,6 +45,41 @@ function BowlIcon({ className = "w-8 h-8" }) {
         strokeWidth="2"
         fill="none"
       />
+      
+      {/* Meatballs */}
+      <circle cx="40" cy="62" r="6" fill="#F97316" opacity="0.8"/>
+      <circle cx="60" cy="62" r="6" fill="#F97316" opacity="0.8"/>
+      <circle cx="50" cy="68" r="5" fill="#F97316" opacity="0.8"/>
+    </svg>
+  );
+}
+
+// Generic Food SVG Fallback
+function FoodIcon({ className = "w-16 h-16" }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 100 100"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <circle cx="50" cy="50" r="48" fill="#FEF3C7" opacity="0.5"/>
+      <text x="50" y="65" textAnchor="middle" fontSize="50" fill="#F97316">🍜</text>
+    </svg>
+  );
+}
+
+// Drink SVG Fallback
+function DrinkIcon({ className = "w-16 h-16" }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 100 100"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <circle cx="50" cy="50" r="48" fill="#DBEAFE" opacity="0.5"/>
+      <text x="50" y="65" textAnchor="middle" fontSize="50" fill="#3B82F6">🥤</text>
     </svg>
   );
 }
@@ -42,17 +89,42 @@ export function ImageWithFallback({
   alt,
   className,
   fallbackType = 'bowl',
+  retryLimit = 3,
   ...props
 }) {
   const [error, setError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [currentSrc, setCurrentSrc] = useState(src);
 
-  if (!src || error) {
+  const handleError = () => {
+    if (retryCount < retryLimit && src) {
+      // Retry loading the same image with cache bust
+      const timeout = Math.min(1000 * Math.pow(2, retryCount), 5000);
+      setTimeout(() => {
+        const separator = src.includes('?') ? '&' : '?';
+        setCurrentSrc(`${src}${separator}retry=${retryCount + 1}&t=${Date.now()}`);
+        setRetryCount(retryCount + 1);
+      }, timeout);
+    } else {
+      setError(true);
+    }
+  };
+
+  const handleLoad = () => {
+    // Reset retry count on successful load
+    if (retryCount > 0) {
+      setRetryCount(0);
+    }
+  };
+
+  if (!currentSrc || error) {
     return (
-      <div className={cn('bg-surface flex items-center justify-center', className)}>
-        {fallbackType === 'bowl' ? (
-          <BowlIcon className="w-1/2 h-1/2" />
-        ) : (
-          <div className="w-1/2 h-1/2 flex items-center justify-center text-4xl">
+      <div className={cn('bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center', className)}>
+        {fallbackType === 'bowl' && <BowlIcon className="w-1/2 h-1/2" />}
+        {fallbackType === 'food' && <FoodIcon className="w-1/2 h-1/2" />}
+        {fallbackType === 'drink' && <DrinkIcon className="w-1/2 h-1/2" />}
+        {fallbackType === 'emoji' && (
+          <div className="w-1/2 h-1/2 flex items-center justify-center text-5xl">
             🍜
           </div>
         )}
@@ -62,10 +134,11 @@ export function ImageWithFallback({
 
   return (
     <img
-      src={src}
+      src={currentSrc}
       alt={alt}
       className={cn('w-full h-full object-cover', className)}
-      onError={() => setError(true)}
+      onError={handleError}
+      onLoad={handleLoad}
       {...props}
     />
   );

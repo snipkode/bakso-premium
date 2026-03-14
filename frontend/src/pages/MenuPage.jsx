@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Search, SlidersHorizontal, X, Utensils, Flame, Star } from 'lucide-react';
 import { useAuthStore, useCartStore } from '@/store';
 import { productAPI } from '@/lib/api';
-import { Button, Input, Card, Badge, LoadingSpinner, Pagination } from '@/components/ui/BaseComponents';
+import { Button, Input, Card, Badge, LoadingSpinner, Pagination, ImageWithFallback } from '@/components/ui/BaseComponents';
 import { FadeIn, StaggerGrid, ScaleOnHover, PulseBadge } from '@/components/ui/Animations';
 import { BaksoLoadingAnimation } from '@/components/ui/LoadingAnimation';
 
@@ -211,21 +211,12 @@ export default function MenuPage() {
                           className="overflow-hidden cursor-pointer group shadow-md hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 border-orange-100 dark:border-gray-800"
                         >
                           <div className="aspect-square bg-gradient-to-br from-orange-50 to-orange-100 dark:from-gray-800 dark:to-gray-900 relative overflow-hidden">
-                            {product.image ? (
-                              <img
-                                src={product.image}
-                                alt={product.name}
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                onError={(e) => {
-                                  e.target.style.display = 'none';
-                                  e.target.nextElementSibling?.classList.remove('hidden');
-                                }}
-                              />
-                            ) : (
-                              <div className="hidden">
-                                <img src="/placeholder.svg" alt="placeholder" />
-                              </div>
-                            )}
+                            <ImageWithFallback
+                              src={product.image}
+                              alt={product.name}
+                              className="group-hover:scale-110 transition-transform duration-500"
+                              fallbackType={product.category?.name?.toLowerCase().includes('minum') ? 'drink' : 'food'}
+                            />
 
                             <div className="absolute top-2 left-2 flex flex-col gap-1">
                               {!product.is_available && (

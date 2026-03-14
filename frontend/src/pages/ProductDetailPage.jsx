@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { productAPI } from '@/lib/api';
 import { useCartStore } from '@/store';
-import { Button, Card, Badge, LoadingSpinner } from '@/components/ui/BaseComponents';
+import { Button, Card, Badge, LoadingSpinner, ImageWithFallback } from '@/components/ui/BaseComponents';
 import { FadeIn, ScaleOnHover } from '@/components/ui/Animations';
 import { ProductDetailSkeleton } from '@/components/ui/Skeletons';
 import { BaksoLoadingAnimation } from '@/components/ui/LoadingAnimation';
@@ -162,26 +162,14 @@ export default function ProductDetailPage() {
               <text x="90" y="80" fontSize="20">🍜</text>
             </svg>
           </div>
-          
-          {product.image ? (
-            <motion.img
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              src={product.image}
-              alt={product.name}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className="text-9xl opacity-30"
-            >
-              🍜
-            </motion.div>
-          )}
+
+          <ImageWithFallback
+            src={product.image}
+            alt={product.name}
+            className="w-full h-full object-cover"
+            fallbackType={product.category?.name?.toLowerCase().includes('minum') ? 'drink' : 'bowl'}
+            retryLimit={3}
+          />
         </div>
 
         {/* Badges */}
