@@ -309,7 +309,6 @@ exports.getLowStockProducts = async (req, res) => {
   try {
     const products = await Product.findAll({
       where: {
-        stock: { [Op.lte]: sequelize.col('min_stock') },
         is_available: true,
       },
       include: [{
@@ -319,8 +318,12 @@ exports.getLowStockProducts = async (req, res) => {
       order: [['stock', 'ASC']],
     });
 
-    res.json({ success: true, products });
+    // Filter products with stock <= min_stock
+    const lowStockProducts = products.filter(p => p.stock <= p.min_stock);
+
+    res.json({ success: true, products: lowStockProducts });
   } catch (error) {
+    console.error('Get low stock products error:', error);
     res.status(500).json({ error: 'Failed to get low stock products' });
   }
 };

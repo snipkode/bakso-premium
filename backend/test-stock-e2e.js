@@ -216,8 +216,7 @@ async function testOrderStockValidation() {
 
   // Create product with limited stock
   const product = await createTestProduct(10);
-  state.testProductId = product.id;
-
+  
   await test('Reject order when quantity > stock', async () => {
     try {
       await axios.post(`${API_URL}/orders`, {
@@ -250,6 +249,9 @@ async function testOrderStockValidation() {
 
     assert(res.data.success, 'Should create order successfully');
     log(`      Order created: ${res.data.order.order_number}`);
+    
+    // Store product for next test
+    state.testProductId = product.id;
   });
 }
 
@@ -288,16 +290,18 @@ async function testStockReduction() {
 async function testMultipleItemsOrder() {
   logStep('Step 6: Multiple Items Order Stock Reduction');
 
-  // Create 2 test products
+  // Create 2 fresh test products with known stock
   const product1 = await createTestProduct(50);
   const product2 = await createTestProduct(30);
+  
+  const initialStock1 = product1.stock;
+  const initialStock2 = product2.stock;
+  const qty1 = 5;
+  const qty2 = 3;
 
   await test('Reduce stock for all items in order', async () => {
-    const qty1 = 5;
-    const qty2 = 3;
-
     // Create order with multiple items
-    await axios.post(`${API_URL}/orders`, {
+    const orderRes = await axios.post(`${API_URL}/orders`, {
       order_type: 'takeaway',
       items: [
         { product_id: product1.id, quantity: qty1 },
@@ -307,6 +311,11 @@ async function testMultipleItemsOrder() {
       headers: { Authorization: `Bearer ${state.customerToken}` },
     });
 
+    assert(orderRes.data.success, 'Should create order successfully');
+
+    // Wait a moment for stock reduction
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     // Check stock for both products
     const res1 = await axios.get(`${API_URL}/products/${product1.id}`, {
       headers: { Authorization: `Bearer ${state.adminToken}` },
@@ -315,11 +324,14 @@ async function testMultipleItemsOrder() {
       headers: { Authorization: `Bearer ${state.adminToken}` },
     });
 
-    assert(res1.data.product.stock === 50 - qty1, 'Product 1 stock should be reduced');
-    assert(res2.data.product.stock === 30 - qty2, 'Product 2 stock should be reduced');
+    const expectedStock1 = initialStock1 - qty1;
+    const expectedStock2 = initialStock2 - qty2;
     
-    log(`      Product 1: 50 → ${res1.data.product.stock}`);
-    log(`      Product 2: 30 → ${res2.data.product.stock}`);
+    assert(res1.data.product.stock === expectedStock1, `Product 1 stock should be ${expectedStock1}, got ${res1.data.product.stock}`);
+    assert(res2.data.product.stock === expectedStock2, `Product 2 stock should be ${expectedStock2}, got ${res2.data.product.stock}`);
+    
+    log(`      Product 1: ${initialStock1} → ${res1.data.product.stock}`);
+    log(`      Product 2: ${initialStock2} → ${res2.data.product.stock}`);
   });
 }
 
@@ -341,7 +353,7 @@ async function runAllTests() {
   log('╚═══════════════════════════════════════════════════════════════════╝', 'cyan');
   log(`\nBase URL: ${BASE_URL}`, 'cyan');
 
-  const results = [];
+  const allResults = [];
 
   // Setup
   logStep('Setup: Login & Create Test Data');
@@ -356,26 +368,37 @@ async function runAllTests() {
     process.exit(1);
   }
 
-  // Run tests
-  results.push(await testGetProducts());
-  results.push(await testUpdateStock());
-  results.push(await testLowStockProducts());
-  results.push(await testOrderStockValidation());
-  results.push(await testStockReduction());
-  results.push(await testMultipleItemsOrder());
+  // Run tests and collect results
+  const testGroups = [
+    await testGetProducts(),
+    await testUpdateStock(),
+    await testLowStockProducts(),
+    await testOrderStockValidation(),
+    await testStockReduction(),
+    await testMultipleItemsOrder(),
+  ];
+  
+  testGroups.forEach(group => {
+    if (Array.isArray(group)) {
+      allResults.push(...group);
+    } else if (group) {
+      allResults.push(group);
+    }
+  });
 
   // Summary
-  const passed = results.filter(r => r?.passed).length;
-  const failed = results.filter(r => !r?.passed).length;
+  const passed = allResults.filter(r => r?.passed).length;
+  const failed = allResults.filter(r => r && !r?.passed).length;
+  const total = passed + failed;
 
   log(`\n\n${'═'.repeat(70)}`, 'cyan');
   log('  📊 FINAL TEST SUMMARY', 'cyan');
   log(`${'═'.repeat(70)}`, 'cyan');
   log(`\n  ✅ Passed: ${passed}`, 'green');
   log(`  ❌ Failed: ${failed}`, 'red');
-  log(`  📝 Total:  ${passed + failed}`, 'cyan');
+  log(`  📝 Total:  ${total}`, 'cyan');
 
-  const rate = ((passed / (passed + failed)) * 100).toFixed(1);
+  const rate = total > 0 ? ((passed / total) * 100).toFixed(1) : '0.0';
   log(`  📈 Success: ${rate}%`, rate === '100.0' ? 'green' : 'yellow');
   log(`${'═'.repeat(70)}`, 'cyan');
 
