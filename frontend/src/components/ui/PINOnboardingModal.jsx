@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, KeyRound, Shield, Check, AlertCircle } from 'lucide-react';
 import { Button, Input, Card } from '@/components/ui/BaseComponents';
 import { BaksoIconAnimation } from './BaksoIconAnimation';
+import { customerPINAPI } from '@/lib/api';
 
 export function PINOnboardingModal({ isOpen, onClose, onComplete }) {
   const [pin, setPin] = useState(['', '', '', '', '', '']);
@@ -54,18 +55,19 @@ export function PINOnboardingModal({ isOpen, onClose, onComplete }) {
     setError('');
 
     try {
-      // TODO: Call API to set PIN
-      console.log('Setting PIN:', finalPin);
+      console.log('🔑 Setting PIN...');
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Call API to set PIN
+      const response = await customerPINAPI.setPIN(finalPin);
+      console.log('✅ PIN set successfully:', response.data);
       
       setStep(3);
       setTimeout(() => {
         onComplete();
       }, 1500);
     } catch (err) {
-      setError('Gagal mengatur PIN. Silakan coba lagi.');
+      console.error('❌ Failed to set PIN:', err);
+      setError(err.response?.data?.error || 'Gagal mengatur PIN. Silakan coba lagi.');
     } finally {
       setIsLoading(false);
     }

@@ -35,20 +35,28 @@ export default function LoginPage() {
     try {
       const result = await customerAuth(formData.name, formData.phone);
       
+      console.log('📊 Login result:', result);
+      console.log('📊 is_existing_user:', result?.is_existing_user);
+      console.log('📊 is_pin_set:', result?.user?.is_pin_set);
+      
       // Check if user already exists
       if (result?.is_existing_user) {
-        // Show welcome back message
-        console.log('Welcome back!', result.user.name);
+        console.log('👋 Welcome back user!');
       }
       
-      // Show onboarding for new customers or customers without PIN
-      if (!result?.is_existing_user || !result?.user?.is_pin_set) {
+      // Show onboarding ONLY if user doesn't have PIN set
+      const shouldShowOnboarding = !result?.user?.is_pin_set;
+      console.log('🤔 Should show onboarding:', shouldShowOnboarding);
+      
+      if (shouldShowOnboarding) {
+        console.log('🎯 Showing onboarding modal...');
         setShowOnboarding(true);
       } else {
+        console.log('✅ User has PIN, navigating to menu...');
         navigate('/menu');
       }
     } catch (error) {
-      console.error('Customer auth failed:', error);
+      console.error('❌ Customer auth failed:', error);
     }
   };
 
@@ -64,8 +72,10 @@ export default function LoginPage() {
   };
 
   const handleOnboardingComplete = async () => {
+    console.log('✅ Onboarding complete!');
     setShowOnboarding(false);
     setNeedsPINOnboarding(false);
+    console.log('🎯 Navigating to menu...');
     navigate('/menu');
   };
 
@@ -333,11 +343,16 @@ export default function LoginPage() {
                         <Input
                           label="PIN (6 digit)"
                           placeholder="Masukkan PIN Anda"
-                          type="password"
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
                           maxLength={6}
-                          pattern="\d{6}"
                           value={formData.pin}
-                          onChange={(e) => setFormData({ ...formData, pin: e.target.value.replace(/\D/g, '') })}
+                          onChange={(e) => {
+                            // Only allow numbers
+                            const value = e.target.value.replace(/\D/g, '');
+                            setFormData({ ...formData, pin: value });
+                          }}
                           required
                           className="pl-11"
                         />
