@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ShoppingBag, MapPin, Clock, Star, ChevronRight, Utensils, Truck } from 'lucide-react';
+import { Search, MapPin, Clock, Star, ChevronRight, Utensils, Truck } from 'lucide-react';
 import { useAuthStore, useCartStore } from '@/store';
 import { productAPI } from '@/lib/api';
 import { Button, Input, Card, Badge, LoadingSpinner } from '@/components/ui/BaseComponents';
@@ -281,16 +281,74 @@ export default function HomePage() {
                 ))}
               </div>
             ) : (
-              <Card className="p-8 text-center">
-                <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
-                  <ShoppingBag className="w-8 h-8 text-gray-400" />
+              <Card className="p-8 text-center overflow-hidden relative">
+                {/* Decorative SVG Background */}
+                <div className="absolute inset-0 opacity-5">
+                  <svg viewBox="0 0 200 200" className="w-full h-full">
+                    {/* Food icons pattern */}
+                    <text x="20" y="40" fontSize="24">🍜</text>
+                    <text x="60" y="30" fontSize="24">🍲</text>
+                    <text x="100" y="50" fontSize="24">🍛</text>
+                    <text x="140" y="35" fontSize="24">🍱</text>
+                    <text x="30" y="80" fontSize="24">🍢</text>
+                    <text x="80" y="70" fontSize="24">🍡</text>
+                    <text x="130" y="85" fontSize="24">🍜</text>
+                    <text x="50" y="120" fontSize="24">🍲</text>
+                    <text x="100" y="110" fontSize="24">🍛</text>
+                    <text x="150" y="125" fontSize="24">🍱</text>
+                    <text x="40" y="160" fontSize="24">🍢</text>
+                    <text x="90" y="150" fontSize="24">🍡</text>
+                    <text x="140" y="165" fontSize="24">🍜</text>
+                  </svg>
                 </div>
-                <p className="text-gray-500 dark:text-gray-400 mb-4">
-                  No {activeTab === 'featured' ? 'featured' : 'best seller'} products available
-                </p>
-                <Button onClick={() => navigate('/menu')} variant="secondary">
-                  Browse All Products
-                </Button>
+                
+                {/* Main illustration */}
+                <div className="relative z-10">
+                  <div className="w-24 h-24 mx-auto mb-4 relative">
+                    {/* Person eating illustration */}
+                    <svg viewBox="0 0 100 100" className="w-full h-full">
+                      {/* Person head */}
+                      <circle cx="50" cy="35" r="20" fill="#FED7AA" />
+                      {/* Hair */}
+                      <path d="M30 30 Q50 10 70 30 Q75 20 70 15 Q50 5 30 15 Q25 20 30 30" fill="#4B5563" />
+                      {/* Body */}
+                      <ellipse cx="50" cy="70" rx="25" ry="20" fill="#3B82F6" />
+                      {/* Arm holding bowl */}
+                      <path d="M30 65 Q20 70 15 60" stroke="#FED7AA" strokeWidth="6" strokeLinecap="round" fill="none" />
+                      {/* Bowl */}
+                      <ellipse cx="15" cy="55" rx="12" ry="6" fill="#F59E0B" />
+                      {/* Steam from bowl */}
+                      <path d="M10 50 Q12 45 10 40" stroke="#9CA3AF" strokeWidth="2" fill="none" opacity="0.6" />
+                      <path d="M15 48 Q17 43 15 38" stroke="#9CA3AF" strokeWidth="2" fill="none" opacity="0.6" />
+                      <path d="M20 50 Q22 45 20 40" stroke="#9CA3AF" strokeWidth="2" fill="none" opacity="0.6" />
+                      {/* Happy expression */}
+                      <path d="M42 32 Q45 35 48 32" stroke="#1F2937" strokeWidth="2" fill="none" />
+                      <path d="M52 32 Q55 35 58 32" stroke="#1F2937" strokeWidth="2" fill="none" />
+                      <path d="M45 42 Q50 47 55 42" stroke="#1F2937" strokeWidth="2" fill="none" />
+                      {/* Sparkles for delicious food */}
+                      <text x="70" y="25" fontSize="12">✨</text>
+                      <text x="75" y="45" fontSize="10">✨</text>
+                    </svg>
+                  </div>
+                  
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                    {activeTab === 'featured' ? 'Belum Ada Menu Favorit' : 'Belum Ada Best Seller'}
+                  </h3>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">
+                    {activeTab === 'featured' 
+                      ? 'Menu favorit akan muncul di sini setelah ditambahkan' 
+                      : 'Menu best seller akan muncul di sini setelah ada yang memesan'}
+                  </p>
+                  
+                  {/* Food emojis decoration */}
+                  <div className="flex justify-center gap-2 text-2xl">
+                    <span>🍜</span>
+                    <span>🍲</span>
+                    <span>🍛</span>
+                    <span>🍱</span>
+                    <span>🍢</span>
+                  </div>
+                </div>
               </Card>
             )}
           </section>
