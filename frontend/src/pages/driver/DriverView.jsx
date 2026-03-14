@@ -56,15 +56,28 @@ export default function DriverView() {
 
   const loadOrders = async () => {
     try {
-      const { data } = await orderAPI.getAllOrders({ 
-        order_type: 'delivery',
-        status: 'ready,out_for_delivery,completed',
-        limit: 50 
+      setLoading(true);
+      console.log('🔄 Loading driver orders...');
+      
+      // Backend will filter by role (driver sees delivery orders only)
+      const { data } = await orderAPI.getAllOrders({
+        limit: 100
       });
+      
       const ordersList = data.orders || data.rows || data || [];
-      setOrders(ordersList.filter(o => ['ready', 'out_for_delivery', 'completed'].includes(o.status)));
+      console.log(`📦 Loaded ${ordersList.length} total orders`);
+      
+      // Filter for delivery orders (should already be filtered by backend)
+      const driverOrders = ordersList.filter(o => 
+        o.order_type === 'delivery' && 
+        ['ready', 'out_for_delivery', 'completed'].includes(o.status)
+      );
+      
+      console.log(`🛵 Driver orders: ${driverOrders.length}`);
+      setOrders(driverOrders);
     } catch (error) {
       console.error('Failed to load orders:', error);
+      alert('Gagal load orders: ' + (error.response?.data?.error || error.message));
     } finally {
       setLoading(false);
     }
