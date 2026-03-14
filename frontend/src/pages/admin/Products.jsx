@@ -97,9 +97,18 @@ export default function AdminProducts() {
     available: 0,
   });
 
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCurrentPage(1); // Reset to first page on search
+      loadData();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   useEffect(() => {
     loadData();
-  }, [currentPage, pageSize, filterCategory, filterStock]);
+  }, [currentPage, pageSize, filterCategory]);
 
   const loadData = async () => {
     try {
@@ -114,16 +123,34 @@ export default function AdminProducts() {
         }),
         productAPI.getLowStockProducts(),
       ]);
-      
+
       setCategories(categoriesRes.data.categories || []);
-      const productsData = productsRes.data.products || productsRes.data.rows || [];
-      setProducts(productsData);
+      let productsData = productsRes.data.products || productsRes.data.rows || [];
       setTotalCount(productsRes.data.count || productsData.length);
-      
+
+      // Apply stock filter client-side (since API doesn't support it yet)
+      if (filterStock !== 'all') {
+        switch (filterStock) {
+          case 'low':
+            productsData = productsData.filter(p => p.stock <= p.min_stock && p.stock > 0);
+            break;
+          case 'out':
+            productsData = productsData.filter(p => p.stock === 0);
+            break;
+          case 'available':
+            productsData = productsData.filter(p => p.is_available && p.stock > 0);
+            break;
+          default:
+            break;
+        }
+      }
+
+      setProducts(productsData);
+
       // Calculate stats
       const lowStock = lowStockRes.data.products || [];
       setStats({
-        total: productsData.length,
+        total: productsRes.data.count || productsRes.data.products?.length || 0,
         lowStock: lowStock.filter(p => p.stock <= p.min_stock && p.stock > 0).length,
         outOfStock: productsData.filter(p => p.stock === 0).length,
         available: productsData.filter(p => p.is_available && p.stock > 0).length,
