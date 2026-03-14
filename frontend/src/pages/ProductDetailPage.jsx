@@ -373,48 +373,50 @@ export default function ProductDetailPage() {
             />
           </Card>
         </FadeIn>
-      </div>
 
-      {/* Bottom Action Bar - Fixed */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border-t border-orange-100 dark:border-gray-800 p-4 pb-safe-bottom z-50 shadow-lg">
-        <div className="flex items-center gap-3 max-w-lg mx-auto">
-          {/* Quantity */}
-          <div className="flex items-center gap-2 bg-gradient-to-r from-orange-50 to-orange-100 dark:from-gray-800 dark:to-gray-700 rounded-full px-2 py-2 border border-orange-200 dark:border-gray-600">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              disabled={quantity <= 1}
-              className="p-2 h-8 w-8 hover:bg-orange-200 dark:hover:bg-gray-600 rounded-full"
-            >
-              <Minus className="w-4 h-4" />
-            </Button>
-            <span className="w-10 text-center font-bold text-gray-900 dark:text-white text-lg">
-              {quantity}
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-              disabled={quantity >= product.stock}
-              className="p-2 h-8 w-8 hover:bg-orange-200 dark:hover:bg-gray-600 rounded-full"
-            >
-              <Plus className="w-4 h-4" />
-            </Button>
-          </div>
+        {/* Bottom Action Bar - Inside content flow (above BottomNav) */}
+        <FadeIn delay={0.5}>
+          <Card className="p-4 bg-gradient-to-r from-orange-50 to-orange-100 dark:from-gray-800 dark:to-gray-700 border-orange-200 dark:border-gray-600 sticky bottom-20 shadow-lg">
+            <div className="flex items-center gap-3">
+              {/* Quantity */}
+              <div className="flex items-center gap-2 bg-white dark:bg-gray-900 rounded-full px-2 py-2 border border-orange-200 dark:border-gray-600">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  disabled={quantity <= 1}
+                  className="p-2 h-8 w-8 hover:bg-orange-100 dark:hover:bg-gray-700 rounded-full"
+                >
+                  <Minus className="w-4 h-4" />
+                </Button>
+                <span className="w-10 text-center font-bold text-gray-900 dark:text-white text-lg">
+                  {quantity}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                  disabled={quantity >= product.stock}
+                  className="p-2 h-8 w-8 hover:bg-orange-100 dark:hover:bg-gray-700 rounded-full"
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
 
-          {/* Add to Cart */}
-          <Button
-            onClick={handleAddToCart}
-            disabled={!product.is_available || product.stock === 0}
-            className="flex-1 bg-gradient-to-r from-primary to-orange-500 hover:from-primary/90 hover:to-orange-500/90 shadow-lg shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed py-4 rounded-full font-semibold"
-          >
-            <ShoppingBag className="w-5 h-5 mr-2 inline" />
-            {product.is_available 
-              ? `Tambah • ${formatPrice(product.price * quantity)}` 
-              : 'Sold Out'}
-          </Button>
-        </div>
+              {/* Add to Cart */}
+              <Button
+                onClick={handleAddToCart}
+                disabled={!product.is_available || product.stock === 0}
+                className="flex-1 bg-gradient-to-r from-primary to-orange-500 hover:from-primary/90 hover:to-orange-500/90 shadow-lg shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed py-4 rounded-full font-semibold"
+              >
+                <ShoppingBag className="w-5 h-5 mr-2 inline" />
+                {product.is_available
+                  ? `Tambah • ${formatPrice(product.price * quantity)}`
+                  : 'Sold Out'}
+              </Button>
+            </div>
+          </Card>
+        </FadeIn>
       </div>
     </div>
   );
