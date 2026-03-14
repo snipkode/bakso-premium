@@ -35,8 +35,10 @@ export default function LoginPage() {
   const [existingUserData, setExistingUserData] = useState(null);
   const [redirectTimer, setRedirectTimer] = useState(4);
   const [resetEmail, setResetEmail] = useState('');
+  const [resetEmailError, setResetEmailError] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  const [resetSuccessMessage, setResetSuccessMessage] = useState('');
   const [formErrors, setFormErrors] = useState({
     name: '',
     phone: '',
@@ -141,9 +143,11 @@ export default function LoginPage() {
 
   const handleResetPIN = async () => {
     if (!resetEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(resetEmail)) {
-      alert('Email tidak valid');
+      setResetEmailError('Email tidak valid');
       return;
     }
+
+    setResetEmailError('');
 
     // Show phone verification modal instead of prompt
     setShowPhoneVerificationModal(true);
@@ -165,12 +169,20 @@ export default function LoginPage() {
       
       const response = await customerPINAPI.forgotPIN(verificationPhone, resetEmail);
       console.log('✅ Reset email sent:', response.data);
+      
+      // Get message from response
+      const successMessage = response.data?.message || 'Permintaan reset PIN telah dikirim';
+      
       setResetSent(true);
       setShowPhoneVerificationModal(false);
       setVerificationPhone('');
+      
+      // Store message for display
+      setResetSuccessMessage(successMessage);
     } catch (error) {
       console.error('❌ Failed to send reset email:', error);
-      alert(error.response?.data?.error || 'Gagal mengirim link reset PIN');
+      const errorMsg = error.response?.data?.error || error.message || 'Gagal mengirim link reset PIN';
+      alert('⚠️ ' + errorMsg);
     } finally {
       setResetLoading(false);
     }
@@ -959,12 +971,21 @@ export default function LoginPage() {
                       <input
                         type="email"
                         value={resetEmail}
-                        onChange={(e) => setResetEmail(e.target.value)}
+                        onChange={(e) => {
+                          setResetEmail(e.target.value);
+                          setResetEmailError('');
+                        }}
                         placeholder="nama@email.com"
                         className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                         disabled={resetLoading}
                       />
                     </div>
+                    {resetEmailError && (
+                      <p className="text-xs text-red-600 dark:text-red-400 mt-1 ml-3 flex items-center gap-1">
+                        <span>⚠️</span>
+                        <span>{resetEmailError}</span>
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex gap-3">
@@ -998,7 +1019,7 @@ export default function LoginPage() {
                     Permintaan Reset Dikirim!
                   </h3>
                   <p className="text-gray-600 dark:text-gray-400 mb-6">
-                    {response.data.message || 'Link reset PIN telah dikirim'}<br />
+                    {resetSuccessMessage}<br />
                     <strong className="text-gray-900 dark:text-white">{resetEmail}</strong>
                   </p>
                   <Button
