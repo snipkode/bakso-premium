@@ -301,21 +301,110 @@ export default function HomePage() {
                 ))}
               </div>
             ) : (
-              <Card className="p-8 text-center bg-gradient-to-b from-white to-orange-50/50 dark:from-gray-800 dark:to-gray-800/50 border-0 shadow-lg">
-                <div className="w-20 h-20 mx-auto mb-4 relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-orange-500/20 rounded-full animate-pulse"></div>
-                  <div className="absolute inset-2 bg-gradient-to-r from-primary/10 to-orange-500/10 rounded-full flex items-center justify-center">
-                    <ShoppingBag className="w-8 h-8 text-primary" />
+              <Card className="p-8 text-center bg-gradient-to-b from-white to-orange-50/50 dark:from-gray-800 dark:to-gray-800/50 border-0 shadow-lg overflow-hidden relative">
+                {/* Decorative Background Pattern */}
+                <div className="absolute inset-0 opacity-5">
+                  <svg viewBox="0 0 200 200" className="w-full h-full">
+                    <text x="20" y="40" fontSize="20">🍜</text>
+                    <text x="60" y="30" fontSize="20">🍲</text>
+                    <text x="100" y="50" fontSize="20">🍛</text>
+                    <text x="140" y="35" fontSize="20">🍱</text>
+                    <text x="30" y="80" fontSize="20">🍢</text>
+                    <text x="80" y="70" fontSize="20">🍡</text>
+                    <text x="130" y="85" fontSize="20">🍜</text>
+                    <text x="50" y="120" fontSize="20">🍲</text>
+                    <text x="100" y="110" fontSize="20">🍛</text>
+                    <text x="150" y="125" fontSize="20">🍱</text>
+                  </svg>
+                </div>
+
+                <div className="relative z-10">
+                  {/* Aesthetic SVG Character - Bakso Seller */}
+                  <div className="w-32 h-32 mx-auto mb-4 relative">
+                    <svg viewBox="0 0 120 120" className="w-full h-full">
+                      {/* Background Circle */}
+                      <circle cx="60" cy="60" r="55" fill="url(#baksoGradient)" opacity="0.2"/>
+                      
+                      {/* Gradient Definitions */}
+                      <defs>
+                        <linearGradient id="baksoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#FF6B35"/>
+                          <stop offset="100%" stopColor="#FFA94D"/>
+                        </linearGradient>
+                        <linearGradient id="skinGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#FED7AA"/>
+                          <stop offset="100%" stopColor="#FDBA74"/>
+                        </linearGradient>
+                        <linearGradient id="shirtGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#FF6B35"/>
+                          <stop offset="100%" stopColor="#EA580C"/>
+                        </linearGradient>
+                      </defs>
+                      
+                      {/* Body */}
+                      <ellipse cx="60" cy="95" rx="30" ry="20" fill="url(#shirtGradient)"/>
+                      
+                      {/* Head */}
+                      <circle cx="60" cy="55" r="22" fill="url(#skinGradient)"/>
+                      
+                      {/* Hair */}
+                      <path d="M38 50 Q40 35 60 35 Q80 35 82 50 Q85 45 82 40 Q80 30 60 30 Q40 30 38 40 Q35 45 38 50" fill="#1F2937"/>
+                      <circle cx="60" cy="38" r="15" fill="#1F2937"/>
+                      
+                      {/* Happy Eyes */}
+                      <path d="M48 52 Q52 48 56 52" stroke="#1F2937" strokeWidth="2" fill="none" strokeLinecap="round"/>
+                      <path d="M64 52 Q68 48 72 52" stroke="#1F2937" strokeWidth="2" fill="none" strokeLinecap="round"/>
+                      
+                      {/* Smile */}
+                      <path d="M52 62 Q60 70 68 62" stroke="#1F2937" strokeWidth="2" fill="none" strokeLinecap="round"/>
+                      
+                      {/* Blush */}
+                      <ellipse cx="45" cy="58" rx="4" ry="2" fill="#FCA5A5" opacity="0.6"/>
+                      <ellipse cx="75" cy="58" rx="4" ry="2" fill="#FCA5A5" opacity="0.6"/>
+                      
+                      {/* Arm holding bakso cart */}
+                      <path d="M35 85 Q25 90 20 80" stroke="url(#skinGradient)" strokeWidth="5" strokeLinecap="round" fill="none"/>
+                      
+                      {/* Bakso Cart */}
+                      <rect x="5" y="75" width="20" height="15" rx="2" fill="#78350F"/>
+                      <rect x="7" y="77" width="16" height="8" rx="1" fill="#FCD34D"/>
+                      
+                      {/* Steam from bakso */}
+                      <path d="M12 72 Q14 68 12 64" stroke="#9CA3AF" strokeWidth="2" fill="none" opacity="0.6">
+                        <animate attributeName="d" values="M12 72 Q14 68 12 64;M12 70 Q10 66 12 62;M12 72 Q14 68 12 64" dur="1s" repeatCount="indefinite"/>
+                      </path>
+                      <path d="M18 70 Q20 66 18 62" stroke="#9CA3AF" strokeWidth="2" fill="none" opacity="0.6">
+                        <animate attributeName="d" values="M18 70 Q20 66 18 62;M18 68 Q16 64 18 60;M18 70 Q20 66 18 62" dur="1.2s" repeatCount="indefinite"/>
+                      </path>
+                      
+                      {/* Towel on shoulder */}
+                      <path d="M85 80 Q90 85 88 90" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" fill="none"/>
+                      
+                      {/* Sparkles */}
+                      <text x="95" y="35" fontSize="10" opacity="0.8">✨</text>
+                      <text x="90" y="50" fontSize="8" opacity="0.6">✨</text>
+                      <text x="25" y="30" fontSize="12" opacity="0.7">⭐</text>
+                    </svg>
+                  </div>
+                  
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                    {activeTab === 'featured' ? '🍜 Belum Ada Menu Favorit' : '🔥 Belum Ada Best Seller'}
+                  </h3>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
+                    {activeTab === 'featured'
+                      ? 'Yuk coba produk favorit kami! Menu bakso paling diminati akan muncul di sini.'
+                      : 'Tunggu apa lagi? Pesan sekarang dan jadilah yang pertama menikmati bakso premium kami!'}
+                  </p>
+                  
+                  {/* Food emojis decoration */}
+                  <div className="flex justify-center gap-2 text-xl">
+                    <span className="animate-bounce" style={{animationDelay: '0ms'}}>🍜</span>
+                    <span className="animate-bounce" style={{animationDelay: '100ms'}}>🍲</span>
+                    <span className="animate-bounce" style={{animationDelay: '200ms'}}>🍛</span>
+                    <span className="animate-bounce" style={{animationDelay: '300ms'}}>🍱</span>
+                    <span className="animate-bounce" style={{animationDelay: '400ms'}}>🥢</span>
                   </div>
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-                  {activeTab === 'featured' ? '🍜 Belum Ada Menu Favorit' : '🔥 Belum Ada Best Seller'}
-                </h3>
-                <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
-                  {activeTab === 'featured' 
-                    ? 'Yuk coba produk favorit kami! Menu bakso paling diminati akan muncul di sini.' 
-                    : 'Tunggu apa lagi? Pesan sekarang dan jadilah yang pertama menikmati bakso premium kami!'}
-                </p>
               </Card>
             )}
           </section>
