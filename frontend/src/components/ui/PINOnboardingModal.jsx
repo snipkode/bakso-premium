@@ -88,23 +88,18 @@ export function PINOnboardingModal({ isOpen, onClose, onComplete }) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
-          onClick={onClose}
+          // Prevent closing by clicking outside
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
             className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
+            // Prevent closing by clicking inside
           >
             {/* Header */}
             <div className="relative bg-gradient-to-br from-orange-500 to-amber-500 p-6 text-white">
-              <button
-                onClick={onClose}
-                className="absolute top-4 right-4 p-2 hover:bg-white/20 rounded-full transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              {/* Close button removed - modal cannot be closed until PIN is set */}
 
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
@@ -126,6 +121,12 @@ export function PINOnboardingModal({ isOpen, onClose, onComplete }) {
                     }`}
                   />
                 ))}
+              </div>
+
+              {/* Required Notice */}
+              <div className="mt-3 flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-2 rounded-xl">
+                <Shield className="w-4 h-4" />
+                <p className="text-xs font-medium">Wajib diatur untuk melanjutkan</p>
               </div>
             </div>
 
