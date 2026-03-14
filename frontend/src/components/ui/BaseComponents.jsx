@@ -95,8 +95,10 @@ export function ImageWithFallback({
   const [error, setError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [currentSrc, setCurrentSrc] = useState(src);
+  const [isLoading, setIsLoading] = useState(true);
 
   const handleError = () => {
+    setIsLoading(false);
     if (retryCount < retryLimit && src) {
       // Retry loading the same image with cache bust
       const timeout = Math.min(1000 * Math.pow(2, retryCount), 5000);
@@ -104,6 +106,7 @@ export function ImageWithFallback({
         const separator = src.includes('?') ? '&' : '?';
         setCurrentSrc(`${src}${separator}retry=${retryCount + 1}&t=${Date.now()}`);
         setRetryCount(retryCount + 1);
+        setIsLoading(true);
       }, timeout);
     } else {
       setError(true);
@@ -111,11 +114,67 @@ export function ImageWithFallback({
   };
 
   const handleLoad = () => {
+    setIsLoading(false);
     // Reset retry count on successful load
     if (retryCount > 0) {
       setRetryCount(0);
     }
   };
+
+  // Show loading skeleton while loading
+  if (isLoading) {
+    return (
+      <div className={cn('relative overflow-hidden bg-gradient-to-br from-orange-100 to-orange-200 dark:from-gray-700 dark:to-gray-800', className)}>
+        {/* Shimmer Loading Animation */}
+        <div className="absolute inset-0">
+          <div className="w-full h-full bg-gradient-to-r from-transparent via-white/20 dark:via-white/10 to-transparent shimmer-loading" />
+        </div>
+        {/* Center Loading Icon */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0.5 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.3 }}
+            className="w-12 h-12 relative"
+          >
+            {/* Animated Loading Ring */}
+            <svg className="w-full h-full animate-spin" viewBox="0 0 100 100">
+              <circle
+                cx="50"
+                cy="50"
+                r="40"
+                stroke="currentColor"
+                strokeWidth="6"
+                fill="none"
+                className="text-orange-200 dark:text-gray-600"
+              />
+              <path
+                d="M50 10 A40 40 0 0 1 90 50"
+                stroke="currentColor"
+                strokeWidth="6"
+                fill="none"
+                strokeLinecap="round"
+                className="text-orange-500"
+              >
+                <animateTransform
+                  attributeName="transform"
+                  type="rotate"
+                  from="0 50 50"
+                  to="360 50 50"
+                  dur="1s"
+                  repeatCount="indefinite"
+                />
+              </path>
+            </svg>
+            {/* Food Icon in Center */}
+            <div className="absolute inset-0 flex items-center justify-center text-lg">
+              {fallbackType === 'drink' ? '🥤' : '🍜'}
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
 
   if (!currentSrc || error) {
     return (
