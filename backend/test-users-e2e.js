@@ -83,8 +83,9 @@ async function adminLogin() {
 async function testListUsers() {
   logStep('Step 1: List Users');
   
-  return [
-    await test('Get all users', async () => {
+  const results = [];
+  
+  results.push(await test('Get all users', async () => {
     const headers = { Authorization: `Bearer ${state.adminToken}` };
     const response = await axios.get(`${API_URL}/users`, { headers });
     
@@ -148,8 +149,9 @@ async function testListUsers() {
     });
     
     log(`      Found ${users.length} users matching "Admin"`, 'cyan');
-  });
-  ];
+  }));
+  
+  return results;
 }
 
 async function testGetUserById() {

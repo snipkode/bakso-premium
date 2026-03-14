@@ -148,4 +148,15 @@ export const queueAPI = {
   adjustQueue: (currentQueue, totalOrders) => api.patch('/queue/adjust', { current_queue: currentQueue, total_orders: totalOrders }),
 };
 
+// Reports API
+export const reportsAPI = {
+  getStats: (range) => api.get('/reports/stats', { params: { range } }),
+  getReportList: () => api.get('/reports'),
+  generateDaily: (params) => api.get('/reports/daily', { params, responseType: 'blob' }),
+  generateWeekly: (params) => api.get('/reports/weekly', { params, responseType: 'blob' }),
+  generateMonthly: (params) => api.get('/reports/monthly', { params, responseType: 'blob' }),
+  generateStaff: (params) => api.get('/reports/staff', { params, responseType: 'blob' }),
+  download: (fileName) => api.get(`/reports/download/${fileName}`, { responseType: 'blob' }),
+};
+
 export default api;

@@ -1,6 +1,112 @@
 const reportGenerator = require('../utils/reportGenerator');
 const { auth, authorize } = require('../middleware/auth');
-const multer = require('../middleware/upload');
+const { Order, Payment, User, OrderItem, Product } = require('../models');
+const { Op } = require('sequelize');
+const path = require('path');
+const fs = require('fs');
+
+// Get dashboard stats
+exports.getStats = async (req, res) => {
+  try {
+    const { range = 'today' } = req.query;
+    
+    let startDate, endDate;
+    const now = new Date();
+    
+    switch (range) {
+      case 'today':
+        startDate = new Date(now.setHours(0, 0, 0, 0));
+        endDate = new Date(now.setHours(23, 59, 59, 999));
+        break;
+      case 'week':
+        startDate = new Date(now.setDate(now.getDate() - 7));
+        endDate = new Date();
+        break;
+      case 'month':
+        startDate = new Date(now.setMonth(now.getMonth() - 1));
+        endDate = new Date();
+        break;
+      case 'year':
+        startDate = new Date(now.setFullYear(now.getFullYear() - 1));
+        endDate = new Date();
+        break;
+      default:
+        startDate = new Date(now.setHours(0, 0, 0, 0));
+        endDate = new Date(now.setHours(23, 59, 59, 999));
+    }
+
+    // Get order stats
+    const orders = await Order.findAll({
+      where: {
+        createdAt: { [Op.gte]: startDate, [Op.lte]: endDate },
+      },
+      attributes: [
+        'status',
+        'total',
+        [Order.sequelize.fn('COUNT', Order.sequelize.col('Order.id')), 'count'],
+      ],
+      group: ['status'],
+      raw: true,
+    });
+
+    // Calculate revenue
+    const completedOrders = await Order.findAll({
+      where: {
+        status: 'completed',
+        createdAt: { [Op.gte]: startDate, [Op.lte]: endDate },
+      },
+      attributes: ['total'],
+      raw: true,
+    });
+
+    const revenue = completedOrders.reduce((sum, o) => sum + o.total, 0);
+
+    // Get new customers
+    const newCustomers = await User.count({
+      where: {
+        role: 'customer',
+        createdAt: { [Op.gte]: startDate, [Op.lte]: endDate },
+      },
+    });
+
+    // Get products sold
+    const orderItems = await OrderItem.findAll({
+      where: {
+        createdAt: { [Op.gte]: startDate, [Op.lte]: endDate },
+      },
+      attributes: [
+        [OrderItem.sequelize.fn('SUM', OrderItem.sequelize.col('quantity')), 'total'],
+      ],
+      raw: true,
+    });
+
+    const productsSold = orderItems[0]?.total || 0;
+
+    // Calculate completion rate
+    const totalOrders = await Order.count({
+      where: {
+        createdAt: { [Op.gte]: startDate, [Op.lte]: endDate },
+      },
+    });
+
+    const completedCount = completedOrders.length;
+    const completionRate = totalOrders > 0 ? Math.round((completedCount / totalOrders) * 100) : 0;
+
+    res.json({
+      success: true,
+      stats: {
+        revenue,
+        orders: totalOrders,
+        productsSold,
+        newCustomers,
+        completionRate,
+      },
+    });
+  } catch (error) {
+    console.error('Get stats error:', error);
+    res.status(500).json({ error: 'Failed to get stats' });
+  }
+};
 
 // Get report list
 exports.getReportList = async (req, res) => {

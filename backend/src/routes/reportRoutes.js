@@ -7,6 +7,9 @@ const { auth, authorize } = require('../middleware/auth');
 router.use(auth);
 router.use(authorize('admin'));
 
+// Get dashboard stats
+router.get('/stats', reportController.getStats);
+
 // Get report list
 router.get('/', reportController.getReportList);
 

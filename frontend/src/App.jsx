@@ -124,59 +124,9 @@ function App() {
             }
           />
 
-          {/* Admin Routes */}
+          {/* Admin Routes (with AdminLayout) */}
           <Route
             path="/admin"
-            element={
-              <ProtectedRoute roles={['admin']}>
-                <AdminDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/orders"
-            element={
-              <ProtectedRoute roles={['admin']}>
-                <AdminOrders />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/products"
-            element={
-              <ProtectedRoute roles={['admin']}>
-                <AdminProducts />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/payments"
-            element={
-              <ProtectedRoute roles={['admin']}>
-                <AdminPayments />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/users"
-            element={
-              <ProtectedRoute roles={['admin']}>
-                <AdminUsers />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/reports"
-            element={
-              <ProtectedRoute roles={['admin']}>
-                <AdminReports />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Admin Layout Routes (with sidebar) */}
-          <Route
-            path="/admin-panel"
             element={
               <ProtectedRoute roles={['admin']}>
                 <AdminLayout />

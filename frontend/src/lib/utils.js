@@ -5,7 +5,20 @@ export function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
-export function formatRupiah(amount) {
+export function formatRupiah(amount, options = {}) {
+  const { compact = false } = options;
+  
+  if (compact) {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+      notation: 'compact',
+      compactDisplay: 'short',
+    }).format(amount);
+  }
+  
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
     currency: 'IDR',
@@ -23,12 +36,24 @@ export function formatTime(minutes) {
   return mins > 0 ? `${hours} jam ${mins} menit` : `${hours} jam`;
 }
 
-export function formatDate(dateString) {
+export function formatDate(dateString, options = {}) {
+  const { short = false } = options;
+  const date = new Date(dateString);
+  
+  if (short) {
+    return new Intl.DateTimeFormat('id-ID', {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(date);
+  }
+  
   return new Intl.DateTimeFormat('id-ID', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
-  }).format(new Date(dateString));
+  }).format(date);
 }
 
 export function formatDateTime(dateString) {

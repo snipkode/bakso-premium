@@ -182,6 +182,93 @@ exports.updateUserStatus = async (req, res) => {
   }
 };
 
+// Update user (admin only)
+exports.updateUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, phone, role, password } = req.body;
+
+    const user = await User.findByPk(id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (name) user.name = name;
+    if (email) user.email = email;
+    if (phone) user.phone = phone;
+    if (role) user.role = role;
+    
+    if (password) {
+      const bcrypt = require('bcryptjs');
+      user.password = await bcrypt.hash(password, 10);
+    }
+
+    await user.save();
+
+    res.json({ 
+      success: true, 
+      user: {
+        id: user.id,
+        name: user.name,
+        phone: user.phone,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+      }
+    });
+  } catch (error) {
+    console.error('Update user error:', error);
+    res.status(500).json({ error: 'Failed to update user' });
+  }
+};
+
+// Create user (admin only)
+exports.createUser = async (req, res) => {
+  try {
+    const { name, phone, email, password, role, status } = req.body;
+
+    // Validate required fields
+    if (!name || !phone) {
+      return res.status(400).json({ error: 'Name and phone are required' });
+    }
+
+    // Check if phone already exists
+    const existingUser = await User.findOne({ where: { phone } });
+    if (existingUser) {
+      return res.status(409).json({ error: 'Phone number already registered' });
+    }
+
+    // Hash password
+    const bcrypt = require('bcryptjs');
+    const hashedPassword = await bcrypt.hash(password || '123456', 10);
+
+    // Create user
+    const user = await User.create({
+      name,
+      phone,
+      email: email || null,
+      password: hashedPassword,
+      role: role || 'customer',
+      status: status || 'active',
+    });
+
+    res.json({ 
+      success: true, 
+      user: {
+        id: user.id,
+        name: user.name,
+        phone: user.phone,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+      }
+    });
+  } catch (error) {
+    console.error('Create user error:', error);
+    res.status(500).json({ error: 'Failed to create user' });
+  }
+};
+
 // Delete user (admin only)
 exports.deleteUser = async (req, res) => {
   try {
