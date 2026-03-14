@@ -23,6 +23,7 @@ const queueRoutes = require('./routes/queueRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const userRoutes = require('./routes/userRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
+const customerPinRoutes = require('./routes/customerPinRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -63,6 +64,7 @@ app.use('/api/queue', queueRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/customer-pin', customerPinRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -45,6 +45,22 @@ const User = sequelize.define('user', {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW,
   },
+  pin_hash: {
+    type: DataTypes.STRING,
+    allowNull: true, // For customer PIN authentication
+  },
+  pin_reset_token: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  pin_reset_expires: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  is_pin_set: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
 }, {
   hooks: {
     beforeCreate: async (user) => {
