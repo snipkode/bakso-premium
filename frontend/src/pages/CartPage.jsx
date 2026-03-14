@@ -146,7 +146,17 @@ export default function CartPage() {
       </div>
 
       {/* Checkout Button - Card style inside content flow (above BottomNav) */}
-      <div className="px-4 mt-4">
+      <div className="px-4 mt-4 space-y-3">
+        {/* Continue Shopping Button */}
+        <Button
+          onClick={() => navigate('/menu')}
+          variant="secondary"
+          className="w-full bg-white dark:bg-gray-800 border-2 border-orange-200 dark:border-gray-600 text-primary hover:bg-orange-50 dark:hover:bg-gray-700 py-3.5 rounded-full font-semibold text-sm"
+        >
+          🛒 Tambah Pesanan
+        </Button>
+
+        {/* Checkout Button */}
         <Card className="p-4 bg-gradient-to-r from-orange-50 to-orange-100 dark:from-gray-800 dark:to-gray-700 border-orange-200 dark:border-gray-600 sticky bottom-20 shadow-lg z-30">
           <div className="flex items-center gap-3">
             <div className="flex-1">
