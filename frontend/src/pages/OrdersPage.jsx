@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, FileText } from 'lucide-react';
+import { Clock, FileText, MapPin, Truck } from 'lucide-react';
 import { orderAPI } from '../lib/api';
 import { Button, Card, LoadingSpinner, EmptyState } from '../components/ui/BaseComponents';
 import { OrderCard } from '../components/ui';
@@ -38,8 +38,16 @@ export default function OrdersPage() {
     { value: 'all', label: 'Semua' },
     { value: 'pending_payment', label: 'Belum Bayar' },
     { value: 'paid', label: 'Dibayar' },
+    { value: 'preparing', label: 'Disiapkan' },
+    { value: 'ready', label: 'Siap' },
+    { value: 'delivering', label: 'Dikirim' },
     { value: 'completed', label: 'Selesai' },
   ];
+
+  // Get orders that can be tracked (active orders)
+  const trackableOrders = orders.filter(
+    (order) => ['paid', 'preparing', 'ready', 'delivering'].includes(order.status)
+  );
 
   if (loading) {
     return (
@@ -55,6 +63,31 @@ export default function OrdersPage() {
       <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border px-4 py-3">
         <h1 className="text-2xl font-bold text-text-primary">Pesanan Saya</h1>
       </div>
+
+      {/* Track Active Order Card */}
+      {trackableOrders.length > 0 && (
+        <div className="px-4 py-4">
+          <Card 
+            onClick={() => navigate(`/track/${trackableOrders[0].id}`)}
+            className="p-4 bg-gradient-to-r from-primary to-orange-500 text-white cursor-pointer hover:shadow-lg transition-shadow"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                  <Truck className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg">Lacak Pesanan</h3>
+                  <p className="text-sm text-white/90">
+                    #{trackableOrders[0].order_number} - {trackableOrders[0].status === 'preparing' ? 'Sedang disiapkan' : trackableOrders[0].status === 'ready' ? 'Siap diambil' : 'Sedang dikirim'}
+                  </p>
+                </div>
+              </div>
+              <MapPin className="w-6 h-6 text-white/70" />
+            </div>
+          </Card>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="px-4 py-3 overflow-x-auto">

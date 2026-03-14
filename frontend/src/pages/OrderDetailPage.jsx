@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Clock, CheckCircle, AlertCircle, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, Clock, CheckCircle, AlertCircle, ShoppingBag, MapPin, Truck } from 'lucide-react';
 import { orderAPI } from '../lib/api';
 import { useAuthStore } from '../store';
 import { Button, Card, LoadingSpinner, Badge } from '../components/ui/BaseComponents';
@@ -160,6 +160,29 @@ export default function OrderDetailPage() {
             </div>
           </div>
         </Card>
+
+        {/* Track Order Button - For active orders */}
+        {['paid', 'preparing', 'ready', 'delivering'].includes(order.status) && (
+          <Card 
+            onClick={() => navigate(`/track/${order.id}`)}
+            className="p-4 bg-gradient-to-r from-primary to-orange-500 text-white cursor-pointer hover:shadow-lg transition-shadow"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                  <Truck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold">Lacak Pesanan</h3>
+                  <p className="text-sm text-white/90">
+                    Lihat progress pesanan Anda
+                  </p>
+                </div>
+              </div>
+              <MapPin className="w-6 h-6 text-white/70" />
+            </div>
+          </Card>
+        )}
 
         {/* Order Info */}
         <Card className="p-4 space-y-3">
