@@ -1,158 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Phone, ArrowRight, ChefHat, Truck, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { User, Phone, ArrowRight, ChefHat, Eye, EyeOff, Sparkles, KeyRound, Mail } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { Button, Input, Card } from '@/components/ui/BaseComponents';
-
-// Delicious Bakso SVG Animation Component
-function BaksoAnimation() {
-  return (
-    <svg viewBox="0 0 200 200" className="w-48 h-48 md:w-64 md:h-64">
-      {/* Background Glow */}
-      <defs>
-        <radialGradient id="bowlGlow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#F97316" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="#F97316" stopOpacity="0" />
-        </radialGradient>
-        <linearGradient id="bowlGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#F97316" />
-          <stop offset="100%" stopColor="#EA580C" />
-        </linearGradient>
-        <linearGradient id="soupGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#FCD34D" />
-          <stop offset="100%" stopColor="#F59E0B" />
-        </linearGradient>
-      </defs>
-
-      {/* Glow Background */}
-      <circle cx="100" cy="100" r="80" fill="url(#bowlGlow)">
-        <animate attributeName="r" values="70;80;70" dur="2s" repeatCount="indefinite" />
-        <animate attributeName="opacity" values="0.2;0.3;0.2" dur="2s" repeatCount="indefinite" />
-      </circle>
-
-      {/* Bowl */}
-      <motion.ellipse
-        cx="100"
-        cy="140"
-        rx="70"
-        ry="20"
-        fill="url(#bowlGradient)"
-        initial={{ scaleY: 0.8 }}
-        animate={{ scaleY: 1 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      />
-      <motion.path
-        d="M30 140 C30 140 35 170 100 170 C165 170 170 140 170 140"
-        fill="#EA580C"
-        initial={{ scaleY: 0.8 }}
-        animate={{ scaleY: 1 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      />
-
-      {/* Soup */}
-      <ellipse cx="100" cy="135" rx="60" ry="15" fill="url(#soupGradient)" />
-
-      {/* Steam Animations */}
-      <g className="steam">
-        <path d="M70 120 Q75 100 70 85" stroke="#FFFFFF" strokeWidth="3" fill="none" opacity="0.6">
-          <animate attributeName="d" values="M70 120 Q75 100 70 85;M70 118 Q72 98 68 83;M70 120 Q75 100 70 85" dur="2s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.6;0.3;0.6" dur="2s" repeatCount="indefinite" />
-        </path>
-        <path d="M100 115 Q105 95 100 80" stroke="#FFFFFF" strokeWidth="3" fill="none" opacity="0.6">
-          <animate attributeName="d" values="M100 115 Q105 95 100 80;M100 113 Q102 93 98 78;M100 115 Q105 95 100 80" dur="2.5s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.6;0.3;0.6" dur="2.5s" repeatCount="indefinite" />
-        </path>
-        <path d="M130 120 Q135 100 130 85" stroke="#FFFFFF" strokeWidth="3" fill="none" opacity="0.6">
-          <animate attributeName="d" values="M130 120 Q135 100 130 85;M130 118 Q132 98 128 83;M130 120 Q135 100 130 85" dur="2s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.6;0.3;0.6" dur="2s" repeatCount="indefinite" />
-        </path>
-      </g>
-
-      {/* Meatballs */}
-      <motion.circle
-        cx="80"
-        cy="135"
-        r="12"
-        fill="#F97316"
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ duration: 0.4, delay: 0.4, type: "spring" }}
-      />
-      <motion.circle
-        cx="120"
-        cy="135"
-        r="12"
-        fill="#F97316"
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ duration: 0.4, delay: 0.5, type: "spring" }}
-      />
-      <motion.circle
-        cx="100"
-        cy="140"
-        r="14"
-        fill="#F97316"
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ duration: 0.4, delay: 0.6, type: "spring" }}
-      />
-
-      {/* Noodles */}
-      <motion.path
-        d="M60 130 Q80 125 100 130 Q120 135 140 130"
-        stroke="#FCD34D"
-        strokeWidth="4"
-        fill="none"
-        strokeLinecap="round"
-        initial={{ pathLength: 0 }}
-        animate={{ pathLength: 1 }}
-        transition={{ duration: 1, delay: 0.7 }}
-      />
-      <motion.path
-        d="M65 138 Q85 133 105 138 Q125 143 145 138"
-        stroke="#FCD34D"
-        strokeWidth="3"
-        fill="none"
-        strokeLinecap="round"
-        initial={{ pathLength: 0 }}
-        animate={{ pathLength: 1 }}
-        transition={{ duration: 1, delay: 0.8 }}
-      />
-
-      {/* Sparkles */}
-      <motion.g
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1, duration: 0.5 }}
-      >
-        <circle cx="150" cy="110" r="3" fill="#FEF3C7">
-          <animate attributeName="opacity" values="1;0.5;1" dur="1.5s" repeatCount="indefinite" />
-        </circle>
-        <circle cx="50" cy="115" r="2" fill="#FEF3C7">
-          <animate attributeName="opacity" values="1;0.5;1" dur="1.5s" repeatCount="indefinite" begin="0.5s" />
-        </circle>
-        <circle cx="160" cy="130" r="2.5" fill="#FEF3C7">
-          <animate attributeName="opacity" values="1;0.5;1" dur="1.5s" repeatCount="indefinite" begin="1s" />
-        </circle>
-      </motion.g>
-
-      {/* Bowl Highlight */}
-      <ellipse cx="100" cy="135" rx="60" ry="15" fill="none" stroke="#FDBA74" strokeWidth="2" opacity="0.5" />
-    </svg>
-  );
-}
+import { BaksoLoginAnimation } from '@/components/ui/BaksoLoginAnimation';
+import { BaksoIconAnimation } from '@/components/ui/BaksoIconAnimation';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { customerAuth, staffLogin, isLoading, error } = useAuthStore();
 
   const [loginType, setLoginType] = useState('customer');
+  const [customerSubTab, setCustomerSubTab] = useState('new');
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
     password: '',
+    pin: '',
   });
 
   const handleCustomerAuth = async (e) => {
@@ -180,217 +46,394 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen h-screen overflow-hidden bg-gradient-to-br from-orange-50 via-amber-50 to-orange-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 flex flex-col">
-      {/* Animated Background Pattern */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-orange-200 dark:bg-orange-900/20 rounded-full blur-3xl opacity-30 animate-pulse" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-amber-200 dark:bg-amber-900/20 rounded-full blur-3xl opacity-30 animate-pulse" style={{ animationDelay: '1s' }} />
-      </div>
-
-      {/* Header with Bakso Animation */}
-      <div className="relative px-4 pt-8 pb-4 text-center">
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.6, type: "spring" }}
-          className="mb-4"
-        >
-          <BaksoAnimation />
-        </motion.div>
-
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-600 dark:from-orange-400 dark:to-amber-400">
-            Bakso Premium
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm font-medium">
-            Nikmati bakso terbaik di kota 🍜
-          </p>
-        </motion.div>
-      </div>
-
-      {/* Login Type Tabs */}
-      <div className="relative px-4 mb-6">
-        <Card className="p-1.5 flex gap-1 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-lg border-0">
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setLoginType('customer')}
-            className={`flex-1 py-3 rounded-xl font-semibold transition-all ${
-              loginType === 'customer'
-                ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/30'
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-            }`}
-          >
-            🍽️ Pelanggan
-          </motion.button>
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setLoginType('staff')}
-            className={`flex-1 py-3 rounded-xl font-semibold transition-all ${
-              loginType === 'staff'
-                ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg shadow-blue-500/30'
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-            }`}
-          >
-            👨‍🍳 Staff
-          </motion.button>
-        </Card>
-      </div>
-
-      {/* Forms */}
-      <div className="relative flex-1 px-4">
-        <AnimatePresence mode="wait">
-          {loginType === 'customer' ? (
-            <motion.form
-              key="customer"
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 30 }}
-              transition={{ duration: 0.3 }}
-              onSubmit={handleCustomerAuth}
-              className="space-y-4"
-            >
-              <div className="space-y-4">
-                <div className="relative">
-                  <Input
-                    label="Nama Lengkap"
-                    placeholder="Masukkan nama Anda"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                    className="pl-11"
-                  />
-                  <User className="absolute left-3 top-9 w-5 h-5 text-gray-400" />
-                </div>
-                <div className="relative">
-                  <Input
-                    label="Nomor WhatsApp"
-                    placeholder="081234567890"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    required
-                    className="pl-11"
-                  />
-                  <Phone className="absolute left-3 top-9 w-5 h-5 text-gray-400" />
-                </div>
-              </div>
-
-              <motion.div whileTap={{ scale: 0.98 }}>
-                <Button
-                  type="submit"
-                  className="w-full mt-6 py-4 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-base shadow-xl shadow-orange-500/30 rounded-2xl"
-                  isLoading={isLoading}
-                >
-                  Lanjut
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              </motion.div>
-            </motion.form>
-          ) : (
-            <motion.form
-              key="staff"
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -30 }}
-              transition={{ duration: 0.3 }}
-              onSubmit={handleStaffLogin}
-              className="space-y-4"
-            >
-              <div className="space-y-4">
-                <div className="relative">
-                  <Input
-                    label="Nomor Telepon"
-                    placeholder="Masukkan nomor telepon"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    required
-                    className="pl-11"
-                  />
-                  <Phone className="absolute left-3 top-9 w-5 h-5 text-gray-400" />
-                </div>
-                <div className="relative">
-                  <Input
-                    label="Password"
-                    placeholder="Masukkan password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    required
-                    className="pl-11 pr-11"
-                  />
-                  <ChefHat className="absolute left-3 top-9 w-5 h-5 text-gray-400" />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-9 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-              </div>
-
-              <motion.div whileTap={{ scale: 0.98 }}>
-                <Button
-                  type="submit"
-                  className="w-full mt-6 py-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-bold text-base shadow-xl shadow-blue-500/30 rounded-2xl"
-                  isLoading={isLoading}
-                >
-                  Login Staff
-                </Button>
-              </motion.div>
-
-              {/* Quick login hints */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="mt-6 p-4 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl border border-gray-200 dark:border-gray-700"
-              >
-                <div className="flex items-center gap-2 mb-3">
-                  <Sparkles className="w-4 h-4 text-amber-500" />
-                  <p className="text-sm font-bold text-gray-900 dark:text-white">Demo Login:</p>
-                </div>
-                <div className="space-y-2 text-xs">
-                  <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                    <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white font-bold text-xs">A</div>
-                    <span className="font-mono">081234567890 / admin123</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                    <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold text-xs">K</div>
-                    <span className="font-mono">081234567891 / kitchen123</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                    <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xs">D</div>
-                    <span className="font-mono">081234567892 / driver123</span>
-                  </div>
-                </div>
-              </motion.div>
-            </motion.form>
-          )}
-        </AnimatePresence>
-
-        {error && (
+    <div className="fixed inset-0 bg-gradient-to-br from-orange-50 via-amber-50 to-orange-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 overflow-hidden">
+      {/* Loading Overlay */}
+      <AnimatePresence>
+        {isLoading && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center"
           >
-            <p className="text-sm text-red-600 dark:text-red-400 text-center font-medium">{error}</p>
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.8, opacity: 0, y: 20 }}
+              className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-6"
+            >
+              <div className="w-40 h-40">
+                <BaksoLoginAnimation />
+              </div>
+              <p className="text-center text-sm font-semibold text-gray-700 dark:text-gray-300 mt-4">
+                Memproses...
+              </p>
+            </motion.div>
           </motion.div>
         )}
-      </div>
+      </AnimatePresence>
 
-      {/* Footer */}
-      <div className="relative px-4 py-6 text-center">
-        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-          Dengan melanjutkan, Anda menyetujui{' '}
-          <span className="text-orange-600 dark:text-orange-400 font-semibold">Syarat & Ketentuan</span>
-        </p>
+      {/* Main Content - Scrollable */}
+      <div className="h-full overflow-y-auto">
+        <div className="min-h-full flex flex-col">
+          {/* Header */}
+          <div className="flex-shrink-0 px-4 pt-6 pb-4 text-center">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.6, type: "spring" }}
+              className="mb-3"
+            >
+              <div className="w-32 h-32 md:w-40 md:h-40 mx-auto">
+                <BaksoIconAnimation className="w-full h-full" />
+              </div>
+              <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-600 dark:from-orange-400 dark:to-amber-400 mt-3">
+                Bakso Premium
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm font-medium">
+                Nikmati bakso terbaik di kota 🍜
+              </p>
+            </motion.div>
+          </div>
+
+          {/* Login Type Tabs */}
+          <div className="flex-shrink-0 px-4 mb-3">
+            <Card className="p-1.5 flex gap-1 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg border-0">
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setLoginType('customer')}
+                className={`flex-1 py-3 rounded-xl font-semibold transition-all ${
+                  loginType === 'customer'
+                    ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/30'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                🍽️ Pelanggan
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setLoginType('staff')}
+                className={`flex-1 py-3 rounded-xl font-semibold transition-all ${
+                  loginType === 'staff'
+                    ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg shadow-blue-500/30'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                👨‍🍳 Staff
+              </motion.button>
+            </Card>
+          </div>
+
+          {/* Customer Type - Radio Buttons */}
+          <AnimatePresence>
+            {loginType === 'customer' && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="flex-shrink-0 px-4 mb-4 overflow-hidden"
+              >
+                <Card className="p-4 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-800 dark:to-gray-800 border-orange-200/50 dark:border-gray-700">
+                  <div className="flex items-center justify-center gap-6">
+                    {/* Radio Buttons */}
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <div className="relative">
+                        <input
+                          type="radio"
+                          name="customerType"
+                          value="baru"
+                          checked={customerSubTab === 'new'}
+                          onChange={() => setCustomerSubTab('new')}
+                          className="sr-only"
+                        />
+                        <div className={`w-5 h-5 rounded-full border-2 transition-all ${
+                          customerSubTab === 'new'
+                            ? 'border-orange-500 bg-orange-500'
+                            : 'border-gray-300 dark:border-gray-600'
+                        }`}>
+                          {customerSubTab === 'new' && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              className="w-full h-full bg-white rounded-full"
+                              style={{ margin: '2px' }}
+                            />
+                          )}
+                        </div>
+                      </div>
+                      <span className={`text-sm font-semibold ${
+                        customerSubTab === 'new'
+                          ? 'text-orange-600 dark:text-orange-400'
+                          : 'text-gray-600 dark:text-gray-400'
+                      }`}>
+                        Baru
+                      </span>
+                    </label>
+
+                    <div className="w-px h-6 bg-gray-300 dark:bg-gray-600" />
+
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <div className="relative">
+                        <input
+                          type="radio"
+                          name="customerType"
+                          value="lama"
+                          checked={customerSubTab === 'existing'}
+                          onChange={() => setCustomerSubTab('existing')}
+                          className="sr-only"
+                        />
+                        <div className={`w-5 h-5 rounded-full border-2 transition-all ${
+                          customerSubTab === 'existing'
+                            ? 'border-orange-500 bg-orange-500'
+                            : 'border-gray-300 dark:border-gray-600'
+                        }`}>
+                          {customerSubTab === 'existing' && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              className="w-full h-full bg-white rounded-full"
+                              style={{ margin: '2px' }}
+                            />
+                          )}
+                        </div>
+                      </div>
+                      <span className={`text-sm font-semibold ${
+                        customerSubTab === 'existing'
+                          ? 'text-orange-600 dark:text-orange-400'
+                          : 'text-gray-600 dark:text-gray-400'
+                      }`}>
+                        Lama
+                      </span>
+                    </label>
+                  </div>
+                </Card>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Forms */}
+          <div className="flex-1 px-4 pb-6">
+            <AnimatePresence mode="wait">
+              {loginType === 'customer' ? (
+                customerSubTab === 'new' ? (
+                  <motion.form
+                    key="new-customer"
+                    initial={{ opacity: 0, x: -30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 30 }}
+                    transition={{ duration: 0.3 }}
+                    onSubmit={handleCustomerAuth}
+                    className="space-y-4"
+                  >
+                    <div className="space-y-4">
+                      <div className="relative">
+                        <Input
+                          label="Nama Lengkap"
+                          placeholder="Masukkan nama Anda"
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          required
+                          className="pl-11"
+                        />
+                        <User className="absolute left-3 top-9 w-5 h-5 text-gray-400" />
+                      </div>
+                      <div className="relative">
+                        <Input
+                          label="Nomor WhatsApp"
+                          placeholder="081234567890"
+                          type="tel"
+                          value={formData.phone}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          required
+                          className="pl-11"
+                        />
+                        <Phone className="absolute left-3 top-9 w-5 h-5 text-gray-400" />
+                      </div>
+                    </div>
+
+                    <motion.button
+                      whileTap={{ scale: 0.98 }}
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full py-4 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-base shadow-xl shadow-orange-500/30 rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Lanjut <ArrowRight className="w-5 h-5 ml-2 inline" />
+                    </motion.button>
+
+                    <p className="text-xs text-center text-gray-500 dark:text-gray-400 mt-4">
+                      👋 Selamat datang! Anda akan langsung login dengan nomor WhatsApp
+                    </p>
+                  </motion.form>
+                ) : (
+                  <motion.form
+                    key="existing-customer"
+                    initial={{ opacity: 0, x: 30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -30 }}
+                    transition={{ duration: 0.3 }}
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      console.log('PIN login:', formData.phone, formData.pin);
+                    }}
+                    className="space-y-4"
+                  >
+                    <div className="space-y-4">
+                      <div className="relative">
+                        <Input
+                          label="Nomor Telepon"
+                          placeholder="Masukkan nomor telepon"
+                          type="tel"
+                          value={formData.phone}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          required
+                          className="pl-11"
+                        />
+                        <Phone className="absolute left-3 top-9 w-5 h-5 text-gray-400" />
+                      </div>
+                      <div className="relative">
+                        <Input
+                          label="PIN (6 digit)"
+                          placeholder="Masukkan PIN Anda"
+                          type="password"
+                          maxLength={6}
+                          pattern="\d{6}"
+                          value={formData.pin}
+                          onChange={(e) => setFormData({ ...formData, pin: e.target.value.replace(/\D/g, '') })}
+                          required
+                          className="pl-11"
+                        />
+                        <KeyRound className="absolute left-3 top-9 w-5 h-5 text-gray-400" />
+                      </div>
+                    </div>
+
+                    <motion.button
+                      whileTap={{ scale: 0.98 }}
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full py-4 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-base shadow-xl shadow-orange-500/30 rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Login dengan PIN
+                    </motion.button>
+
+                    <div className="text-center">
+                      <button
+                        type="button"
+                        className="text-sm text-orange-600 dark:text-orange-400 font-medium hover:underline flex items-center justify-center gap-1 mx-auto"
+                      >
+                        <Mail className="w-4 h-4" />
+                        Lupa PIN? Reset via email
+                      </button>
+                    </div>
+
+                    <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-200 dark:border-blue-800">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center flex-shrink-0">
+                          <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div className="text-xs text-blue-800 dark:text-blue-300">
+                          <p className="font-bold mb-1">Belum punya PIN?</p>
+                          <p>Anda bisa mengatur PIN setelah login sebagai pelanggan baru.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.form>
+                )
+              ) : (
+                <motion.form
+                  key="staff"
+                  initial={{ opacity: 0, x: 30 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -30 }}
+                  transition={{ duration: 0.3 }}
+                  onSubmit={handleStaffLogin}
+                  className="space-y-4"
+                >
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <Input
+                        label="Nomor Telepon"
+                        placeholder="Masukkan nomor telepon"
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        required
+                        className="pl-11"
+                      />
+                      <Phone className="absolute left-3 top-9 w-5 h-5 text-gray-400" />
+                    </div>
+                    <div className="relative">
+                      <Input
+                        label="Password"
+                        placeholder="Masukkan password"
+                        type={showPassword ? 'text' : 'password'}
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        required
+                        className="pl-11 pr-11"
+                      />
+                      <ChefHat className="absolute left-3 top-9 w-5 h-5 text-gray-400" />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-9 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      >
+                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <motion.button
+                    whileTap={{ scale: 0.98 }}
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full py-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-bold text-base shadow-xl shadow-blue-500/30 rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Login Staff
+                  </motion.button>
+
+                  <div className="mt-6 p-4 bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-2xl border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Sparkles className="w-4 h-4 text-amber-500" />
+                      <p className="text-sm font-bold text-gray-900 dark:text-white">Demo Login:</p>
+                    </div>
+                    <div className="space-y-2 text-xs">
+                      <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                        <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white font-bold text-xs">A</div>
+                        <span className="font-mono">081234567890 / admin123</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                        <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold text-xs">K</div>
+                        <span className="font-mono">081234567891 / kitchen123</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                        <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xs">D</div>
+                        <span className="font-mono">081234567892 / driver123</span>
+                      </div>
+                    </div>
+                  </div>
+                </motion.form>
+              )}
+            </AnimatePresence>
+
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl"
+              >
+                <p className="text-sm text-red-600 dark:text-red-400 text-center font-medium">{error}</p>
+              </motion.div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="flex-shrink-0 px-4 py-4 text-center border-t border-gray-200/50 dark:border-gray-700/50 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+              Dengan melanjutkan, Anda menyetujui{' '}
+              <span className="text-orange-600 dark:text-orange-400 font-semibold">Syarat & Ketentuan</span>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
