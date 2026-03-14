@@ -89,11 +89,29 @@ export default function LoginPage() {
   const handlePINLogin = async (e) => {
     e.preventDefault();
     try {
-      await customerPINLogin(formData.phone, formData.pin);
-      navigate('/menu');
+      console.log('🔑 Attempting PIN login...');
+      const result = await customerPINLogin(formData.phone, formData.pin);
+      
+      console.log('✅ PIN login successful!');
+      console.log('📊 Token received:', result?.token ? 'Yes' : 'No');
+      console.log('📊 User:', result?.user);
+      
+      // Check if token is in localStorage
+      const storedToken = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
+      console.log('💾 Token in localStorage:', storedToken ? 'Yes' : 'No');
+      console.log('💾 User in localStorage:', storedUser ? 'Yes' : 'No');
+      
+      if (storedToken) {
+        console.log('✅ Authentication ready! Navigating to menu...');
+        navigate('/menu');
+      } else {
+        console.error('❌ ERROR: Token not saved to localStorage!');
+        alert('Terjadi kesalahan. Silakan coba lagi.');
+      }
     } catch (error) {
-      console.error('PIN login failed:', error);
-      // Error will be shown via store error state
+      console.error('❌ PIN login failed:', error);
+      console.error('Error response:', error.response?.data);
     }
   };
 

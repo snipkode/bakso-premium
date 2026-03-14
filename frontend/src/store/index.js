@@ -88,6 +88,7 @@ export const useAuthStore = create(
         set({ isLoading: true, error: null });
         try {
           const { data } = await customerPINAPI.verifyPIN(phone, pin);
+          console.log('📥 PIN API response:', data);
 
           // Validate user data
           if (!data.user || !data.user.id) {
@@ -104,14 +105,19 @@ export const useAuthStore = create(
             isLoading: false,
             needsPINOnboarding,
           });
+          
+          // Save to localStorage
           localStorage.setItem('token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
+          console.log('💾 Token saved to localStorage:', data.token ? '✅' : '❌');
+          console.log('💾 User saved to localStorage:', data.user ? '✅' : '❌');
 
           // Connect socket with validated user data
           connectSocket(data.user.id, data.user.role || 'customer', window.location.pathname);
 
           return data;
         } catch (error) {
+          console.error('❌ PIN login error:', error);
           set({
             error: error.response?.data?.error || 'PIN login failed',
             isLoading: false,
