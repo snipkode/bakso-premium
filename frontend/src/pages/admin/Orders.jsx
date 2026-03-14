@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Search, Eye, RefreshCw, Clock, ChevronRight, Filter } from 'lucide-react';
 import { orderAPI } from '../../lib/api';
 import { Card, Button, Badge, LoadingSpinner, Input, Pagination } from '../../components/ui/BaseComponents';
@@ -59,7 +60,7 @@ export default function AdminOrders() {
   };
 
   const handleViewDetail = (orderId) => {
-    window.open(`/admin/orders/${orderId}`, '_blank');
+    navigate(`/admin/orders/${orderId}`);
   };
 
   if (loading) {

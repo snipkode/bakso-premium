@@ -18,6 +18,7 @@ import LoginPage from '@/pages/LoginPage';
 import NotificationSettingsPage from '@/pages/NotificationSettingsPage';
 import AdminDashboard from '@/pages/admin/Dashboard';
 import AdminOrders from '@/pages/admin/Orders';
+import AdminOrderDetail from '@/pages/admin/OrderDetail';
 import AdminProducts from '@/pages/admin/Products';
 import AdminPayments from '@/pages/admin/Payments';
 import AdminUsers from '@/pages/admin/Users';
@@ -134,6 +135,7 @@ function App() {
           >
             <Route index element={<AdminDashboard />} />
             <Route path="orders" element={<AdminOrders />} />
+            <Route path="orders/:id" element={<AdminOrderDetail />} />
             <Route path="payments" element={<AdminPayments />} />
             <Route path="products" element={<AdminProducts />} />
             <Route path="reports" element={<AdminReports />} />
