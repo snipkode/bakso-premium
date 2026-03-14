@@ -23,6 +23,8 @@ export default function LoginPage() {
   const [loginType, setLoginType] = useState('customer');
   const [customerSubTab, setCustomerSubTab] = useState('new');
   const [showPassword, setShowPassword] = useState(false);
+  const [showPIN, setShowPIN] = useState(false);
+  const [staffLoginType, setStaffLoginType] = useState('password'); // 'password' or 'pin'
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showExistingUserModal, setShowExistingUserModal] = useState(false);
   const [showResetPINModal, setShowResetPINModal] = useState(false);
@@ -135,6 +137,12 @@ export default function LoginPage() {
       errors.phone = phoneError;
       errors.password = passwordError;
       if (phoneError || passwordError) isValid = false;
+    } else if (type === 'staff-pin') {
+      const phoneError = validatePhone(formData.phone);
+      const pinError = validatePIN(formData.pin);
+      errors.phone = phoneError;
+      errors.pin = pinError;
+      if (phoneError || pinError) isValid = false;
     }
 
     setFormErrors(errors);
@@ -377,9 +385,17 @@ export default function LoginPage() {
   const handleStaffLogin = async (e) => {
     e.preventDefault();
     
-    // Validate form
-    if (!validateForm('staff')) {
-      return;
+    // Validate based on login type
+    if (staffLoginType === 'pin') {
+      if (!validateForm('staff-pin')) {
+        return;
+      }
+      // TODO: Implement staff PIN login API
+      console.log('Staff PIN login:', formData.phone, formData.pin);
+    } else {
+      if (!validateForm('staff')) {
+        return;
+      }
     }
     
     try {
@@ -669,7 +685,7 @@ export default function LoginPage() {
                         <Input
                           label="PIN (6 digit)"
                           placeholder="Masukkan PIN Anda"
-                          type="text"
+                          type={showPIN ? 'text' : 'password'}
                           inputMode="numeric"
                           pattern="[0-9]*"
                           maxLength={6}
@@ -681,9 +697,16 @@ export default function LoginPage() {
                             validateField('pin', value);
                           }}
                           required
-                          className="pl-11"
+                          className="pl-11 pr-11"
                         />
                         <KeyRound className="absolute left-3 top-9 w-5 h-5 text-gray-400" />
+                        <button
+                          type="button"
+                          onClick={() => setShowPIN(!showPIN)}
+                          className="absolute right-3 top-9 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        >
+                          {showPIN ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
                         {formErrors.pin && (
                           <p className="text-xs text-red-600 dark:text-red-400 mt-1 ml-3 flex items-center gap-1">
                             <span>⚠️</span>
@@ -736,6 +759,75 @@ export default function LoginPage() {
                   onSubmit={handleStaffLogin}
                   className="space-y-4"
                 >
+                  {/* Login Type Toggle */}
+                  <Card className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-gray-800 dark:to-gray-700 border-blue-200 dark:border-gray-600">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Shield className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                      <p className="text-sm font-bold text-gray-900 dark:text-white">Jenis Login Staff</p>
+                    </div>
+                    
+                    <div className="flex gap-3">
+                      <label className="flex-1 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="staffLoginType"
+                          value="password"
+                          checked={staffLoginType === 'password'}
+                          onChange={(e) => setStaffLoginType(e.target.value)}
+                          className="sr-only"
+                        />
+                        <div className={`p-3 rounded-xl border-2 transition-all ${
+                          staffLoginType === 'password'
+                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                            : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'
+                        }`}>
+                          <div className="flex items-center justify-center gap-2">
+                            <Eye className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                            <span className={`text-sm font-semibold ${
+                              staffLoginType === 'password'
+                                ? 'text-blue-600 dark:text-blue-400'
+                                : 'text-gray-600 dark:text-gray-400'
+                            }`}>Password</span>
+                          </div>
+                        </div>
+                      </label>
+
+                      <label className="flex-1 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="staffLoginType"
+                          value="pin"
+                          checked={staffLoginType === 'pin'}
+                          onChange={(e) => setStaffLoginType(e.target.value)}
+                          className="sr-only"
+                        />
+                        <div className={`p-3 rounded-xl border-2 transition-all ${
+                          staffLoginType === 'pin'
+                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                            : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'
+                        }`}>
+                          <div className="flex items-center justify-center gap-2">
+                            <KeyRound className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                            <span className={`text-sm font-semibold ${
+                              staffLoginType === 'pin'
+                                ? 'text-blue-600 dark:text-blue-400'
+                                : 'text-gray-600 dark:text-gray-400'
+                            }`}>PIN</span>
+                          </div>
+                        </div>
+                      </label>
+                    </div>
+
+                    {staffLoginType === 'pin' && (
+                      <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
+                        <p className="text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2">
+                          <span>🔄</span>
+                          <span><strong>Info:</strong> PIN staff akan direset otomatis setiap 1 bulan untuk keamanan. Anda akan menerima email notifikasi sebelum reset.</span>
+                        </p>
+                      </div>
+                    )}
+                  </Card>
+
                   <div className="space-y-4">
                     <div className="relative">
                       <Input
@@ -749,34 +841,70 @@ export default function LoginPage() {
                       />
                       <Phone className="absolute left-3 top-9 w-5 h-5 text-gray-400" />
                     </div>
-                    <div className="relative">
-                      <Input
-                        label="Password"
-                        placeholder="Masukkan password"
-                        type={showPassword ? 'text' : 'password'}
-                        value={formData.password}
-                        onChange={(e) => {
-                          setFormData({ ...formData, password: e.target.value });
-                          validateField('password', e.target.value);
-                        }}
-                        required
-                        className="pl-11 pr-11"
-                      />
-                      <ChefHat className="absolute left-3 top-9 w-5 h-5 text-gray-400" />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-9 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                      >
-                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                      {formErrors.password && (
-                        <p className="text-xs text-red-600 dark:text-red-400 mt-1 ml-3 flex items-center gap-1">
-                          <span>⚠️</span>
-                          <span>{formErrors.password}</span>
-                        </p>
-                      )}
-                    </div>
+
+                    {staffLoginType === 'password' ? (
+                      <div className="relative">
+                        <Input
+                          label="Password"
+                          placeholder="Masukkan password"
+                          type={showPassword ? 'text' : 'password'}
+                          value={formData.password}
+                          onChange={(e) => {
+                            setFormData({ ...formData, password: e.target.value });
+                            validateField('password', e.target.value);
+                          }}
+                          required
+                          className="pl-11 pr-11"
+                        />
+                        <ChefHat className="absolute left-3 top-9 w-5 h-5 text-gray-400" />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-9 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        >
+                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                        {formErrors.password && (
+                          <p className="text-xs text-red-600 dark:text-red-400 mt-1 ml-3 flex items-center gap-1">
+                            <span>⚠️</span>
+                            <span>{formErrors.password}</span>
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="relative">
+                        <Input
+                          label="PIN (6 digit)"
+                          placeholder="Masukkan PIN Anda"
+                          type={showPIN ? 'text' : 'password'}
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          maxLength={6}
+                          value={formData.pin}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '');
+                            setFormData({ ...formData, pin: value });
+                            validateField('pin', value);
+                          }}
+                          required
+                          className="pl-11 pr-11"
+                        />
+                        <KeyRound className="absolute left-3 top-9 w-5 h-5 text-gray-400" />
+                        <button
+                          type="button"
+                          onClick={() => setShowPIN(!showPIN)}
+                          className="absolute right-3 top-9 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        >
+                          {showPIN ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                        {formErrors.pin && (
+                          <p className="text-xs text-red-600 dark:text-red-400 mt-1 ml-3 flex items-center gap-1">
+                            <span>⚠️</span>
+                            <span>{formErrors.pin}</span>
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <motion.button
