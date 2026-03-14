@@ -207,27 +207,27 @@ export default function ProductDetailPage() {
       </div>
 
       {/* Content */}
-      <div className="px-4 py-6 space-y-6">
+      <div className="px-4 py-5 space-y-4">
         {/* Title & Price */}
         <FadeIn>
-          <div className="flex items-start justify-between">
-            <div className="flex-1 pr-4">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1">
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
                 {product.name}
               </h1>
               {product.description && (
-                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mt-1.5">
                   {product.description}
                 </p>
               )}
             </div>
-            <div className="text-right">
-              <p className="text-2xl font-bold bg-gradient-to-r from-primary to-orange-500 bg-clip-text text-transparent">
+            <div className="text-right flex-shrink-0">
+              <p className="text-xl font-bold bg-gradient-to-r from-primary to-orange-500 bg-clip-text text-transparent">
                 {formatPrice(product.price)}
               </p>
               {product.total_sold > 0 && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center justify-end gap-1">
-                  <ShoppingBag className="w-3 h-3" />
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 flex items-center justify-end gap-0.5 mt-1">
+                  <ShoppingBag className="w-2.5 h-2.5" />
                   {product.total_sold} terjual
                 </p>
               )}
@@ -237,53 +237,53 @@ export default function ProductDetailPage() {
 
         {/* Info Cards */}
         <FadeIn delay={0.1}>
-          <div className="grid grid-cols-3 gap-3">
-            <Card className="p-3 text-center bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-900/10 border-green-100 dark:border-green-900/30">
-              <div className={`text-lg font-bold ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <div className="grid grid-cols-3 gap-2">
+            <Card className="p-2.5 text-center bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-900/10 border-green-100 dark:border-green-900/30">
+              <div className={`text-base font-bold ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {product.stock}
               </div>
-              <p className="text-xs text-gray-600 dark:text-gray-400">Stok Tersedia</p>
+              <p className="text-[10px] text-gray-600 dark:text-gray-400 mt-0.5">Stok</p>
             </Card>
-            <Card className="p-3 text-center bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-900/20 dark:to-orange-900/10 border-orange-100 dark:border-orange-900/30">
-              <div className="text-lg font-bold text-orange-600 flex items-center justify-center gap-1">
-                <Clock className="w-4 h-4" />
+            <Card className="p-2.5 text-center bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-900/20 dark:to-orange-900/10 border-orange-100 dark:border-orange-900/30">
+              <div className="text-base font-bold text-orange-600 flex items-center justify-center gap-1">
+                <Clock className="w-3.5 h-3.5" />
                 {product.preparation_time || 15}m
               </div>
-              <p className="text-xs text-gray-600 dark:text-gray-400">Waktu Siap</p>
+              <p className="text-[10px] text-gray-600 dark:text-gray-400 mt-0.5">Siap</p>
             </Card>
-            <Card className="p-3 text-center bg-gradient-to-br from-yellow-50 to-yellow-100/50 dark:from-yellow-900/20 dark:to-yellow-900/10 border-yellow-100 dark:border-yellow-900/30">
-              <div className="flex items-center justify-center gap-1">
+            <Card className="p-2.5 text-center bg-gradient-to-br from-yellow-50 to-yellow-100/50 dark:from-yellow-900/20 dark:to-yellow-900/10 border-yellow-100 dark:border-yellow-900/30">
+              <div className="flex items-center justify-center gap-0.5">
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
-                    className={`w-3 h-3 ${i < 4 ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+                    className={`w-2.5 h-2.5 ${i < 4 ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
                   />
                 ))}
               </div>
-              <p className="text-xs text-gray-600 dark:text-gray-400">4.0 (120)</p>
+              <p className="text-[10px] text-gray-600 dark:text-gray-400 mt-0.5">4.0</p>
             </Card>
           </div>
         </FadeIn>
 
         {/* Quality Badges */}
         <FadeIn delay={0.15}>
-          <div className="grid grid-cols-2 gap-3">
-            <Card className="p-3 flex items-center gap-3 bg-gradient-to-r from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-900/10 border-blue-100 dark:border-blue-900/30">
-              <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                <ShieldCheck className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          <div className="grid grid-cols-2 gap-2">
+            <Card className="p-2.5 flex items-center gap-2.5 bg-gradient-to-r from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-900/10 border-blue-100 dark:border-blue-900/30">
+              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               </div>
-              <div>
-                <p className="text-xs font-semibold text-gray-900 dark:text-white">Kualitas Premium</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Bahan segar setiap hari</p>
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold text-gray-900 dark:text-white leading-tight">Kualitas Premium</p>
+                <p className="text-[9px] text-gray-500 dark:text-gray-400 mt-0.5">Bahan segar</p>
               </div>
             </Card>
-            <Card className="p-3 flex items-center gap-3 bg-gradient-to-r from-purple-50 to-purple-100/50 dark:from-purple-900/20 dark:to-purple-900/10 border-purple-100 dark:border-purple-900/30">
-              <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                <Truck className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            <Card className="p-2.5 flex items-center gap-2.5 bg-gradient-to-r from-purple-50 to-purple-100/50 dark:from-purple-900/20 dark:to-purple-900/10 border-purple-100 dark:border-purple-900/30">
+              <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
+                <Truck className="w-4 h-4 text-purple-600 dark:text-purple-400" />
               </div>
-              <div>
-                <p className="text-xs font-semibold text-gray-900 dark:text-white">Pengiriman Cepat</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">15-20 menit</p>
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold text-gray-900 dark:text-white leading-tight">Pengiriman Cepat</p>
+                <p className="text-[9px] text-gray-500 dark:text-gray-400 mt-0.5">15-20 min</p>
               </div>
             </Card>
           </div>
@@ -292,22 +292,22 @@ export default function ProductDetailPage() {
         {/* Spicy Level */}
         {product.spicy_level > 0 && (
           <FadeIn delay={0.2}>
-            <Card className="p-4 bg-gradient-to-r from-red-50 to-red-100/50 dark:from-red-900/20 dark:to-red-900/10 border-red-100 dark:border-red-900/30">
+            <Card className="p-3.5 bg-gradient-to-r from-red-50 to-red-100/50 dark:from-red-900/20 dark:to-red-900/10 border-red-100 dark:border-red-900/30">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                  <Flame className="w-6 h-6 text-red-600 dark:text-red-400" />
+                <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
+                  <Flame className="w-5 h-5 text-red-600 dark:text-red-400" />
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-bold text-red-900 dark:text-red-100">
-                    Tingkat Pedas: {spicyLabels[product.spicy_level] || 'Super Pedas'}
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-red-900 dark:text-red-100 leading-tight">
+                    {spicyLabels[product.spicy_level] || 'Super Pedas'}
                   </p>
-                  <div className="flex items-center gap-1 mt-2">
+                  <div className="flex items-center gap-0.5 mt-1.5">
                     {[...Array(5)].map((_, i) => (
-                      <span 
-                        key={i} 
-                        className={`text-lg transition-all ${
-                          i < product.spicy_level 
-                            ? 'opacity-100 scale-110' 
+                      <span
+                        key={i}
+                        className={`text-base transition-all ${
+                          i < product.spicy_level
+                            ? 'opacity-100 scale-110'
                             : 'opacity-20 scale-90'
                         }`}
                       >
@@ -324,22 +324,22 @@ export default function ProductDetailPage() {
         {/* Customizations */}
         {Array.isArray(product.customizations) && product.customizations.length > 0 && (
           <FadeIn delay={0.3}>
-            <Card className="p-4">
+            <Card className="p-3.5">
               <div className="flex items-center gap-2 mb-3">
-                <ChefHat className="w-5 h-5 text-primary" />
-                <h3 className="font-bold text-gray-900 dark:text-white">Pilihan Tambahan</h3>
+                <ChefHat className="w-4 h-4 text-primary" />
+                <h3 className="font-bold text-gray-900 dark:text-white text-sm">Pilihan Tambahan</h3>
               </div>
               <div className="space-y-3">
                 {product.customizations.map((custom, index) => (
                   <div key={index}>
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
                       {custom.name}
                     </p>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-1.5">
                       {custom.options.map((option, optIndex) => (
                         <button
                           key={optIndex}
-                          className="px-4 py-2 text-sm rounded-full bg-orange-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-orange-200 dark:border-gray-700 hover:bg-orange-100 dark:hover:bg-gray-700 hover:border-orange-300 dark:hover:border-gray-600 transition-all"
+                          className="px-3 py-1.5 text-xs rounded-full bg-orange-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-orange-200 dark:border-gray-700 hover:bg-orange-100 dark:hover:bg-gray-700 hover:border-orange-300 dark:hover:border-gray-600 transition-all"
                         >
                           {option}
                           {custom.price && custom.price > 0 && (
@@ -359,16 +359,16 @@ export default function ProductDetailPage() {
 
         {/* Notes */}
         <FadeIn delay={0.4}>
-          <Card className="p-4">
+          <Card className="p-3.5">
             <div className="flex items-center gap-2 mb-3">
-              <Info className="w-5 h-5 text-primary" />
-              <h3 className="font-bold text-gray-900 dark:text-white">Catatan Pesanan</h3>
+              <Info className="w-4 h-4 text-primary" />
+              <h3 className="font-bold text-gray-900 dark:text-white text-sm">Catatan Pesanan</h3>
             </div>
             <textarea
               value={selectedNotes}
               onChange={(e) => setSelectedNotes(e.target.value)}
               placeholder="Contoh: Jangan terlalu pedas, tanpa daun bawang, dll."
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+              className="w-full px-3 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
               rows={3}
             />
           </Card>
@@ -376,20 +376,20 @@ export default function ProductDetailPage() {
 
         {/* Bottom Action Bar - Inside content flow (above BottomNav) */}
         <FadeIn delay={0.5}>
-          <Card className="p-4 bg-gradient-to-r from-orange-50 to-orange-100 dark:from-gray-800 dark:to-gray-700 border-orange-200 dark:border-gray-600 sticky bottom-20 shadow-lg">
-            <div className="flex items-center gap-3">
+          <Card className="p-3.5 bg-gradient-to-r from-orange-50 to-orange-100 dark:from-gray-800 dark:to-gray-700 border-orange-200 dark:border-gray-600 sticky bottom-20 shadow-lg">
+            <div className="flex items-center gap-2.5">
               {/* Quantity */}
-              <div className="flex items-center gap-2 bg-white dark:bg-gray-900 rounded-full px-2 py-2 border border-orange-200 dark:border-gray-600">
+              <div className="flex items-center gap-1.5 bg-white dark:bg-gray-900 rounded-full px-1.5 py-1.5 border border-orange-200 dark:border-gray-600">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   disabled={quantity <= 1}
-                  className="p-2 h-8 w-8 hover:bg-orange-100 dark:hover:bg-gray-700 rounded-full"
+                  className="p-1.5 h-7 w-7 hover:bg-orange-100 dark:hover:bg-gray-700 rounded-full"
                 >
-                  <Minus className="w-4 h-4" />
+                  <Minus className="w-3.5 h-3.5" />
                 </Button>
-                <span className="w-10 text-center font-bold text-gray-900 dark:text-white text-lg">
+                <span className="w-9 text-center font-bold text-gray-900 dark:text-white text-base">
                   {quantity}
                 </span>
                 <Button
@@ -397,9 +397,9 @@ export default function ProductDetailPage() {
                   size="sm"
                   onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
                   disabled={quantity >= product.stock}
-                  className="p-2 h-8 w-8 hover:bg-orange-100 dark:hover:bg-gray-700 rounded-full"
+                  className="p-1.5 h-7 w-7 hover:bg-orange-100 dark:hover:bg-gray-700 rounded-full"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-3.5 h-3.5" />
                 </Button>
               </div>
 
@@ -407,9 +407,9 @@ export default function ProductDetailPage() {
               <Button
                 onClick={handleAddToCart}
                 disabled={!product.is_available || product.stock === 0}
-                className="flex-1 bg-gradient-to-r from-primary to-orange-500 hover:from-primary/90 hover:to-orange-500/90 shadow-lg shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed py-4 rounded-full font-semibold"
+                className="flex-1 bg-gradient-to-r from-primary to-orange-500 hover:from-primary/90 hover:to-orange-500/90 shadow-lg shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed py-3.5 rounded-full font-semibold text-sm"
               >
-                <ShoppingBag className="w-5 h-5 mr-2 inline" />
+                <ShoppingBag className="w-4 h-4 mr-1.5 inline" />
                 {product.is_available
                   ? `Tambah • ${formatPrice(product.price * quantity)}`
                   : 'Sold Out'}
