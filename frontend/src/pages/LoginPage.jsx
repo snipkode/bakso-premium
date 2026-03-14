@@ -9,7 +9,7 @@ import { BaksoIconAnimation } from '@/components/ui/BaksoIconAnimation';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { customerAuth, staffLogin, isLoading, error } = useAuthStore();
+  const { customerAuth, staffLogin, customerPINLogin, isLoading, error } = useAuthStore();
 
   const [loginType, setLoginType] = useState('customer');
   const [customerSubTab, setCustomerSubTab] = useState('new');
@@ -28,6 +28,17 @@ export default function LoginPage() {
       navigate('/menu');
     } catch (error) {
       console.error('Customer auth failed:', error);
+    }
+  };
+
+  const handlePINLogin = async (e) => {
+    e.preventDefault();
+    try {
+      await customerPINLogin(formData.phone, formData.pin);
+      navigate('/menu');
+    } catch (error) {
+      console.error('PIN login failed:', error);
+      // Error will be shown via store error state
     }
   };
 
@@ -271,10 +282,7 @@ export default function LoginPage() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -30 }}
                     transition={{ duration: 0.3 }}
-                    onSubmit={async (e) => {
-                      e.preventDefault();
-                      console.log('PIN login:', formData.phone, formData.pin);
-                    }}
+                    onSubmit={handlePINLogin}
                     className="space-y-4"
                   >
                     <div className="space-y-4">

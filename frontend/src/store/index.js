@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { authAPI } from '@/lib/api';
+import { authAPI, customerPINAPI } from '@/lib/api';
 import { connectSocket, disconnectSocket, emitPageChange } from '@/lib/socket';
 
 export const useAuthStore = create(
@@ -50,12 +50,12 @@ export const useAuthStore = create(
         set({ isLoading: true, error: null });
         try {
           const { data } = await authAPI.staffLogin(phone, password);
-          
+
           // Validate user data
           if (!data.user || !data.user.id) {
             throw new Error('Invalid user data from server');
           }
-          
+
           set({
             user: data.user,
             token: data.token,
@@ -72,6 +72,39 @@ export const useAuthStore = create(
         } catch (error) {
           set({
             error: error.response?.data?.error || 'Login failed',
+            isLoading: false,
+          });
+          throw error;
+        }
+      },
+
+      // Customer PIN login
+      customerPINLogin: async (phone, pin) => {
+        set({ isLoading: true, error: null });
+        try {
+          const { data } = await customerPINAPI.verifyPIN(phone, pin);
+
+          // Validate user data
+          if (!data.user || !data.user.id) {
+            throw new Error('Invalid user data from server');
+          }
+
+          set({
+            user: data.user,
+            token: data.token,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+
+          // Connect socket with validated user data
+          connectSocket(data.user.id, data.user.role || 'customer', window.location.pathname);
+
+          return data;
+        } catch (error) {
+          set({
+            error: error.response?.data?.error || 'PIN login failed',
             isLoading: false,
           });
           throw error;
