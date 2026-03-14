@@ -309,9 +309,11 @@ export function IconButton({ children, className, ...props }) {
 export function Pagination({ currentPage, totalPages, onPageChange, className }) {
   if (totalPages <= 1) return null;
 
-  const getPageNumbers = () => {
+  const getPageNumbers = (isMobile = false) => {
     const pages = [];
-    const maxVisible = 5;
+    // Mobile: show only 3 pages (current-1, current, current+1)
+    // Desktop: show 5 pages for better navigation
+    const maxVisible = isMobile ? 3 : 5;
     let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
     let end = Math.min(totalPages, start + maxVisible - 1);
 
@@ -319,6 +321,15 @@ export function Pagination({ currentPage, totalPages, onPageChange, className })
       start = Math.max(1, end - maxVisible + 1);
     }
 
+    // Mobile: no ellipsis, just show 3 pages
+    if (isMobile) {
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+      return pages;
+    }
+
+    // Desktop: with ellipsis
     if (start > 1) {
       pages.push(1);
       if (start > 2) pages.push('...');
@@ -352,15 +363,9 @@ export function Pagination({ currentPage, totalPages, onPageChange, className })
 
       {/* Page Numbers - Scrollable container */}
       <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide flex-shrink-0 max-w-[calc(100vw-140px)] sm:max-w-none">
-        {getPageNumbers().map((page, index) =>
-          page === '...' ? (
-            <span
-              key={`ellipsis-${index}`}
-              className="w-8 h-8 flex items-center justify-center text-gray-400 dark:text-gray-500 text-xs flex-shrink-0"
-            >
-              ‧‧‧
-            </span>
-          ) : (
+        {/* Mobile: show only 3 pages */}
+        <div className="flex items-center gap-1.5 sm:hidden">
+          {getPageNumbers(true).map((page, index) => (
             <button
               key={page}
               onClick={() => onPageChange(page)}
@@ -373,8 +378,35 @@ export function Pagination({ currentPage, totalPages, onPageChange, className })
             >
               {page}
             </button>
-          )
-        )}
+          ))}
+        </div>
+
+        {/* Desktop: show 5 pages with ellipsis */}
+        <div className="hidden sm:flex items-center gap-1.5">
+          {getPageNumbers(false).map((page, index) =>
+            page === '...' ? (
+              <span
+                key={`ellipsis-${index}`}
+                className="w-8 h-8 flex items-center justify-center text-gray-400 dark:text-gray-500 text-xs flex-shrink-0"
+              >
+                ‧‧‧
+              </span>
+            ) : (
+              <button
+                key={page}
+                onClick={() => onPageChange(page)}
+                className={cn(
+                  'w-8 h-8 rounded-lg text-xs font-medium transition-all flex-shrink-0',
+                  page === currentPage
+                    ? 'bg-gradient-to-br from-primary to-primary/90 text-white shadow-md'
+                    : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                )}
+              >
+                {page}
+              </button>
+            )
+          )}
+        </div>
       </div>
 
       {/* Next Button - Always visible */}
