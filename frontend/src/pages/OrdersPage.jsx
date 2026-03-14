@@ -5,6 +5,7 @@ import { orderAPI } from '../lib/api';
 import { Button, Card, LoadingSpinner, EmptyState } from '../components/ui/BaseComponents';
 import { OrderCard } from '../components/ui';
 import { subscribeToOrderUpdates } from '../lib/socket';
+import { getStatusLabel } from '../lib/utils';
 
 export default function OrdersPage() {
   const navigate = useNavigate();
@@ -49,6 +50,16 @@ export default function OrdersPage() {
     (order) => ['paid', 'preparing', 'ready', 'delivering'].includes(order.status)
   );
 
+  const getStatusLabelShort = (status) => {
+    const labels = {
+      paid: 'Dibayar',
+      preparing: 'Disiapkan',
+      ready: 'Siap Diantar',
+      delivering: 'Dikirim',
+    };
+    return labels[status] || getStatusLabel(status);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -67,7 +78,7 @@ export default function OrdersPage() {
       {/* Track Active Order Card */}
       {trackableOrders.length > 0 && (
         <div className="px-4 py-4">
-          <Card 
+          <Card
             onClick={() => navigate(`/track/${trackableOrders[0].id}`)}
             className="p-4 bg-gradient-to-r from-primary to-orange-500 text-white cursor-pointer hover:shadow-lg transition-shadow"
           >
@@ -79,7 +90,7 @@ export default function OrdersPage() {
                 <div>
                   <h3 className="font-bold text-lg">Lacak Pesanan</h3>
                   <p className="text-sm text-white/90">
-                    #{trackableOrders[0].order_number} - {trackableOrders[0].status === 'preparing' ? 'Sedang disiapkan' : trackableOrders[0].status === 'ready' ? 'Siap diambil' : 'Sedang dikirim'}
+                    #{trackableOrders[0].order_number} - {getStatusLabelShort(trackableOrders[0].status)}
                   </p>
                 </div>
               </div>
