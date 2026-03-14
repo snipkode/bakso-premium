@@ -995,10 +995,10 @@ export default function LoginPage() {
                     <CheckCircle className="w-10 h-10 text-white" />
                   </motion.div>
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                    Email Terkirim!
+                    Permintaan Reset Dikirim!
                   </h3>
                   <p className="text-gray-600 dark:text-gray-400 mb-6">
-                    Link reset PIN telah dikirim ke<br />
+                    {response.data.message || 'Link reset PIN telah dikirim'}<br />
                     <strong className="text-gray-900 dark:text-white">{resetEmail}</strong>
                   </p>
                   <Button

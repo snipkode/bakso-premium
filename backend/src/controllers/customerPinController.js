@@ -190,7 +190,7 @@ exports.requestPINReset = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Link reset PIN telah dikirim ke email Anda',
+      message: 'Jika data cocok, link reset PIN akan dikirim ke email Anda',
       // Include reset link for development/testing only
       reset_link: resetLink,
       reset_token: resetToken,

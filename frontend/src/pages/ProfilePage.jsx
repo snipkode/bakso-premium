@@ -117,10 +117,11 @@ export default function ProfilePage() {
       console.log('✅ Reset email sent:', response.data);
       
       const attemptsRemaining = response.data.attempts_remaining;
+      const backendMessage = response.data.message || 'Link reset PIN telah dikirim ke email Anda';
       
       alert(
-        '✅ Email Terkirim!\n\n' +
-        `Link reset PIN telah dikirim ke:\n${user.email}\n\n` +
+        '✅ ' + backendMessage + '\n\n' +
+        `Email: ${user.email}\n\n` +
         (attemptsRemaining !== undefined 
           ? `Percobaan tersisa: ${attemptsRemaining}/5 dalam 24 jam\n\n`
           : '') +
