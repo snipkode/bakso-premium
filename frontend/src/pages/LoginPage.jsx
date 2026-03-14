@@ -84,10 +84,17 @@ export default function LoginPage() {
     try {
       const result = await staffLogin(formData.phone, formData.password);
       const role = result?.user?.role;
-      if (role === 'admin') navigate('/admin-panel');
-      else if (role === 'kitchen') navigate('/kitchen');
-      else if (role === 'driver') navigate('/driver');
-      else navigate('/');
+      
+      // Redirect based on role
+      if (role === 'admin') {
+        navigate('/admin');
+      } else if (role === 'kitchen') {
+        navigate('/kitchen');
+      } else if (role === 'driver') {
+        navigate('/driver');
+      } else {
+        navigate('/');
+      }
     } catch (error) {
       console.error('Staff login failed:', error);
     }
