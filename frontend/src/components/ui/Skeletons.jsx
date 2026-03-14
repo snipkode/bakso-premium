@@ -198,3 +198,85 @@ export function ProductDetailSkeleton() {
     </div>
   );
 }
+
+export function OrderDetailSkeleton() {
+  return (
+    <div className="pb-32 min-h-screen animate-pulse">
+      {/* Header */}
+      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border px-4 py-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+          <div className="h-6 w-40 bg-gray-200 dark:bg-gray-700 rounded"></div>
+        </div>
+      </div>
+
+      <div className="p-4 space-y-4">
+        {/* Status Card Skeleton */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-md">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
+              <div className="h-7 w-48 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            </div>
+            <div className="h-9 w-28 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+          </div>
+
+          {/* Timeline Skeleton */}
+          <div className="flex items-center justify-between mt-6">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="flex flex-col items-center">
+                <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+                <div className="h-3 w-12 bg-gray-200 dark:bg-gray-700 rounded mt-2"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Track Order Skeleton */}
+        <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
+
+        {/* Order Info Skeleton */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4">
+          <div className="h-5 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+          <div className="space-y-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="flex justify-between">
+                <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Order Items Skeleton */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4">
+          <div className="h-5 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex justify-between">
+                <div className="flex-1">
+                  <div className="h-4 w-40 bg-gray-200 dark:bg-gray-700 rounded mb-1"></div>
+                  <div className="h-3 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                </div>
+                <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Payment Summary Skeleton */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4">
+          <div className="h-5 w-40 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+          <div className="space-y-2">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex justify-between">
+                <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
