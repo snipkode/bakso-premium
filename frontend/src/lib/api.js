@@ -60,6 +60,8 @@ export const productAPI = {
   updateProduct: (id, data) => api.put(`/products/${id}`, data),
   deleteProduct: (id) => api.delete(`/products/${id}`),
   toggleAvailability: (id) => api.patch(`/products/${id}/availability`),
+  updateStock: (id, data) => api.patch(`/products/${id}/stock`, data),
+  getLowStockProducts: () => api.get('/products/stock/low'),
 };
 
 // Order API
