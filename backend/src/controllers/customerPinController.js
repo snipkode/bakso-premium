@@ -1,6 +1,7 @@
 const { User } = require('../models');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const { sendPINResetEmail } = require('../utils/emailService');
 
 // Set PIN for customer
 exports.setPIN = async (req, res) => {
@@ -139,13 +140,19 @@ exports.requestPINReset = async (req, res) => {
     user.pin_reset_expires = resetExpires;
     await user.save();
 
-    // Generate reset link
+    // Send reset email
+    try {
+      await sendPINResetEmail(email, resetToken);
+    } catch (emailError) {
+      console.error('Failed to send reset email:', emailError);
+      // Continue anyway - token is still valid
+    }
+
+    // Generate reset link for frontend (development/testing)
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    const resetLink = `${frontendUrl}/reset-pin?token=${resetToken}&email=${email}`;
+    const resetLink = `${frontendUrl}/reset-pin?token=${resetToken}&email=${encodeURIComponent(email)}`;
     console.log('📧 PIN Reset Link:', resetLink);
     
-    // In production, send email here
-    // For development/testing, always return the link
     res.json({ 
       success: true, 
       message: 'Link reset PIN telah dikirim ke email Anda',
