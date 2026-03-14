@@ -6,7 +6,6 @@ import { useAuthStore, useCartStore } from '@/store';
 import { productAPI } from '@/lib/api';
 import { Button, Input, Card, Badge, LoadingSpinner } from '@/components/ui/BaseComponents';
 import { FadeIn, StaggerGrid, ScaleOnHover, PulseBadge } from '@/components/ui/Animations';
-import { HomePageSkeleton } from '@/components/ui/Skeletons';
 import { BaksoLoadingAnimation } from '@/components/ui/LoadingAnimation';
 
 export default function MenuPage() {
@@ -24,7 +23,7 @@ export default function MenuPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 8, // Default for mobile
+    limit: 8,
     total: 0,
     totalPages: 0,
   });
@@ -94,10 +93,9 @@ export default function MenuPage() {
 
   return (
     <div className="pb-24 min-h-screen bg-gradient-to-b from-orange-50/50 to-background">
-      {/* Header - Appetizing Design */}
+      {/* Header */}
       <div className="sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-orange-100 dark:border-gray-800 shadow-sm">
         <div className="px-4 py-3">
-          {/* Title & Actions */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-orange-500 flex items-center justify-center shadow-lg shadow-primary/30">
@@ -125,7 +123,6 @@ export default function MenuPage() {
             </Button>
           </div>
 
-          {/* Search & Filter */}
           <div className="flex gap-2">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-orange-400" />
@@ -157,7 +154,6 @@ export default function MenuPage() {
             </Button>
           </div>
 
-          {/* Category Filters - Animated */}
           {showFilters && (
             <FadeIn delay={0.1}>
               <div className="flex gap-2 mt-3 overflow-x-auto scrollbar-hide pb-2">
@@ -211,7 +207,6 @@ export default function MenuPage() {
                           onClick={() => navigate(`/product/${product.id}`)}
                           className="overflow-hidden cursor-pointer group shadow-md hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 border-orange-100 dark:border-gray-800"
                         >
-                          {/* Image Section */}
                           <div className="aspect-square bg-gradient-to-br from-orange-50 to-orange-100 dark:from-gray-800 dark:to-gray-900 relative overflow-hidden">
                             {product.image ? (
                               <img
@@ -229,7 +224,6 @@ export default function MenuPage() {
                               </div>
                             )}
 
-                            {/* Badges with Animation */}
                             <div className="absolute top-2 left-2 flex flex-col gap-1">
                               {!product.is_available && (
                                 <PulseBadge>
@@ -252,13 +246,11 @@ export default function MenuPage() {
                               )}
                             </div>
 
-                            {/* Quick View Overlay */}
                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
                               <p className="text-white text-xs font-medium">Tap to view details</p>
                             </div>
                           </div>
 
-                          {/* Content Section */}
                           <div className="p-3 bg-white dark:bg-gray-900">
                             <h3 className="font-semibold text-sm text-gray-900 dark:text-white line-clamp-2 mb-1 group-hover:text-primary transition-colors">
                               {product.name}
@@ -275,7 +267,6 @@ export default function MenuPage() {
                               )}
                             </div>
 
-                            {/* Stock & Spicy */}
                             <div className="flex items-center justify-between">
                               <div className={`text-xs px-2 py-1 rounded-full ${
                                 product.stock === 0
@@ -302,109 +293,105 @@ export default function MenuPage() {
                 </div>
               </StaggerGrid>
 
-            {/* Pagination - Responsive */}
-            {pagination.totalPages > 1 && (
-              <div className="pt-6 pb-8">
-                <Card className="p-4 bg-gradient-to-r from-orange-50 to-orange-100/50 dark:from-gray-800 dark:to-gray-700 border-orange-200 dark:border-gray-600 shadow-lg">
-                  <div className="flex items-center justify-between gap-2">
-                    {/* Previous Button */}
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handlePageChange(pagination.page - 1)}
-                      disabled={pagination.page === 1}
-                      className="flex items-center gap-1 bg-white dark:bg-gray-800 hover:bg-orange-50 dark:hover:bg-gray-600"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                      <span className="hidden sm:inline text-xs font-medium">Prev</span>
-                    </Button>
+              {pagination.totalPages > 1 && (
+                <div className="pt-6 pb-8">
+                  <Card className="p-4 bg-gradient-to-r from-orange-50 to-orange-100/50 dark:from-gray-800 dark:to-gray-700 border-orange-200 dark:border-gray-600 shadow-lg">
+                    <div className="flex items-center justify-between gap-2">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handlePageChange(pagination.page - 1)}
+                        disabled={pagination.page === 1}
+                        className="flex items-center gap-1 bg-white dark:bg-gray-800 hover:bg-orange-50 dark:hover:bg-gray-600"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                        <span className="hidden sm:inline text-xs font-medium">Prev</span>
+                      </Button>
 
-                    {/* Page Numbers */}
-                    <div className="flex items-center gap-1.5 overflow-x-auto">
-                      {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                        let pageNum;
-                        if (pagination.totalPages <= 5) {
-                          pageNum = i + 1;
-                        } else if (pagination.page <= 3) {
-                          pageNum = i + 1;
-                        } else if (pagination.page >= pagination.totalPages - 2) {
-                          pageNum = pagination.totalPages - 4 + i;
-                        } else {
-                          pageNum = pagination.page - 2 + i;
-                        }
+                      <div className="flex items-center gap-1.5 overflow-x-auto">
+                        {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                          let pageNum;
+                          if (pagination.totalPages <= 5) {
+                            pageNum = i + 1;
+                          } else if (pagination.page <= 3) {
+                            pageNum = i + 1;
+                          } else if (pagination.page >= pagination.totalPages - 2) {
+                            pageNum = pagination.totalPages - 4 + i;
+                          } else {
+                            pageNum = pagination.page - 2 + i;
+                          }
 
-                        return (
-                          <button
-                            key={pageNum}
-                            onClick={() => handlePageChange(pageNum)}
-                            className={`w-9 h-9 rounded-full text-xs font-bold transition-all flex-shrink-0 ${
-                              pagination.page === pageNum
-                                ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF8C42] text-white shadow-lg shadow-orange-500/30 scale-110'
-                                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-orange-100 dark:border-gray-700 hover:border-orange-300 dark:hover:border-gray-600 hover:bg-orange-50 dark:hover:bg-gray-700'
-                            }`}
-                          >
-                            {pageNum}
-                          </button>
-                        );
-                      })}
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => handlePageChange(pageNum)}
+                              className={`w-9 h-9 rounded-full text-xs font-bold transition-all flex-shrink-0 ${
+                                pagination.page === pageNum
+                                  ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF8C42] text-white shadow-lg shadow-orange-500/30 scale-110'
+                                  : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-orange-100 dark:border-gray-700 hover:border-orange-300 dark:hover:border-gray-600 hover:bg-orange-50 dark:hover:bg-gray-700'
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handlePageChange(pagination.page + 1)}
+                        disabled={pagination.page === pagination.totalPages}
+                        className="flex items-center gap-1 bg-white dark:bg-gray-800 hover:bg-orange-50 dark:hover:bg-gray-600"
+                      >
+                        <span className="hidden sm:inline text-xs font-medium">Next</span>
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
                     </div>
 
-                    {/* Next Button */}
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handlePageChange(pagination.page + 1)}
-                      disabled={pagination.page === pagination.totalPages}
-                      className="flex items-center gap-1 bg-white dark:bg-gray-800 hover:bg-orange-50 dark:hover:bg-gray-600"
-                    >
-                      <span className="hidden sm:inline text-xs font-medium">Next</span>
-                      <ChevronRight className="w-4 h-4" />
-                    </Button>
-                  </div>
-
-                  {/* Page Info */}
-                  <div className="mt-3 pt-3 border-t border-orange-100 dark:border-gray-600 text-center">
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                      <span className="font-bold text-primary">Halaman {pagination.page}</span> dari{' '}
-                      <span className="font-bold text-primary">{pagination.totalPages}</span>
-                      {' '}({pagination.total} menu)
-                    </p>
-                    <p className="text-[10px] text-gray-500 dark:text-gray-500 mt-1">
-                      Menampilkan {Math.min((pagination.page - 1) * pagination.limit + 1, pagination.total)}-{Math.min(pagination.page * pagination.limit, pagination.total)} dari {pagination.total} menu
-                    </p>
-                  </div>
-                </Card>
+                    <div className="mt-3 pt-3 border-t border-orange-100 dark:border-gray-600 text-center">
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        <span className="font-bold text-primary">Halaman {pagination.page}</span> dari{' '}
+                        <span className="font-bold text-primary">{pagination.totalPages}</span>
+                        {' '}({pagination.total} menu)
+                      </p>
+                      <p className="text-[10px] text-gray-500 dark:text-gray-500 mt-1">
+                        Menampilkan {Math.min((pagination.page - 1) * pagination.limit + 1, pagination.total)}-{Math.min(pagination.page * pagination.limit, pagination.total)} dari {pagination.total} menu
+                      </p>
+                    </div>
+                  </Card>
+                </div>
+              )}
+            </>
+          ) : (
+            <FadeIn>
+              <div className="text-center py-20">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', duration: 0.5 }}
+                  className="w-24 h-24 rounded-full bg-gradient-to-br from-orange-100 to-orange-200 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center mx-auto mb-4"
+                >
+                  <Search className="w-12 h-12 text-primary" />
+                </motion.div>
+                <p className="text-gray-500 dark:text-gray-400 mb-4 text-lg font-medium">
+                  No items found
+                </p>
+                <Button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSelectedCategory('all');
+                    loadData();
+                  }}
+                  className="bg-gradient-to-r from-primary to-orange-500 shadow-lg shadow-primary/30"
+                >
+                  Reset Filters
+                </Button>
               </div>
-            )}
-          </>
-        ) : (
-          <FadeIn>
-            <div className="text-center py-20">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: 'spring', duration: 0.5 }}
-                className="w-24 h-24 rounded-full bg-gradient-to-br from-orange-100 to-orange-200 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center mx-auto mb-4"
-              >
-                <Search className="w-12 h-12 text-primary" />
-              </motion.div>
-              <p className="text-gray-500 dark:text-gray-400 mb-4 text-lg font-medium">
-                No items found
-              </p>
-              <Button
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedCategory('all');
-                  loadData();
-                }}
-                className="bg-gradient-to-r from-primary to-orange-500 shadow-lg shadow-primary/30"
-              >
-                Reset Filters
-              </Button>
-            </div>
-          </FadeIn>
-        )}
-      </div>
+            </FadeIn>
+          )}
+        </div>
+      )}
     </div>
   );
 }
