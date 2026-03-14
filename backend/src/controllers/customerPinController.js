@@ -62,10 +62,20 @@ exports.verifyPIN = async (req, res) => {
       return res.status(400).json({ error: 'Akun bukan customer' });
     }
 
+    // SPECIAL CASE: User exists but PIN not set yet
+    // Don't generate token, just return user status for frontend redirect
     if (!user.is_pin_set) {
-      return res.status(400).json({
-        error: 'PIN belum diatur. Silakan set PIN terlebih dahulu.',
-        requires_pin_setup: true
+      return res.status(403).json({
+        success: false,
+        requires_pin_setup: true,
+        message: 'Akun ini belum mengatur PIN. Silakan atur PIN terlebih dahulu.',
+        user: {
+          id: user.id,
+          phone: user.phone,
+          name: user.name,
+          email: user.email,
+          is_pin_set: false,
+        }
       });
     }
 

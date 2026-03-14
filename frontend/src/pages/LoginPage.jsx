@@ -254,12 +254,58 @@ export default function LoginPage() {
       }
     } catch (error) {
       console.error('❌ PIN login failed:', error);
-      console.error('Error response:', error.response?.data);
+      console.error('Error response:', error.response);
+      
+      // Handle special case: User exists but PIN not set (403)
+      if (error.response?.status === 403 && error.response?.data?.requires_pin_setup) {
+        const userData = error.response.data.user;
+        
+        console.log('⚠️ User exists but PIN not set:', userData);
+        
+        // Store user data temporarily for onboarding
+        localStorage.setItem('pending_user', JSON.stringify(userData));
+        
+        // Redirect to onboarding
+        alert(
+          '🔒 Akun Belum Lengkap\n\n' +
+          'Nomor ini sudah terdaftar tetapi belum mengatur PIN.\n\n' +
+          'Silakan atur PIN untuk melanjutkan.'
+        );
+        
+        // Switch to new customer tab for onboarding
+        setCustomerSubTab('new');
+        setFormData({
+          ...formData,
+          name: userData.name || '',
+          phone: userData.phone || '',
+          pin: ''
+        });
+        
+        // Show onboarding after alert
+        setTimeout(() => {
+          setShowOnboarding(true);
+        }, 100);
+        
+        return;
+      }
+      
+      // Other errors
+      alert(error.response?.data?.error || 'PIN salah atau terjadi kesalahan.');
     }
   };
 
   const handleOnboardingComplete = async () => {
     console.log('✅ Onboarding complete!');
+    
+    // Check if there's a pending user (from PIN login with missing PIN)
+    const pendingUserStr = localStorage.getItem('pending_user');
+    
+    if (pendingUserStr) {
+      // User was updating their PIN, not creating new account
+      console.log('📝 Updating PIN for existing user');
+      localStorage.removeItem('pending_user');
+    }
+    
     setShowOnboarding(false);
     setNeedsPINOnboarding(false);
     console.log('🎯 Navigating to menu...');
