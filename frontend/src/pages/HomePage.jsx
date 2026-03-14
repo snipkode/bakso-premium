@@ -13,9 +13,10 @@ export default function HomePage() {
   const { getTotalItems } = useCartStore();
 
   const [categories, setCategories] = useState([]);
-  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
   useEffect(() => {
     // Redirect staff to their dashboard
@@ -36,10 +37,14 @@ export default function HomePage() {
     try {
       const [categoriesRes, productsRes] = await Promise.all([
         productAPI.getCategories(),
-        productAPI.getProducts({ is_featured: true, limit: 6 }),
+        productAPI.getProducts({
+          is_featured: selectedCategory === 'all' ? undefined : undefined,
+          category: selectedCategory !== 'all' ? selectedCategory : undefined,
+          search: searchQuery || undefined,
+        }),
       ]);
       setCategories(categoriesRes.data.categories || []);
-      setFeaturedProducts(productsRes.data.products || []);
+      setProducts(productsRes.data.products || productsRes.data.rows || []);
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {
@@ -48,9 +53,7 @@ export default function HomePage() {
   };
 
   const handleSearch = () => {
-    if (searchQuery.trim()) {
-      navigate(`/menu?search=${encodeURIComponent(searchQuery)}`);
-    }
+    loadData();
   };
 
   const totalItems = getTotalItems();
@@ -63,7 +66,7 @@ export default function HomePage() {
           <div className="flex items-center justify-between mb-3">
             <div>
               <h1 className="text-2xl font-bold text-text-primary">
-                🍜 Bakso Premium
+                🍜 Menu
               </h1>
               <p className="text-sm text-text-tertiary">
                 {isAuthenticated ? `Halo, ${user?.name}!` : 'Masuk untuk memesan'}
@@ -100,6 +103,33 @@ export default function HomePage() {
               <Search className="w-5 h-5" />
             </Button>
           </div>
+
+          {/* Category Filter */}
+          <div className="flex gap-2 mt-3 overflow-x-auto scrollbar-hide">
+            <button
+              onClick={() => setSelectedCategory('all')}
+              className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                selectedCategory === 'all'
+                  ? 'bg-primary text-white'
+                  : 'bg-secondary text-text-secondary hover:bg-secondary/80'
+              }`}
+            >
+              Semua
+            </button>
+            {categories.map((category) => (
+              <button
+                key={category.id}
+                onClick={() => setSelectedCategory(category.id)}
+                className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                  selectedCategory === category.id
+                    ? 'bg-primary text-white'
+                    : 'bg-secondary text-text-secondary hover:bg-secondary/80'
+                }`}
+              >
+                {category.name}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -108,50 +138,29 @@ export default function HomePage() {
           <LoadingSpinner size="lg" />
         </div>
       ) : (
-        <div className="px-4 py-6 space-y-8">
-          {/* Categories */}
-          <section>
-            <h2 className="text-lg font-bold text-text-primary mb-4">Kategori</h2>
-            <div className="grid grid-cols-4 gap-3">
-              {categories.map((category) => (
-                <motion.div
-                  key={category.id}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => navigate(`/menu?category=${category.id}`)}
-                  className="flex flex-col items-center gap-2 cursor-pointer"
-                >
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-2xl shadow-ios-md">
-                    {category.icon || '🍜'}
-                  </div>
-                  <span className="text-xs text-text-primary text-center line-clamp-2">
-                    {category.name}
-                  </span>
-                </motion.div>
-              ))}
-            </div>
-          </section>
-
-          {/* Featured Products */}
+        <div className="px-4 py-6 space-y-6">
+          {/* All Products Grid */}
           <section>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-text-primary">Menu Favorit</h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/menu')}
-              >
-                Lihat Semua
-              </Button>
+              <h2 className="text-lg font-bold text-text-primary">
+                {selectedCategory === 'all' ? 'Semua Produk' : 'Produk'}
+              </h2>
+              <span className="text-xs text-text-tertiary">
+                {filteredProducts.length} items
+              </span>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              {featuredProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onClick={() => navigate(`/product/${product.id}`)}
-                />
-              ))}
-            </div>
+            {filteredProducts.length > 0 ? (
+              <div className="grid grid-cols-2 gap-3">
+                {filteredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <ShoppingBag className="w-16 h-16 text-text-tertiary mx-auto mb-4 opacity-50" />
+                <p className="text-text-tertiary">Tidak ada produk ditemukan</p>
+              </div>
+            )}
           </section>
 
           {/* Info Cards */}
@@ -192,7 +201,7 @@ export default function HomePage() {
                 <Button
                   variant="secondary"
                   size="sm"
-                  onClick={() => navigate('/menu')}
+                  onClick={() => navigate('/cart')}
                 >
                   Pesan Sekarang
                 </Button>
