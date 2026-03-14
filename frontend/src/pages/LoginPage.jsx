@@ -25,6 +25,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showPIN, setShowPIN] = useState(false);
   const [staffLoginType, setStaffLoginType] = useState('password'); // 'password' or 'pin'
+  const [showExpiredPINModal, setShowExpiredPINModal] = useState(false);
+  const [expiredPINUserData, setExpiredPINUserData] = useState(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showExistingUserModal, setShowExistingUserModal] = useState(false);
   const [showResetPINModal, setShowResetPINModal] = useState(false);
@@ -423,21 +425,9 @@ export default function LoginPage() {
         
         // Handle PIN expired for staff
         if (error.response?.status === 403 && error.response?.data?.pin_expired) {
-          alert(
-            '🔄 PIN Kadaluarsa\n\n' +
-            error.response.data.message + '\n\n' +
-            'Silakan atur PIN baru untuk melanjutkan.'
-          );
-          
-          // Switch to PIN setup mode
-          setCustomerSubTab('new');
-          setFormData({
-            ...formData,
-            name: error.response.data.user?.name || '',
-            phone: error.response.data.user?.phone || '',
-            pin: ''
-          });
-          setShowOnboarding(true);
+          // Store user data and show confirmation modal
+          setExpiredPINUserData(error.response.data.user);
+          setShowExpiredPINModal(true);
           return;
         }
         
@@ -466,6 +456,34 @@ export default function LoginPage() {
       } catch (error) {
         console.error('Staff login failed:', error);
       }
+    }
+  };
+
+  const handleExpiredPINConfirm = async () => {
+    // Validate password confirmation
+    if (!formData.password) {
+      alert('⚠️ Password harus diisi untuk konfirmasi');
+      return;
+    }
+
+    try {
+      // Verify password first
+      const result = await staffLogin(formData.phone, formData.password);
+      
+      // Password verified - proceed to PIN setup
+      setShowExpiredPINModal(false);
+      setCustomerSubTab('new');
+      setFormData({
+        ...formData,
+        name: expiredPINUserData?.name || '',
+        phone: expiredPINUserData?.phone || '',
+        password: '',
+        pin: ''
+      });
+      setShowOnboarding(true);
+    } catch (error) {
+      console.error('❌ Password confirmation failed:', error);
+      alert('⚠️ Password salah. Silakan coba lagi.');
     }
   };
 
@@ -1351,6 +1369,92 @@ export default function LoginPage() {
               >
                 Login Staff Sekarang
               </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Expired PIN Confirmation Modal */}
+      {showExpiredPINModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden"
+          >
+            {/* Header */}
+            <div className="relative bg-gradient-to-br from-amber-500 to-orange-500 p-6 text-white">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-3xl">
+                  🔄
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold">PIN Kadaluarsa</h2>
+                  <p className="text-sm text-white/90">Konfirmasi untuk reset PIN</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              <div className="mb-6">
+                <div className="w-20 h-20 bg-gradient-to-br from-amber-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Shield className="w-10 h-10 text-white" />
+                </div>
+                <p className="text-gray-700 dark:text-gray-300 text-center mb-4">
+                  <strong className="text-amber-600 dark:text-amber-400">{expiredPINUserData?.name}</strong><br/>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">{expiredPINUserData?.role}</span>
+                </p>
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 mb-4">
+                  <p className="text-sm text-amber-800 dark:text-amber-300 text-center">
+                    🔒 PIN Anda sudah kadaluarsa (reset 1 bulan).<br/><br/>
+                    <strong>Untuk keamanan, silakan konfirmasi dengan password untuk mengatur PIN baru.</strong>
+                  </p>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Password Konfirmasi
+                </label>
+                <div className="relative">
+                  <Input
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder="Masukkan password Anda"
+                    className="pl-4 pr-11"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setShowExpiredPINModal(false);
+                    setExpiredPINUserData(null);
+                    setFormData({ ...formData, password: '' });
+                  }}
+                  className="flex-1"
+                >
+                  Batal
+                </Button>
+                <Button
+                  onClick={handleExpiredPINConfirm}
+                  className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg shadow-amber-500/30"
+                >
+                  Konfirmasi & Reset PIN
+                </Button>
+              </div>
             </div>
           </motion.div>
         </div>
