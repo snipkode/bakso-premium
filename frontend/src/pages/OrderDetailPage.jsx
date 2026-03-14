@@ -310,7 +310,7 @@ export default function OrderDetailPage() {
                 {order.queue_number && (
                   <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-2 rounded-xl">
                     <Hash className="w-4 h-4" strokeWidth={2.5} />
-                    <span className="text-sm font-semibold">#{order.queue_number}</span>
+                    <span className="text-sm font-semibold">{order.queue_number}</span>
                   </div>
                 )}
               </div>
@@ -501,7 +501,7 @@ export default function OrderDetailPage() {
                     <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Nomor Antrian</span>
                   </div>
                   <span className="text-xl font-bold text-orange-600 dark:text-orange-400">
-                    #{order.queue_number}
+                    {order.queue_number}
                   </span>
                 </div>
               )}
