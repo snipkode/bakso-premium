@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useState } from 'react';
-import api from '../lib/api';
+import api from '@/lib/api';
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
 

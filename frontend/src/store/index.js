@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { authAPI } from '../lib/api';
-import { connectSocket, disconnectSocket, emitPageChange } from '../lib/socket';
+import { authAPI } from '@/lib/api';
+import { connectSocket, disconnectSocket, emitPageChange } from '@/lib/socket';
 
 export const useAuthStore = create(
   persist(

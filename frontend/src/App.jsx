@@ -1,35 +1,35 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { useAuthStore, useAppStore } from './store';
-import { getSocket, disconnectSocket } from './lib/socket';
+import { useAuthStore, useAppStore } from '@/store';
+import { getSocket, disconnectSocket } from '@/lib/socket';
 
 // Pages
-import HomePage from './pages/HomePage';
-import MenuPage from './pages/MenuPage';
-import ProductDetailPage from './pages/ProductDetailPage';
-import CartPage from './pages/CartPage';
-import CheckoutPage from './pages/CheckoutPage';
-import OrderSuccessPage from './pages/OrderSuccessPage';
-import OrdersPage from './pages/OrdersPage';
-import OrderDetailPage from './pages/OrderDetailPage';
-import TrackOrderPage from './pages/TrackOrderPage';
-import ProfilePage from './pages/ProfilePage';
-import LoginPage from './pages/LoginPage';
-import NotificationSettingsPage from './pages/NotificationSettingsPage';
-import AdminDashboard from './pages/admin/Dashboard';
-import AdminOrders from './pages/admin/Orders';
-import AdminProducts from './pages/admin/Products';
-import AdminPayments from './pages/admin/Payments';
-import AdminUsers from './pages/admin/Users';
-import AdminReports from './pages/admin/Reports';
-import AdminLayout from './components/admin/AdminLayout';
-import KitchenView from './pages/kitchen/KitchenView';
-import DriverView from './pages/driver/DriverView';
-import NotFoundPage from './pages/NotFoundPage';
+import HomePage from '@/pages/HomePage';
+import MenuPage from '@/pages/MenuPage';
+import ProductDetailPage from '@/pages/ProductDetailPage';
+import CartPage from '@/pages/CartPage';
+import CheckoutPage from '@/pages/CheckoutPage';
+import OrderSuccessPage from '@/pages/OrderSuccessPage';
+import OrdersPage from '@/pages/OrdersPage';
+import OrderDetailPage from '@/pages/OrderDetailPage';
+import TrackOrderPage from '@/pages/TrackOrderPage';
+import ProfilePage from '@/pages/ProfilePage';
+import LoginPage from '@/pages/LoginPage';
+import NotificationSettingsPage from '@/pages/NotificationSettingsPage';
+import AdminDashboard from '@/pages/admin/Dashboard';
+import AdminOrders from '@/pages/admin/Orders';
+import AdminProducts from '@/pages/admin/Products';
+import AdminPayments from '@/pages/admin/Payments';
+import AdminUsers from '@/pages/admin/Users';
+import AdminReports from '@/pages/admin/Reports';
+import AdminLayout from '@/components/admin/AdminLayout';
+import KitchenView from '@/pages/kitchen/KitchenView';
+import DriverView from '@/pages/driver/DriverView';
+import NotFoundPage from '@/pages/NotFoundPage';
 
 // Components
-import { BottomNav } from './components/BottomNav';
-import { Toaster } from './components/Toaster';
+import { BottomNav } from '@/components/BottomNav';
+import { Toaster } from '@/components/Toaster';
 
 function App() {
   const { isAuthenticated, user, token } = useAuthStore();

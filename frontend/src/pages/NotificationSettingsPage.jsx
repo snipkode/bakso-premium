@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Bell, BellOff, CheckCircle, XCircle, Smartphone, Globe, Shield } from 'lucide-react';
-import { useNotification } from '../hooks/useNotification';
-import { Card, Button, LoadingSpinner } from '../components/ui/BaseComponents';
+import { useNotification } from '@/hooks/useNotification';
+import { Card, Button, LoadingSpinner } from '@/components/ui/BaseComponents';
 
 export default function NotificationSettingsPage() {
   const {
