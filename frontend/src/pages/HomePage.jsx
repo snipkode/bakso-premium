@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Search, ShoppingBag, MapPin, Clock, Star } from 'lucide-react';
-import { useAuthStore, useCartStore } from '../store';
-import { productAPI } from '../lib/api';
-import { Button, Input, Card, Badge, LoadingSpinner } from '../components/ui/BaseComponents';
-import { ProductCard } from '../components/ui';
+import { Search, ShoppingBag, MapPin, Clock } from 'lucide-react';
+import { useAuthStore, useCartStore } from '@/store';
+import { productAPI } from '@/lib/api';
+import { Button, Input, Card, Badge, LoadingSpinner } from '@/components/ui/BaseComponents';
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -55,6 +53,12 @@ export default function HomePage() {
   const handleSearch = () => {
     loadData();
   };
+
+  const filteredProducts = products.filter(product => {
+    const matchSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchCategory = selectedCategory === 'all' || product.category_id === selectedCategory;
+    return matchSearch && matchCategory;
+  });
 
   const totalItems = getTotalItems();
 
@@ -152,7 +156,53 @@ export default function HomePage() {
             {filteredProducts.length > 0 ? (
               <div className="grid grid-cols-2 gap-3">
                 {filteredProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                  <Card
+                    key={product.id}
+                    onClick={() => navigate(`/product/${product.id}`)}
+                    className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+                  >
+                    <div className="aspect-square bg-gray-100 dark:bg-gray-800 relative">
+                      {product.image ? (
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextElementSibling?.classList.remove('hidden');
+                          }}
+                        />
+                      ) : (
+                        <div className="hidden">
+                          <img src="/placeholder.svg" alt="placeholder" />
+                        </div>
+                      )}
+                      {!product.is_available && (
+                        <Badge variant="error" className="absolute top-2 left-2 text-xs">
+                          Unavailable
+                        </Badge>
+                      )}
+                      {product.is_featured && (
+                        <Badge className="absolute top-2 right-2 text-xs">⭐</Badge>
+                      )}
+                    </div>
+                    <div className="p-3">
+                      <h3 className="font-semibold text-sm text-gray-900 dark:text-white line-clamp-2 mb-1">
+                        {product.name}
+                      </h3>
+                      <p className="text-primary font-bold text-sm">
+                        {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(product.price)}
+                      </p>
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          Stock: {product.stock}
+                        </span>
+                        {product.spicy_level > 0 && (
+                          <span className="text-xs">{'🌶️'.repeat(product.spicy_level)}</span>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
                 ))}
               </div>
             ) : (
