@@ -7,6 +7,7 @@ import { formatRupiah, formatDate, getStatusLabel, getStatusColor } from '../../
 import { subscribeToOrderUpdates } from '../../lib/socket';
 
 export default function AdminOrders() {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('all');
