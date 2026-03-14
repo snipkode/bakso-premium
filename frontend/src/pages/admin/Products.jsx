@@ -106,6 +106,21 @@ export default function AdminProducts() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  // Reset to page 1 when filterStock changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterStock]);
+
+  // Auto-navigate if current page is empty
+  useEffect(() => {
+    if (products.length === 0 && currentPage > 1 && totalCount > 0) {
+      const lastPage = Math.ceil(totalCount / pageSize);
+      if (currentPage > lastPage) {
+        setCurrentPage(lastPage);
+      }
+    }
+  }, [products.length, currentPage, totalCount, pageSize]);
+
   useEffect(() => {
     loadData();
   }, [currentPage, pageSize, filterCategory]);
@@ -126,34 +141,36 @@ export default function AdminProducts() {
 
       setCategories(categoriesRes.data.categories || []);
       let productsData = productsRes.data.products || productsRes.data.rows || [];
-      setTotalCount(productsRes.data.count || productsData.length);
+      const totalFromServer = productsRes.data.count || productsData.length;
 
-      // Apply stock filter client-side (since API doesn't support it yet)
+      // Apply stock filter client-side
+      let filteredProducts = productsData;
       if (filterStock !== 'all') {
         switch (filterStock) {
           case 'low':
-            productsData = productsData.filter(p => p.stock <= p.min_stock && p.stock > 0);
+            filteredProducts = productsData.filter(p => p.stock <= p.min_stock && p.stock > 0);
             break;
           case 'out':
-            productsData = productsData.filter(p => p.stock === 0);
+            filteredProducts = productsData.filter(p => p.stock === 0);
             break;
           case 'available':
-            productsData = productsData.filter(p => p.is_available && p.stock > 0);
+            filteredProducts = productsData.filter(p => p.is_available && p.stock > 0);
             break;
           default:
             break;
         }
       }
 
-      setProducts(productsData);
+      setProducts(filteredProducts);
+      setTotalCount(filterStock !== 'all' ? filteredProducts.length : totalFromServer);
 
       // Calculate stats
       const lowStock = lowStockRes.data.products || [];
       setStats({
-        total: productsRes.data.count || productsRes.data.products?.length || 0,
+        total: totalFromServer,
         lowStock: lowStock.filter(p => p.stock <= p.min_stock && p.stock > 0).length,
-        outOfStock: productsData.filter(p => p.stock === 0).length,
-        available: productsData.filter(p => p.is_available && p.stock > 0).length,
+        outOfStock: filteredProducts.filter(p => p.stock === 0).length,
+        available: filteredProducts.filter(p => p.is_available && p.stock > 0).length,
       });
     } catch (error) {
       console.error('Failed to load data:', error);
