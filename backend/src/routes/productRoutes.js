@@ -19,4 +19,8 @@ router.put('/products/:id', auth, authorize('admin'), productController.updatePr
 router.delete('/products/:id', auth, authorize('admin'), productController.deleteProduct);
 router.patch('/products/:id/availability', auth, authorize('admin'), productController.toggleProductAvailability);
 
+// Stock management routes (admin only)
+router.patch('/products/:id/stock', auth, authorize('admin'), productController.updateProductStock);
+router.get('/products/stock/low', auth, authorize('admin'), productController.getLowStockProducts);
+
 module.exports = router;

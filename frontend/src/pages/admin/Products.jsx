@@ -317,9 +317,15 @@ export default function AdminProducts() {
                     </span>
                   ))}
                 </div>
-                <span className="text-xs text-gray-400 dark:text-gray-500">
-                  Stock: {product.stock || 0}
-                </span>
+                <div className="text-xs">
+                  <span className={
+                    product.stock <= 0 ? 'text-red-600 font-bold' :
+                    product.stock <= (product.min_stock || 10) ? 'text-orange-600 font-medium' :
+                    'text-gray-400 dark:text-gray-500'
+                  }>
+                    Stock: {product.stock || 0}
+                  </span>
+                </div>
               </div>
             </div>
           </Card>

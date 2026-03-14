@@ -38,6 +38,19 @@ exports.createOrder = async (req, res) => {
         if (!product) {
           return res.status(400).json({ error: `Product not found: ${item.product_id}` });
         }
+        
+        // Check product availability
+        if (!product.is_available) {
+          return res.status(400).json({ error: `Product ${product.name} is not available` });
+        }
+        
+        // Check stock
+        if (product.stock < item.quantity) {
+          return res.status(400).json({ 
+            error: `Stock tidak cukup untuk ${product.name}. Stock: ${product.stock}, requested: ${item.quantity}` 
+          });
+        }
+        
         itemsWithDetails.push({
           product_id: product.id,
           product_name: product.name,
@@ -129,7 +142,7 @@ exports.createOrder = async (req, res) => {
       estimated_time: 30,
     }, { transaction });
 
-    // Create order items
+    // Create order items AND reduce stock
     for (const item of itemsWithDetails) {
       await OrderItem.create({
         order_id: order.id,
@@ -141,6 +154,15 @@ exports.createOrder = async (req, res) => {
         notes: item.notes,
         customizations: item.customizations || [],
       }, { transaction });
+      
+      // Reduce product stock
+      if (item.product_id) {
+        await Product.decrement('stock', {
+          by: item.quantity,
+          where: { id: item.product_id },
+          transaction,
+        });
+      }
     }
 
     // Deduct loyalty points if used

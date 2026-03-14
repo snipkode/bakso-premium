@@ -59,6 +59,16 @@ const Product = sequelize.define('product', {
     type: DataTypes.JSON,
     defaultValue: [],
   },
+  stock: {
+    type: DataTypes.INTEGER,
+    defaultValue: 100, // Default stock
+    allowNull: false,
+  },
+  min_stock: {
+    type: DataTypes.INTEGER,
+    defaultValue: 10, // Low stock alert threshold
+    allowNull: false,
+  },
 });
 
 module.exports = Product;

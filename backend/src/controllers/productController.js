@@ -260,3 +260,67 @@ exports.toggleProductAvailability = async (req, res) => {
     res.status(500).json({ error: 'Failed to toggle availability' });
   }
 };
+
+// Update product stock (admin only)
+exports.updateProductStock = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { stock, min_stock } = req.body;
+
+    const product = await Product.findByPk(id);
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    if (stock !== undefined) {
+      if (stock < 0) {
+        return res.status(400).json({ error: 'Stock cannot be negative' });
+      }
+      product.stock = stock;
+    }
+
+    if (min_stock !== undefined) {
+      if (min_stock < 0) {
+        return res.status(400).json({ error: 'Min stock cannot be negative' });
+      }
+      product.min_stock = min_stock;
+    }
+
+    await product.save();
+
+    // Auto set is_available based on stock
+    if (product.stock === 0) {
+      product.is_available = false;
+      await product.save();
+    }
+
+    res.json({ 
+      success: true, 
+      product,
+      message: `Stock updated to ${product.stock}`,
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update stock' });
+  }
+};
+
+// Get low stock products (admin only)
+exports.getLowStockProducts = async (req, res) => {
+  try {
+    const products = await Product.findAll({
+      where: {
+        stock: { [Op.lte]: sequelize.col('min_stock') },
+        is_available: true,
+      },
+      include: [{
+        model: Category,
+        as: 'category',
+      }],
+      order: [['stock', 'ASC']],
+    });
+
+    res.json({ success: true, products });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get low stock products' });
+  }
+};
