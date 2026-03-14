@@ -20,8 +20,14 @@ export default function LoginPage() {
   const [staffLoginType, setStaffLoginType] = useState('password');
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showExistingUserModal, setShowExistingUserModal] = useState(false);
+  const [showResetPINModal, setShowResetPINModal] = useState(false);
   const [existingUserData, setExistingUserData] = useState(null);
   const [redirectTimer, setRedirectTimer] = useState(4);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetEmailError, setResetEmailError] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  const [resetSuccessMessage, setResetSuccessMessage] = useState('');
   const [formErrors, setFormErrors] = useState({
     name: '',
     phone: '',
@@ -128,6 +134,43 @@ export default function LoginPage() {
 
     setFormErrors(errors);
     return isValid;
+  };
+
+  const handleResetPIN = async () => {
+    if (!resetEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(resetEmail)) {
+      setResetEmailError('Email tidak valid');
+      return;
+    }
+
+    setResetEmailError('');
+
+    try {
+      setResetLoading(true);
+      console.log('📧 Sending reset PIN request...');
+      
+      // Call forgot PIN API - requires phone for verification
+      const response = await customerPINAPI.forgotPIN(formData.phone, resetEmail);
+      console.log('✅ Reset email sent:', response.data);
+
+      // Get message from response
+      const successMessage = response.data?.message || 'Link reset PIN akan dikirim ke email Anda';
+      setResetSuccessMessage(successMessage);
+      setResetSent(true);
+    } catch (error) {
+      console.error('❌ Failed to send reset email:', error);
+      const errorMsg = error.response?.data?.error || 'Gagal mengirim link reset PIN';
+      alert('⚠️ ' + errorMsg);
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  const handleCloseResetModal = () => {
+    setShowResetPINModal(false);
+    setResetEmail('');
+    setResetSent(false);
+    setResetSuccessMessage('');
+    setResetEmailError('');
   };
 
   const handleCustomerAuth = async (e) => {
@@ -1005,6 +1048,111 @@ export default function LoginPage() {
                     Lanjutkan Atur PIN
                   </Button>
                 </>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Reset PIN Modal */}
+      {showResetPINModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden"
+          >
+            {/* Header */}
+            <div className="relative bg-gradient-to-br from-orange-500 to-amber-500 p-6 text-white">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                  <KeyRound className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold">Reset PIN</h2>
+                  <p className="text-sm text-white/90">Kirim link reset via email</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              {!resetSent ? (
+                <>
+                  <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                    <p className="text-sm text-blue-800 dark:text-blue-300">
+                      <strong>ℹ️ Info:</strong> Link reset PIN akan dikirim ke email Anda. Link ini hanya berlaku selama 1 jam.
+                    </p>
+                  </div>
+
+                  <div className="mb-6">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Email
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        type="email"
+                        value={resetEmail}
+                        onChange={(e) => {
+                          setResetEmail(e.target.value);
+                          setResetEmailError('');
+                        }}
+                        placeholder="nama@email.com"
+                        className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                        disabled={resetLoading}
+                      />
+                    </div>
+                    {resetEmailError && (
+                      <p className="text-xs text-red-600 dark:text-red-400 mt-1 ml-3 flex items-center gap-1">
+                        <span>⚠️</span>
+                        <span>{resetEmailError}</span>
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex gap-3">
+                    <Button
+                      variant="secondary"
+                      onClick={handleCloseResetModal}
+                      className="flex-1"
+                      disabled={resetLoading}
+                    >
+                      Batal
+                    </Button>
+                    <Button
+                      onClick={handleResetPIN}
+                      isLoading={resetLoading}
+                      className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg shadow-orange-500/30"
+                    >
+                      {resetLoading ? 'Mengirim...' : 'Kirim Link Reset'}
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-8">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4"
+                  >
+                    <CheckCircle className="w-10 h-10 text-white" />
+                  </motion.div>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                    Permintaan Reset Dikirim!
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-6">
+                    {resetSuccessMessage}<br />
+                    <strong className="text-gray-900 dark:text-white">{resetEmail}</strong>
+                  </p>
+                  <Button
+                    onClick={handleCloseResetModal}
+                    className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 shadow-lg"
+                  >
+                    Tutup
+                  </Button>
+                </div>
               )}
             </div>
           </motion.div>
