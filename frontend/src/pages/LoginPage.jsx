@@ -390,30 +390,61 @@ export default function LoginPage() {
       if (!validateForm('staff-pin')) {
         return;
       }
-      // TODO: Implement staff PIN login API
-      console.log('Staff PIN login:', formData.phone, formData.pin);
+      
+      // Staff PIN login - use customerPINAPI for now (same endpoint)
+      try {
+        console.log('🔑 Staff PIN login:', formData.phone, formData.pin);
+        const result = await customerPINAPI.verifyPIN(formData.phone, formData.pin);
+        
+        console.log('✅ Staff PIN login successful:', result);
+        
+        const role = result?.user?.role;
+        
+        // Verify user is staff
+        if (!['admin', 'kitchen', 'driver'].includes(role)) {
+          alert('⚠️ Akun ini bukan akun Staff. Silakan gunakan login Customer.');
+          return;
+        }
+        
+        // Store auth data
+        localStorage.setItem('token', result.token);
+        localStorage.setItem('user', JSON.stringify(result.user));
+        
+        // Redirect based on role
+        if (role === 'admin') {
+          navigate('/admin');
+        } else if (role === 'kitchen') {
+          navigate('/kitchen');
+        } else if (role === 'driver') {
+          navigate('/driver');
+        }
+      } catch (error) {
+        console.error('❌ Staff PIN login failed:', error);
+        alert(error.response?.data?.error || 'PIN salah atau terjadi kesalahan.');
+      }
     } else {
+      // Staff password login
       if (!validateForm('staff')) {
         return;
       }
-    }
-    
-    try {
-      const result = await staffLogin(formData.phone, formData.password);
-      const role = result?.user?.role;
       
-      // Redirect based on role
-      if (role === 'admin') {
-        navigate('/admin');
-      } else if (role === 'kitchen') {
-        navigate('/kitchen');
-      } else if (role === 'driver') {
-        navigate('/driver');
-      } else {
-        navigate('/');
+      try {
+        const result = await staffLogin(formData.phone, formData.password);
+        const role = result?.user?.role;
+        
+        // Redirect based on role
+        if (role === 'admin') {
+          navigate('/admin');
+        } else if (role === 'kitchen') {
+          navigate('/kitchen');
+        } else if (role === 'driver') {
+          navigate('/driver');
+        } else {
+          navigate('/');
+        }
+      } catch (error) {
+        console.error('Staff login failed:', error);
       }
-    } catch (error) {
-      console.error('Staff login failed:', error);
     }
   };
 

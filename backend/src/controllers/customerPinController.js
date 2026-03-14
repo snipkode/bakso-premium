@@ -41,7 +41,7 @@ exports.setPIN = async (req, res) => {
   }
 };
 
-// Verify PIN for login
+// Verify PIN for login (customer OR staff)
 exports.verifyPIN = async (req, res) => {
   try {
     const { phone, pin } = req.body;
@@ -58,8 +58,9 @@ exports.verifyPIN = async (req, res) => {
       return res.status(404).json({ error: 'User tidak ditemukan' });
     }
 
-    if (user.role !== 'customer') {
-      return res.status(400).json({ error: 'Akun bukan customer' });
+    // Allow both customer and staff roles
+    if (!['customer', 'admin', 'kitchen', 'driver'].includes(user.role)) {
+      return res.status(400).json({ error: 'Role tidak valid' });
     }
 
     // SPECIAL CASE: User exists but PIN not set yet
@@ -74,6 +75,7 @@ exports.verifyPIN = async (req, res) => {
           phone: user.phone,
           name: user.name,
           email: user.email,
+          role: user.role,
           is_pin_set: false,
         }
       });
