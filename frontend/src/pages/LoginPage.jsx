@@ -16,8 +16,6 @@ export default function LoginPage() {
   const [customerSubTab, setCustomerSubTab] = useState('new');
   const [showPassword, setShowPassword] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [showExistingUserModal, setShowExistingUserModal] = useState(false);
-  const [existingUserData, setExistingUserData] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -42,16 +40,6 @@ export default function LoginPage() {
       console.log('📊 has_pin:', result?.user?.is_pin_set);
       console.log('📊 message:', result?.message);
       
-      // Show warning for existing users
-      if (result?.is_existing_user) {
-        const hasPIN = result?.user?.is_pin_set;
-        
-        // Store user data and show modal
-        setExistingUserData({ hasPIN, message: result.message });
-        setShowExistingUserModal(true);
-        return; // Don't continue yet, wait for modal decision
-      }
-      
       // New user - proceed with onboarding
       const shouldShowOnboarding = !result?.user?.is_pin_set;
       
@@ -62,28 +50,39 @@ export default function LoginPage() {
       }
     } catch (error) {
       console.error('❌ Customer auth failed:', error);
-    }
-  };
-
-  const handleExistingUserDecision = (usePIN) => {
-    setShowExistingUserModal(false);
-    
-    if (usePIN) {
-      // Switch to existing customer tab
-      setCustomerSubTab('existing');
-      setFormData({ ...formData, pin: '' });
-    } else {
-      // Continue with new customer flow
-      const shouldShowOnboarding = !existingUserData?.hasPIN;
       
-      if (shouldShowOnboarding) {
-        setShowOnboarding(true);
+      // Handle existing user (409 Conflict)
+      if (error.response?.status === 409 && error.response?.data?.requires_pin_login) {
+        const data = error.response.data;
+        const hasPIN = data.has_pin;
+        
+        console.log('👋 Existing user detected!');
+        console.log('📊 Has PIN:', hasPIN);
+        console.log('📊 Message:', data.message);
+        
+        // Switch to existing customer tab
+        setCustomerSubTab('existing');
+        setFormData({ ...formData, pin: '' });
+        
+        // Show info message
+        if (hasPIN) {
+          alert(
+            '🔒 Akun Sudah Terdaftar\n\n' +
+            'Nomor ini sudah memiliki PIN.\n\n' +
+            'Silakan login dengan PIN untuk keamanan akun Anda.'
+          );
+        } else {
+          alert(
+            '👋 Selamat Datang Kembali!\n\n' +
+            'Nomor ini sudah terdaftar sebelumnya.\n\n' +
+            'Silakan lanjutkan untuk mengatur PIN.'
+          );
+        }
       } else {
-        navigate('/menu');
+        // Other errors
+        alert(error.response?.data?.error || 'Terjadi kesalahan. Silakan coba lagi.');
       }
     }
-    
-    setExistingUserData(null);
   };
 
   const handlePINLogin = async (e) => {
@@ -547,87 +546,6 @@ export default function LoginPage() {
         onClose={() => setShowOnboarding(false)}
         onComplete={handleOnboardingComplete}
       />
-
-      {/* Existing User Modal */}
-      {showExistingUserModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden"
-          >
-            {/* Header */}
-            <div className="relative bg-gradient-to-br from-orange-500 to-amber-500 p-6 text-white">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                  <span className="text-3xl">👋</span>
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold">Selamat Datang Kembali!</h2>
-                  <p className="text-sm text-white/90">Nomor ini sudah terdaftar</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="p-6">
-              {existingUserData?.hasPIN ? (
-                <>
-                  <div className="mb-6">
-                    <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <KeyRound className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-                    </div>
-                    <p className="text-center text-gray-700 dark:text-gray-300 mb-2">
-                      Akun Anda sudah memiliki PIN
-                    </p>
-                    <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-                      Login dengan PIN lebih cepat dan praktis
-                    </p>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <Button
-                      variant="secondary"
-                      onClick={() => handleExistingUserDecision(false)}
-                      className="flex-1"
-                    >
-                      Lanjutkan
-                    </Button>
-                    <Button
-                      onClick={() => handleExistingUserDecision(true)}
-                      className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg shadow-orange-500/30"
-                    >
-                      Login dengan PIN
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="mb-6">
-                    <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Shield className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <p className="text-center text-gray-700 dark:text-gray-300 mb-2">
-                      Akun Anda belum memiliki PIN
-                    </p>
-                    <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-                      Atur PIN untuk login lebih cepat dan aman
-                    </p>
-                  </div>
-
-                  <Button
-                    onClick={() => handleExistingUserDecision(false)}
-                    className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg shadow-orange-500/30"
-                  >
-                    Lanjutkan
-                  </Button>
-                </>
-              )}
-            </div>
-          </motion.div>
-        </div>
-      )}
     </div>
   );
 }

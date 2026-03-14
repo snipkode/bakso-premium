@@ -41,29 +41,36 @@ exports.customerAuth = async (req, res) => {
         });
       }
 
-      // Update name if changed
-      if (user.name !== name) {
-        user.name = name;
-        await user.save();
-      }
-      user.last_active = new Date();
-      await user.save();
-      
+      // User exists - DON'T update name, just return info
       isExistingUser = true;
       hasPIN = user.is_pin_set;
-    } else {
-      user = await User.create({ name, phone, role: 'customer' });
+      
+      // Return special response for existing users
+      return res.status(409).json({
+        success: false,
+        is_existing_user: true,
+        has_pin: hasPIN,
+        requires_pin_login: true,
+        message: hasPIN 
+          ? 'Nomor ini sudah terdaftar. Silakan login dengan PIN untuk keamanan akun.'
+          : 'Nomor ini sudah terdaftar. Silakan lanjutkan untuk mengatur PIN.',
+        user: {
+          phone: user.phone,
+          is_pin_set: user.is_pin_set,
+        }
+      });
     }
+
+    // New user - create account
+    user = await User.create({ name, phone, role: 'customer' });
 
     const token = generateToken(user);
 
     res.json({
       success: true,
-      is_existing_user: isExistingUser,
-      has_pin: hasPIN,
-      message: isExistingUser 
-        ? (hasPIN ? 'Selamat datang kembali! Silakan login dengan PIN untuk pengalaman lebih cepat.' : 'Selamat datang kembali!')
-        : 'Akun baru berhasil dibuat!',
+      is_existing_user: false,
+      has_pin: false,
+      message: 'Akun baru berhasil dibuat!',
       token,
       user: {
         id: user.id,
