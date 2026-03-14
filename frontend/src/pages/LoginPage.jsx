@@ -420,6 +420,27 @@ export default function LoginPage() {
         }
       } catch (error) {
         console.error('❌ Staff PIN login failed:', error);
+        
+        // Handle PIN expired for staff
+        if (error.response?.status === 403 && error.response?.data?.pin_expired) {
+          alert(
+            '🔄 PIN Kadaluarsa\n\n' +
+            error.response.data.message + '\n\n' +
+            'Silakan atur PIN baru untuk melanjutkan.'
+          );
+          
+          // Switch to PIN setup mode
+          setCustomerSubTab('new');
+          setFormData({
+            ...formData,
+            name: error.response.data.user?.name || '',
+            phone: error.response.data.user?.phone || '',
+            pin: ''
+          });
+          setShowOnboarding(true);
+          return;
+        }
+        
         alert(error.response?.data?.error || 'PIN salah atau terjadi kesalahan.');
       }
     } else {
