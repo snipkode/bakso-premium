@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, KeyRound, Eye, EyeOff, Shield, AlertTriangle, CheckCircle } from 'lucide-react';
-import { Button, Input, Card } from '@/components/ui/BaseComponents';
+import { KeyRound, Eye, EyeOff, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Button, Input } from '@/components/ui/BaseComponents';
 import { customerPINAPI } from '@/lib/api';
 import { useAuthStore } from '@/store';
 
@@ -81,20 +81,23 @@ export function StaffPINSetupModal({ isOpen, onClose, onComplete, pinCheckStatus
   return (
     <AnimatePresence>
       {isOpen && (
+        // Full screen overlay - cannot click outside to close
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-end sm:items-center justify-center pointer-events-auto"
         >
+          {/* Slide-up modal */}
           <motion.div
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden"
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="bg-white dark:bg-gray-900 rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-md overflow-hidden max-h-[90vh] flex flex-col"
           >
-            {/* Header */}
-            <div className="relative bg-gradient-to-br from-red-500 to-orange-500 p-6 text-white">
+            {/* Header - No close button */}
+            <div className="relative bg-gradient-to-br from-red-500 to-orange-500 p-6 text-white flex-shrink-0">
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
                   <KeyRound className="w-8 h-8 text-white" />
@@ -108,10 +111,24 @@ export function StaffPINSetupModal({ isOpen, onClose, onComplete, pinCheckStatus
                   </p>
                 </div>
               </div>
+              
+              {/* Progress indicator */}
+              {!success && (
+                <div className="mt-4 flex items-center gap-2">
+                  <div className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: '100%' }}
+                      className="h-full bg-white"
+                    />
+                  </div>
+                  <span className="text-xs text-white/80">Step 2 of 2</span>
+                </div>
+              )}
             </div>
 
-            {/* Content */}
-            <div className="p-6">
+            {/* Scrollable Content */}
+            <div className="p-6 overflow-y-auto flex-1">
               {!success ? (
                 <>
                   {/* Warning Box */}
@@ -219,7 +236,7 @@ export function StaffPINSetupModal({ isOpen, onClose, onComplete, pinCheckStatus
                   </div>
 
                   {/* Info Footer */}
-                  <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                  <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 flex-shrink-0">
                     <p className="text-xs text-blue-800 dark:text-blue-300 text-center">
                       🔒 PIN akan direset otomatis setiap 1 bulan untuk keamanan
                     </p>

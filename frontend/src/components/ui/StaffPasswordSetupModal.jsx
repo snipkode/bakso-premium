@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, KeyRound, Eye, EyeOff, Shield, AlertTriangle } from 'lucide-react';
-import { Button, Input, Card } from '@/components/ui/BaseComponents';
+import { KeyRound, Eye, EyeOff, Shield, AlertTriangle, AlertCircle } from 'lucide-react';
+import { Button, Input } from '@/components/ui/BaseComponents';
 import { authAPI } from '@/lib/api';
 import { useAuthStore } from '@/store';
 
@@ -48,29 +48,25 @@ export function StaffPasswordSetupModal({ isOpen, onClose, onComplete }) {
   return (
     <AnimatePresence>
       {isOpen && (
+        // Full screen overlay - cannot click outside to close
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
-          onClick={onClose}
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-end sm:items-center justify-center pointer-events-auto"
+          onClick={onClose} // Still allow close by clicking overlay (but we'll remove X button)
         >
+          {/* Slide-up modal */}
           <motion.div
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            onClick={(e) => e.stopPropagation()}
-            className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden"
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            onClick={(e) => e.stopPropagation()} // Prevent close when clicking modal content
+            className="bg-white dark:bg-gray-900 rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-md overflow-hidden max-h-[90vh] flex flex-col"
           >
-            {/* Header */}
-            <div className="relative bg-gradient-to-br from-red-500 to-orange-500 p-6 text-white">
-              <button
-                onClick={onClose}
-                className="absolute top-4 right-4 p-2 hover:bg-white/20 rounded-full transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-
+            {/* Header - No close button */}
+            <div className="relative bg-gradient-to-br from-red-500 to-orange-500 p-6 text-white flex-shrink-0">
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
                   <Shield className="w-8 h-8 text-white" />
@@ -80,10 +76,22 @@ export function StaffPasswordSetupModal({ isOpen, onClose, onComplete }) {
                   <p className="text-sm text-white/90">Atur password untuk keamanan akun</p>
                 </div>
               </div>
+              
+              {/* Progress indicator */}
+              <div className="mt-4 flex items-center gap-2">
+                <div className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: '50%' }}
+                    className="h-full bg-white"
+                  />
+                </div>
+                <span className="text-xs text-white/80">Step 1 of 2</span>
+              </div>
             </div>
 
-            {/* Content */}
-            <div className="p-6">
+            {/* Scrollable Content */}
+            <div className="p-6 overflow-y-auto flex-1">
               {/* Warning Box */}
               <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
                 <div className="flex items-start gap-3">
@@ -111,6 +119,7 @@ export function StaffPasswordSetupModal({ isOpen, onClose, onComplete }) {
                       placeholder="Minimal 6 karakter"
                       className="pl-4 pr-11"
                       disabled={isLoading}
+                      autoComplete="new-password"
                     />
                     <button
                       type="button"
@@ -134,6 +143,7 @@ export function StaffPasswordSetupModal({ isOpen, onClose, onComplete }) {
                       placeholder="Ulangi password Anda"
                       className="pl-4 pr-11"
                       disabled={isLoading}
+                      autoComplete="new-password"
                     />
                     <button
                       type="button"
@@ -167,7 +177,7 @@ export function StaffPasswordSetupModal({ isOpen, onClose, onComplete }) {
               </form>
 
               {/* Info Footer */}
-              <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+              <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 flex-shrink-0">
                 <p className="text-xs text-blue-800 dark:text-blue-300 text-center">
                   🔒 Password akan digunakan untuk login two-factor authentication bersama dengan PIN
                 </p>
