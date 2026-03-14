@@ -532,19 +532,21 @@ export default function AdminDashboard() {
         </div>
       </Card>
 
-      {/* Staff Password Setup Modal */}
+      {/* Staff Password Setup Modal - NON-BYPASSABLE */}
       <StaffPasswordSetupModal
         isOpen={showPasswordModal}
         onClose={() => setShowPasswordModal(false)}
         onComplete={handlePasswordSetupComplete}
+        isBypassable={false}
       />
 
-      {/* Staff PIN Setup Modal */}
+      {/* Staff PIN Setup Modal - NON-BYPASSABLE */}
       <StaffPINSetupModal
         isOpen={showPINSetupModal}
         onClose={() => setShowPINSetupModal(false)}
         onComplete={handlePINSetupComplete}
         pinCheckStatus={pinSetupStatus}
+        isBypassable={false}
       />
     </div>
   );

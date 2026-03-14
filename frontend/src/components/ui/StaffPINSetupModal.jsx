@@ -5,7 +5,7 @@ import { Button, Input } from '@/components/ui/BaseComponents';
 import { customerPINAPI } from '@/lib/api';
 import { useAuthStore } from '@/store';
 
-export function StaffPINSetupModal({ isOpen, onClose, onComplete, pinCheckStatus = 'needed' }) {
+export function StaffPINSetupModal({ isOpen, onClose, onComplete, pinCheckStatus = 'needed', isBypassable = false }) {
   const { user } = useAuthStore();
   const [pin, setPin] = useState(['', '', '', '', '', '']);
   const [confirmPin, setConfirmPin] = useState(['', '', '', '', '', '']);
@@ -14,6 +14,33 @@ export function StaffPINSetupModal({ isOpen, onClose, onComplete, pinCheckStatus
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  // Prevent back button
+  useEffect(() => {
+    if (isOpen && !isBypassable) {
+      const handleBackButton = (e) => {
+        e.preventDefault();
+        window.history.pushState(null, '', window.location.href);
+        return false;
+      };
+      
+      window.history.pushState(null, '', window.location.href);
+      window.addEventListener('popstate', handleBackButton);
+      
+      // Prevent page refresh/close
+      const handleBeforeUnload = (e) => {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      };
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      
+      return () => {
+        window.removeEventListener('popstate', handleBackButton);
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+      };
+    }
+  }, [isOpen, isBypassable]);
 
   const handlePinChange = (index, value, isConfirm = false) => {
     // Only allow numbers
@@ -81,12 +108,12 @@ export function StaffPINSetupModal({ isOpen, onClose, onComplete, pinCheckStatus
   return (
     <AnimatePresence>
       {isOpen && (
-        // Full screen overlay - cannot click outside to close
+        // Full screen overlay - completely blocks interaction
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-end sm:items-center justify-center"
+          className="fixed inset-0 bg-black/90 backdrop-blur-md z-[9999] flex items-end sm:items-center justify-center"
         >
           {/* Slide-up modal */}
           <motion.div
@@ -102,14 +129,20 @@ export function StaffPINSetupModal({ isOpen, onClose, onComplete, pinCheckStatus
                 <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
                   <KeyRound className="w-8 h-8 text-white" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <h2 className="text-xl font-bold">
                     {success ? 'PIN Berhasil Diatur!' : 'Atur PIN Staff'}
                   </h2>
                   <p className="text-sm text-white/90">
-                    {success ? 'Anda sekarang bisa login dengan PIN' : 'Keamanan two-factor authentication'}
+                    {success ? 'Anda sekarang bisa login dengan PIN' : 'Wajib untuk keamanan akun staff'}
                   </p>
                 </div>
+                {!isBypassable && !success && (
+                  <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                    <span className="text-xs font-bold">REQUIRED</span>
+                  </div>
+                )}
               </div>
               
               {/* Progress indicator */}
