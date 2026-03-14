@@ -30,6 +30,7 @@ exports.customerAuth = async (req, res) => {
     // Find or create user
     let user = await User.findOne({ where: { phone } });
     let isExistingUser = false;
+    let hasPIN = false;
 
     if (user) {
       // Check if user has a password (staff account)
@@ -49,6 +50,7 @@ exports.customerAuth = async (req, res) => {
       await user.save();
       
       isExistingUser = true;
+      hasPIN = user.is_pin_set;
     } else {
       user = await User.create({ name, phone, role: 'customer' });
     }
@@ -58,6 +60,10 @@ exports.customerAuth = async (req, res) => {
     res.json({
       success: true,
       is_existing_user: isExistingUser,
+      has_pin: hasPIN,
+      message: isExistingUser 
+        ? (hasPIN ? 'Selamat datang kembali! Silakan login dengan PIN untuk pengalaman lebih cepat.' : 'Selamat datang kembali!')
+        : 'Akun baru berhasil dibuat!',
       token,
       user: {
         id: user.id,

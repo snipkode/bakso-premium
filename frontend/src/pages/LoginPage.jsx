@@ -37,11 +37,35 @@ export default function LoginPage() {
       
       console.log('📊 Login result:', result);
       console.log('📊 is_existing_user:', result?.is_existing_user);
-      console.log('📊 is_pin_set:', result?.user?.is_pin_set);
+      console.log('📊 has_pin:', result?.user?.is_pin_set);
+      console.log('📊 message:', result?.message);
       
-      // Check if user already exists
+      // Show warning for existing users
       if (result?.is_existing_user) {
-        console.log('👋 Welcome back user!');
+        const hasPIN = result?.user?.is_pin_set;
+        
+        if (hasPIN) {
+          // User has PIN - suggest to use PIN login
+          const usePIN = confirm(
+            '👋 Selamat datang kembali!\n\n' +
+            'Nomor ini sudah terdaftar dan memiliki PIN.\n\n' +
+            'Apakah Anda ingin login dengan PIN untuk pengalaman lebih cepat?'
+          );
+          
+          if (usePIN) {
+            // Switch to existing customer tab
+            setCustomerSubTab('existing');
+            setFormData({ ...formData, pin: '' });
+            return; // Don't continue with new customer flow
+          }
+        } else {
+          // User doesn't have PIN yet
+          alert(
+            '👋 Selamat datang kembali!\n\n' +
+            'Nomor ini sudah terdaftar sebelumnya.\n\n' +
+            'Anda dapat mengatur PIN untuk login lebih cepat.'
+          );
+        }
       }
       
       // Show onboarding ONLY if user doesn't have PIN set
