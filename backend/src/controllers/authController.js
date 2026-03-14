@@ -89,13 +89,20 @@ exports.customerAuth = async (req, res) => {
   }
 };
 
-// Login staff (with password)
+// Login staff (with password OR PIN)
 exports.staffLogin = async (req, res) => {
   try {
-    const { phone, password } = req.body;
+    const { phone, password, pin } = req.body;
 
-    if (!phone || !password) {
-      return res.status(400).json({ error: 'Phone and password are required' });
+    if (!phone) {
+      return res.status(400).json({ error: 'Nomor HP harus diisi' });
+    }
+
+    // Validate input - either password OR pin must be provided
+    if (!password && !pin) {
+      return res.status(400).json({ 
+        error: 'Password atau PIN harus diisi' 
+      });
     }
 
     const user = await User.findOne({
@@ -106,13 +113,49 @@ exports.staffLogin = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(404).json({ error: 'User tidak ditemukan atau bukan staff' });
     }
 
-    const isMatch = await require('bcryptjs').compare(password, user.password);
+    // PIN login
+    if (pin) {
+      // Check if PIN is set
+      if (!user.is_pin_set) {
+        return res.status(400).json({
+          error: 'PIN belum diatur. Silakan atur PIN terlebih dahulu.',
+          requires_pin_setup: true
+        });
+      }
 
-    if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      // Check PIN expiry (1 month policy)
+      if (user.pin_reset_expires && user.pin_reset_expires < new Date()) {
+        // Clear expired PIN
+        user.pin_hash = null;
+        user.is_pin_set = false;
+        user.pin_reset_token = null;
+        user.pin_reset_expires = null;
+        user.pin_reset_attempts = 0;
+        await user.save();
+
+        return res.status(403).json({
+          error: 'PIN sudah kadaluarsa (reset 1 bulan). Silakan atur PIN baru.',
+          pin_expired: true
+        });
+      }
+
+      // Verify PIN
+      const bcrypt = require('bcryptjs');
+      const isValid = await bcrypt.compare(pin, user.pin_hash);
+      if (!isValid) {
+        return res.status(401).json({ error: 'PIN salah' });
+      }
+    } 
+    // Password login
+    else if (password) {
+      const bcrypt = require('bcryptjs');
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        return res.status(401).json({ error: 'Password salah' });
+      }
     }
 
     user.last_active = new Date();
@@ -127,8 +170,9 @@ exports.staffLogin = async (req, res) => {
         id: user.id,
         name: user.name,
         phone: user.phone,
+        email: user.email,
         role: user.role,
-        status: user.status,
+        is_pin_set: user.is_pin_set,
       },
     });
   } catch (error) {

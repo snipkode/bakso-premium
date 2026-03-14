@@ -393,10 +393,12 @@ export default function LoginPage() {
         return;
       }
       
-      // Staff PIN login - use customerPINAPI for now (same endpoint)
+      // Staff PIN login - use staffLogin API with pin parameter
       try {
         console.log('🔑 Staff PIN login:', formData.phone, formData.pin);
-        const result = await customerPINAPI.verifyPIN(formData.phone, formData.pin);
+        
+        // Call staffLogin with pin instead of password
+        const result = await staffLogin(formData.phone, formData.pin);
         
         console.log('✅ Staff PIN login successful:', result);
         

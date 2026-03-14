@@ -45,7 +45,11 @@ api.interceptors.response.use(
 // Auth API
 export const authAPI = {
   customerAuth: (name, phone) => api.post('/auth/customer', { name, phone }),
-  staffLogin: (phone, password) => api.post('/auth/staff', { phone, password }),
+  staffLogin: (phone, passwordOrPin) => api.post('/auth/staff', { 
+    phone, 
+    password: passwordOrPin,
+    pin: passwordOrPin
+  }),
   getProfile: () => api.get('/profile'),
   updateProfile: (data) => api.put('/profile', data),
   getUsers: (params) => api.get('/users', { params }),

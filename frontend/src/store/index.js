@@ -97,10 +97,13 @@ export const useAuthStore = create(
       },
 
       // Staff login
-      staffLogin: async (phone, password) => {
+      staffLogin: async (phone, passwordOrPin) => {
         set({ isLoading: true, error: null });
         try {
-          const { data } = await authAPI.staffLogin(phone, password);
+          // Determine if it's password or PIN login
+          const isPinLogin = /^\d{6}$/.test(passwordOrPin);
+          
+          const { data } = await authAPI.staffLogin(phone, passwordOrPin, isPinLogin);
 
           // Validate user data
           if (!data.user || !data.user.id) {
@@ -112,6 +115,7 @@ export const useAuthStore = create(
             token: data.token,
             isAuthenticated: true,
             isLoading: false,
+            needsPasswordSetup: !data.user.password,
           });
           localStorage.setItem('token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
