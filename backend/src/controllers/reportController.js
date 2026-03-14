@@ -10,6 +10,8 @@ exports.getStats = async (req, res) => {
   try {
     const { range = 'today' } = req.query;
     
+    console.log('📊 Getting stats for range:', range);
+    
     let startDate, endDate;
     const now = new Date();
     
@@ -35,21 +37,24 @@ exports.getStats = async (req, res) => {
         endDate = new Date(now.setHours(23, 59, 59, 999));
     }
 
-    // Get order stats
+    console.log('Date range:', startDate, 'to', endDate);
+
+    // Get orders with group by status using raw query
     const orders = await Order.findAll({
       where: {
         createdAt: { [Op.gte]: startDate, [Op.lte]: endDate },
       },
       attributes: [
         'status',
-        'total',
-        [Order.sequelize.fn('COUNT', Order.sequelize.col('id')), 'count'],
+        [Order.sequelize.fn('COUNT', Order.sequelize.literal('`order`.`id`')), 'count'],
       ],
       group: ['status'],
       raw: true,
     });
 
-    // Calculate revenue
+    console.log('Orders by status:', orders);
+
+    // Calculate revenue from completed orders
     const completedOrders = await Order.findAll({
       where: {
         status: 'completed',
@@ -58,6 +63,8 @@ exports.getStats = async (req, res) => {
       attributes: ['total'],
       raw: true,
     });
+
+    console.log('Completed orders count:', completedOrders.length);
 
     const revenue = completedOrders.reduce((sum, o) => sum + parseFloat(o.total || 0), 0);
 
@@ -92,6 +99,8 @@ exports.getStats = async (req, res) => {
     const completedCount = completedOrders.length;
     const completionRate = totalOrders > 0 ? Math.round((completedCount / totalOrders) * 100) : 0;
 
+    console.log('Stats calculated successfully');
+
     res.json({
       success: true,
       stats: {
@@ -103,8 +112,9 @@ exports.getStats = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Get stats error:', error);
-    res.status(500).json({ error: 'Failed to get stats' });
+    console.error('❌ Get stats error:', error.message);
+    console.error('Stack:', error.stack);
+    res.status(500).json({ error: 'Failed to get stats', details: error.message });
   }
 };
 

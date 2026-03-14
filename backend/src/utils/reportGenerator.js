@@ -224,16 +224,13 @@ class ReportGenerator {
     
     // Restore state for content
     doc.restore();
-    
+
     // Move cursor below header
     doc.y = 120;
-    
-    // Period info
+
+    // Period info - removed data reference as it's not passed to drawHeader
     doc.fillColor('#333333');
     doc.fontSize(11).font('Helvetica');
-    if (data && data.startDate) {
-      doc.text(`Periode: ${data.startDate} - ${data.endDate}`, { align: 'center' });
-    }
     doc.text(`Tanggal Cetak: ${moment().format('DD MMMM YYYY HH:mm:ss')}`, { align: 'center' });
     doc.moveDown(1);
     
