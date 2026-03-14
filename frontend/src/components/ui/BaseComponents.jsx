@@ -99,7 +99,6 @@ export function ImageWithFallback({
   const [isLoading, setIsLoading] = useState(true);
 
   const handleError = () => {
-    setIsLoading(false);
     if (retryCount < retryLimit && src) {
       // Retry loading the same image with cache bust
       const timeout = Math.min(1000 * Math.pow(2, retryCount), 5000);
@@ -111,6 +110,7 @@ export function ImageWithFallback({
       }, timeout);
     } else {
       setError(true);
+      setIsLoading(false);
     }
   };
 
@@ -122,7 +122,7 @@ export function ImageWithFallback({
     }
   };
 
-  // Show loading skeleton while loading
+  // Show loading animation while loading
   if (isLoading) {
     return (
       <div className={cn('relative overflow-hidden bg-gradient-to-br from-orange-100 to-orange-200 dark:from-gray-700 dark:to-gray-800', className)}>
@@ -177,6 +177,7 @@ export function ImageWithFallback({
     );
   }
 
+  // Show static SVG fallback on error (no animation)
   if (!currentSrc || error) {
     return (
       <div className={cn('bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center', className)}>
@@ -192,6 +193,7 @@ export function ImageWithFallback({
     );
   }
 
+  // Show actual image when loaded successfully
   return (
     <img
       src={currentSrc}
