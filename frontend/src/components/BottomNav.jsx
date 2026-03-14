@@ -1,9 +1,10 @@
 import { NavLink } from 'react-router-dom';
-import { Home, FileText, User } from 'lucide-react';
+import { Home, Utensils, FileText, User } from 'lucide-react';
 
 export function BottomNav() {
   const navItems = [
-    { path: '/', icon: Home, label: 'Menu' },
+    { path: '/', icon: Home, label: 'Home' },
+    { path: '/menu', icon: Utensils, label: 'Menu' },
     { path: '/orders', icon: FileText, label: 'Orders' },
     { path: '/profile', icon: User, label: 'Profile' },
   ];

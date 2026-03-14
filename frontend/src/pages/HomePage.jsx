@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ShoppingBag, MapPin, Clock } from 'lucide-react';
+import { Search, ShoppingBag, MapPin, Clock, Star, ChevronRight, Utensils, Truck } from 'lucide-react';
 import { useAuthStore, useCartStore } from '@/store';
 import { productAPI } from '@/lib/api';
 import { Button, Input, Card, Badge, LoadingSpinner } from '@/components/ui/BaseComponents';
@@ -10,11 +10,9 @@ export default function HomePage() {
   const { isAuthenticated, user } = useAuthStore();
   const { getTotalItems } = useCartStore();
 
-  const [categories, setCategories] = useState([]);
-  const [products, setProducts] = useState([]);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
 
   useEffect(() => {
     // Redirect staff to their dashboard
@@ -27,22 +25,14 @@ export default function HomePage() {
       navigate(roleRoutes[user.role]);
       return;
     }
-    
+
     loadData();
   }, [isAuthenticated, user]);
 
   const loadData = async () => {
     try {
-      const [categoriesRes, productsRes] = await Promise.all([
-        productAPI.getCategories(),
-        productAPI.getProducts({
-          is_featured: selectedCategory === 'all' ? undefined : undefined,
-          category: selectedCategory !== 'all' ? selectedCategory : undefined,
-          search: searchQuery || undefined,
-        }),
-      ]);
-      setCategories(categoriesRes.data.categories || []);
-      setProducts(productsRes.data.products || productsRes.data.rows || []);
+      const productsRes = await productAPI.getProducts({ is_featured: true, limit: 6 });
+      setFeaturedProducts(productsRes.data.products || productsRes.data.rows || []);
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {
@@ -51,36 +41,40 @@ export default function HomePage() {
   };
 
   const handleSearch = () => {
-    loadData();
+    if (searchQuery.trim()) {
+      navigate(`/menu?search=${encodeURIComponent(searchQuery)}`);
+    }
   };
-
-  const filteredProducts = products.filter(product => {
-    const matchSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchCategory = selectedCategory === 'all' || product.category_id === selectedCategory;
-    return matchSearch && matchCategory;
-  });
 
   const totalItems = getTotalItems();
 
   return (
     <div className="pb-24">
-      {/* Header */}
-      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border">
-        <div className="px-4 py-3">
-          <div className="flex items-center justify-between mb-3">
+      {/* Hero Banner - Branding */}
+      <div className="relative bg-gradient-to-br from-primary via-primary/90 to-secondary text-white overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-10 left-10 text-8xl">🍜</div>
+          <div className="absolute top-40 right-20 text-6xl">🍲</div>
+          <div className="absolute bottom-20 left-1/2 text-7xl">🥢</div>
+        </div>
+        
+        {/* Content */}
+        <div className="relative px-4 py-12">
+          <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-2xl font-bold text-text-primary">
-                🍜 Menu
+              <h1 className="text-3xl font-bold mb-2">
+                🍜 Bakso Premium
               </h1>
-              <p className="text-sm text-text-tertiary">
-                {isAuthenticated ? `Halo, ${user?.name}!` : 'Masuk untuk memesan'}
+              <p className="text-white/90">
+                {isAuthenticated ? `Selamat datang, ${user?.name}!` : 'Nikmati bakso paling enak'}
               </p>
             </div>
             <Button
               variant="secondary"
               size="sm"
               onClick={() => navigate(isAuthenticated ? '/profile' : '/login')}
-              className="relative"
+              className="relative bg-white/20 border-white/30 text-white hover:bg-white/30"
             >
               {isAuthenticated ? 'Profile' : 'Login'}
               {totalItems > 0 && (
@@ -91,49 +85,44 @@ export default function HomePage() {
             </Button>
           </div>
 
-          {/* Search */}
-          <div className="flex gap-2">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-tertiary" />
-              <Input
-                placeholder="Cari bakso..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                className="pl-10"
-              />
-            </div>
-            <Button onClick={handleSearch} className="px-4">
-              <Search className="w-5 h-5" />
-            </Button>
+          {/* Search Bar */}
+          <div className="relative mb-4">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Input
+              placeholder="Cari bakso favoritmu..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              className="pl-12 py-4 bg-white text-gray-900 border-0 rounded-xl"
+            />
           </div>
 
-          {/* Category Filter */}
-          <div className="flex gap-2 mt-3 overflow-x-auto scrollbar-hide">
-            <button
-              onClick={() => setSelectedCategory('all')}
-              className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                selectedCategory === 'all'
-                  ? 'bg-primary text-white'
-                  : 'bg-secondary text-text-secondary hover:bg-secondary/80'
-              }`}
+          {/* Quick Actions */}
+          <div className="grid grid-cols-2 gap-3 mt-6">
+            <Card
+              onClick={() => navigate('/menu')}
+              className="p-4 bg-white/20 backdrop-blur-sm border-white/30 cursor-pointer hover:bg-white/30 transition-colors"
             >
-              Semua
-            </button>
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
-                className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                  selectedCategory === category.id
-                    ? 'bg-primary text-white'
-                    : 'bg-secondary text-text-secondary hover:bg-secondary/80'
-                }`}
-              >
-                {category.name}
-              </button>
-            ))}
+              <Utensils className="w-6 h-6 mb-2 text-white" />
+              <p className="font-semibold text-sm">Pesan Sekarang</p>
+              <p className="text-xs text-white/80">Lihat menu lengkap</p>
+            </Card>
+            <Card
+              onClick={() => navigate('/orders')}
+              className="p-4 bg-white/20 backdrop-blur-sm border-white/30 cursor-pointer hover:bg-white/30 transition-colors"
+            >
+              <Clock className="w-6 h-6 mb-2 text-white" />
+              <p className="font-semibold text-sm">Pesanan Saya</p>
+              <p className="text-xs text-white/80">Lacak pesanan</p>
+            </Card>
           </div>
+        </div>
+
+        {/* Wave Divider */}
+        <div className="absolute bottom-0 left-0 right-0">
+          <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto">
+            <path d="M0 0L60 10C120 20 240 40 360 46.7C480 53 600 47 720 43.3C840 40 960 40 1080 46.7C1200 53 1320 67 1380 73.3L1440 80V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0V0Z" fill="currentColor" className="text-background"/>
+          </svg>
         </div>
       </div>
 
@@ -142,122 +131,137 @@ export default function HomePage() {
           <LoadingSpinner size="lg" />
         </div>
       ) : (
-        <div className="px-4 py-6 space-y-6">
-          {/* All Products Grid */}
-          <section>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-text-primary">
-                {selectedCategory === 'all' ? 'Semua Produk' : 'Produk'}
-              </h2>
-              <span className="text-xs text-text-tertiary">
-                {filteredProducts.length} items
-              </span>
-            </div>
-            {filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3">
-                {filteredProducts.map((product) => (
-                  <Card
-                    key={product.id}
-                    onClick={() => navigate(`/product/${product.id}`)}
-                    className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
-                  >
-                    <div className="aspect-square bg-gray-100 dark:bg-gray-800 relative">
-                      {product.image ? (
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.nextElementSibling?.classList.remove('hidden');
-                          }}
-                        />
-                      ) : (
-                        <div className="hidden">
-                          <img src="/placeholder.svg" alt="placeholder" />
-                        </div>
-                      )}
-                      {!product.is_available && (
-                        <Badge variant="error" className="absolute top-2 left-2 text-xs">
-                          Unavailable
-                        </Badge>
-                      )}
-                      {product.is_featured && (
-                        <Badge className="absolute top-2 right-2 text-xs">⭐</Badge>
-                      )}
-                    </div>
-                    <div className="p-3">
-                      <h3 className="font-semibold text-sm text-gray-900 dark:text-white line-clamp-2 mb-1">
-                        {product.name}
-                      </h3>
-                      <p className="text-primary font-bold text-sm">
-                        {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(product.price)}
-                      </p>
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          Stock: {product.stock}
-                        </span>
-                        {product.spicy_level > 0 && (
-                          <span className="text-xs">{'🌶️'.repeat(product.spicy_level)}</span>
-                        )}
-                      </div>
-                    </div>
-                  </Card>
-                ))}
+        <div className="px-4 py-6 space-y-8">
+          {/* Features */}
+          <section className="grid grid-cols-3 gap-3">
+            <Card className="p-4 text-center">
+              <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-2">
+                <Clock className="w-6 h-6 text-success" />
               </div>
-            ) : (
-              <div className="text-center py-12">
-                <ShoppingBag className="w-16 h-16 text-text-tertiary mx-auto mb-4 opacity-50" />
-                <p className="text-text-tertiary">Tidak ada produk ditemukan</p>
+              <p className="text-sm font-semibold">Cepat</p>
+              <p className="text-xs text-gray-500">15-20 menit</p>
+            </Card>
+            <Card className="p-4 text-center">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
+                <Truck className="w-6 h-6 text-primary" />
               </div>
-            )}
+              <p className="text-sm font-semibold">Delivery</p>
+              <p className="text-xs text-gray-500">Min. Rp 50rb</p>
+            </Card>
+            <Card className="p-4 text-center">
+              <div className="w-12 h-12 rounded-full bg-warning/10 flex items-center justify-center mx-auto mb-2">
+                <Star className="w-6 h-6 text-warning" />
+              </div>
+              <p className="text-sm font-semibold">Quality</p>
+              <p className="text-xs text-gray-500">Premium</p>
+            </Card>
           </section>
 
-          {/* Info Cards */}
-          <section className="grid grid-cols-2 gap-3">
-            <Card className="p-4 bg-gradient-to-br from-success/10 to-success/5">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-success" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-text-primary">Cepat</p>
-                  <p className="text-xs text-text-tertiary">15-20 menit</p>
-                </div>
+          {/* Featured Products */}
+          <section>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Menu Favorit</h2>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Paling banyak dipesan</p>
               </div>
-            </Card>
-            <Card className="p-4 bg-gradient-to-br from-primary/10 to-primary/5">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                  <MapPin className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-text-primary">Delivery</p>
-                  <p className="text-xs text-text-tertiary">Min. Rp 50rb</p>
-                </div>
-              </div>
-            </Card>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/menu')}
+                className="text-primary"
+              >
+                Lihat Semua
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {featuredProducts.map((product) => (
+                <Card
+                  key={product.id}
+                  onClick={() => navigate(`/product/${product.id}`)}
+                  className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+                >
+                  <div className="aspect-square bg-gray-100 dark:bg-gray-800 relative">
+                    {product.image ? (
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                    ) : (
+                      <div className="hidden">
+                        <img src="/placeholder.svg" alt="placeholder" />
+                      </div>
+                    )}
+                    <Badge className="absolute top-2 right-2 text-xs">⭐</Badge>
+                  </div>
+                  <div className="p-3">
+                    <h3 className="font-semibold text-sm text-gray-900 dark:text-white line-clamp-2 mb-1">
+                      {product.name}
+                    </h3>
+                    <p className="text-primary font-bold text-sm">
+                      {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(product.price)}
+                    </p>
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        Stock: {product.stock}
+                      </span>
+                      {product.spicy_level > 0 && (
+                        <span className="text-xs">{'🌶️'.repeat(product.spicy_level)}</span>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
           </section>
 
           {/* Promo Banner */}
           <section>
-            <Card className="p-6 bg-gradient-to-r from-primary to-secondary text-white overflow-hidden relative">
+            <Card className="p-6 bg-gradient-to-r from-warning to-orange-500 text-white overflow-hidden relative">
               <div className="relative z-10">
-                <Badge variant="secondary" className="mb-2">Promo</Badge>
+                <Badge variant="secondary" className="mb-2">Promo Spesial</Badge>
                 <h3 className="text-xl font-bold mb-2">Diskon 10%</h3>
-                <p className="text-sm opacity-90 mb-4">
-                  Gunakan kode BAKSO10 untuk pembelian min. Rp 50.000
+                <p className="text-sm text-white/90 mb-4">
+                  Gunakan kode <strong className="text-white">BAKSO10</strong> untuk pembelian min. Rp 50.000
                 </p>
                 <Button
                   variant="secondary"
                   size="sm"
-                  onClick={() => navigate('/cart')}
+                  onClick={() => navigate('/menu')}
+                  className="bg-white text-orange-600 hover:bg-white/90"
                 >
                   Pesan Sekarang
                 </Button>
               </div>
               <div className="absolute -right-4 -bottom-4 text-8xl opacity-20">
-                🍜
+                🎉
+              </div>
+            </Card>
+          </section>
+
+          {/* CTA to Menu */}
+          <section>
+            <Card
+              onClick={() => navigate('/menu')}
+              className="p-6 bg-gradient-to-br from-primary/10 to-secondary/10 dark:from-primary/20 dark:to-secondary/20 cursor-pointer hover:shadow-lg transition-shadow"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                    Lihat Menu Lengkap
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Temukan semua menu favoritmu
+                  </p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center">
+                  <ChevronRight className="w-6 h-6 text-white" />
+                </div>
               </div>
             </Card>
           </section>
