@@ -443,13 +443,13 @@ export default function OrderDetailPage() {
               <span>Informasi Pesanan</span>
             </h3>
 
-            <div className="space-y-1">
+            <div className="space-y-2">
               <div className="flex items-center justify-between py-3 px-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                     <Calendar className="w-4 h-4 text-gray-500 dark:text-gray-400" strokeWidth={2} />
                   </div>
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Tanggal</span>
+                  <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">Tanggal</span>
                 </div>
                 <span className="text-sm font-bold text-gray-900 dark:text-white">
                   {formatDateTime(order.createdAt)}
@@ -461,11 +461,11 @@ export default function OrderDetailPage() {
                   <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                     <Hash className="w-4 h-4 text-gray-500 dark:text-gray-400" strokeWidth={2} />
                   </div>
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Jenis Pesanan</span>
+                  <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">Jenis Pesanan</span>
                 </div>
                 <Badge
                   variant={order.order_type === 'delivery' ? 'primary' : 'secondary'}
-                  className="font-semibold px-3 py-1.5 text-xs"
+                  className="font-bold px-3 py-1.5 text-xs"
                 >
                   {order.order_type === 'dine-in' && '🍽️ Dine-in'}
                   {order.order_type === 'takeaway' && '🛍️ Takeaway'}
@@ -479,9 +479,9 @@ export default function OrderDetailPage() {
                     <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                       <Package className="w-4 h-4 text-gray-500 dark:text-gray-400" strokeWidth={2} />
                     </div>
-                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Nomor Meja</span>
+                    <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">Nomor Meja</span>
                   </div>
-                  <span className="text-base font-bold text-orange-600 dark:text-orange-400">
+                  <span className="text-lg font-extrabold text-orange-600 dark:text-orange-400">
                     #{order.table_number}
                   </span>
                 </div>
@@ -493,9 +493,9 @@ export default function OrderDetailPage() {
                     <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                       <MapPin className="w-4 h-4 text-gray-500 dark:text-gray-400" strokeWidth={2} />
                     </div>
-                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Alamat Pengiriman</span>
+                    <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">Alamat Pengiriman</span>
                   </div>
-                  <p className="text-sm text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-800/70 p-4 rounded-xl mx-4 border border-gray-100 dark:border-gray-700">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-800/70 p-4 rounded-xl mx-4 border border-gray-100 dark:border-gray-700">
                     {order.delivery_address}
                   </p>
                 </div>
@@ -507,9 +507,9 @@ export default function OrderDetailPage() {
                     <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center">
                       <Timer className="w-4 h-4 text-orange-600 dark:text-orange-400" strokeWidth={2} />
                     </div>
-                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Nomor Antrian</span>
+                    <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">Nomor Antrian</span>
                   </div>
-                  <span className="text-xl font-bold text-orange-600 dark:text-orange-400">
+                  <span className="text-2xl font-extrabold text-orange-600 dark:text-orange-400 tracking-tight">
                     {order.queue_number}
                   </span>
                 </div>
@@ -521,9 +521,9 @@ export default function OrderDetailPage() {
                     <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                       <MessageSquare className="w-4 h-4 text-gray-500 dark:text-gray-400" strokeWidth={2} />
                     </div>
-                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Catatan</span>
+                    <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">Catatan</span>
                   </div>
-                  <p className="text-sm text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-800/70 p-4 rounded-xl mx-4 border border-gray-100 dark:border-gray-700 italic">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-800/70 p-4 rounded-xl mx-4 border border-gray-100 dark:border-gray-700 italic">
                     "{order.notes}"
                   </p>
                 </div>
@@ -708,8 +708,8 @@ export default function OrderDetailPage() {
                       {customerName.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Nama Pelanggan</p>
-                      <p className="text-sm font-bold text-gray-900 dark:text-white">{customerName}</p>
+                      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Nama Pelanggan</p>
+                      <p className="text-base font-extrabold text-gray-900 dark:text-white tracking-tight">{customerName}</p>
                     </div>
                   </div>
                 </div>
@@ -723,11 +723,11 @@ export default function OrderDetailPage() {
                       <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center group-hover:bg-orange-100 dark:group-hover:bg-orange-900/40 transition-colors">
                         <Phone className="w-5 h-5 text-gray-500 dark:text-gray-400 group-hover:text-orange-600 dark:group-hover:text-orange-400" strokeWidth={2} />
                       </div>
-                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Telepon</span>
+                      <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">Telepon</span>
                     </div>
-                    <span className="text-sm font-bold text-orange-600 dark:text-orange-400">
+                    <span className="text-base font-extrabold text-orange-600 dark:text-orange-400 tracking-tight">
                       {customerPhone}
-                      <ChevronRight className="w-4 h-4 ml-1 inline" />
+                      <ChevronRight className="w-4 h-4 ml-1 inline" strokeWidth={2.5} />
                     </span>
                   </a>
                 )}
@@ -741,11 +741,11 @@ export default function OrderDetailPage() {
                       <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center group-hover:bg-orange-100 dark:group-hover:bg-orange-900/40 transition-colors">
                         <Mail className="w-5 h-5 text-gray-500 dark:text-gray-400 group-hover:text-orange-600 dark:group-hover:text-orange-400" strokeWidth={2} />
                       </div>
-                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Email</span>
+                      <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">Email</span>
                     </div>
-                    <span className="text-sm font-bold text-orange-600 dark:text-orange-400 truncate max-w-[200px]">
+                    <span className="text-sm font-extrabold text-orange-600 dark:text-orange-400 truncate max-w-[200px]">
                       {order.user.email}
-                      <ChevronRight className="w-4 h-4 ml-1 inline" />
+                      <ChevronRight className="w-4 h-4 ml-1 inline" strokeWidth={2.5} />
                     </span>
                   </a>
                 )}
