@@ -5,11 +5,12 @@ import {
   CheckCircle, XCircle, Clock, Package,
   FileText, BarChart3, ChefHat, Truck,
   RefreshCw, ArrowUpRight, ArrowDownRight, Bell,
-  Wallet, Receipt, Activity
+  Wallet, Receipt, Activity, AlertTriangle
 } from 'lucide-react';
-import { dashboardAPI, paymentAPI, orderAPI } from '../../lib/api';
-import { Card, LoadingSpinner, Button, Badge } from '../../components/ui/BaseComponents';
+import { dashboardAPI, paymentAPI, orderAPI, customerPINAPI } from '../../lib/api';
+import { Card, LoadingSpinner, Button, Badge, Input } from '../../components/ui/BaseComponents';
 import { StaffPasswordSetupModal } from '../../components/ui/StaffPasswordSetupModal';
+import { StaffPINSetupModal } from '../../components/ui/StaffPINSetupModal';
 import { formatRupiah, formatDate } from '../../lib/utils';
 import {
   subscribeToUserCount,
@@ -19,6 +20,7 @@ import {
   emitStaffStatusUpdate
 } from '../../lib/socket';
 import { useAuthStore } from '../../store';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -30,6 +32,8 @@ export default function AdminDashboard() {
   const [onlineCount, setOnlineCount] = useState(0);
   const [staffOnline, setStaffOnline] = useState([]);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showPINSetupModal, setShowPINSetupModal] = useState(false);
+  const [pinCheckStatus, setPinCheckStatus] = useState('checking'); // checking, needed, not-needed, expired
 
   useEffect(() => {
     loadAllData();
@@ -39,6 +43,9 @@ export default function AdminDashboard() {
     // Check if staff needs to setup password
     if (needsPasswordSetup) {
       setShowPasswordModal(true);
+    } else {
+      // Check PIN status for staff
+      checkPINStatus();
     }
 
     return () => {
@@ -46,10 +53,46 @@ export default function AdminDashboard() {
     };
   }, []);
 
+  const checkPINStatus = async () => {
+    try {
+      const response = await customerPINAPI.checkStatus();
+      const isPinSet = response.data?.is_pin_set;
+      
+      if (!isPinSet) {
+        setPinCheckStatus('needed');
+        setShowPINSetupModal(true);
+      } else {
+        setPinCheckStatus('not-needed');
+      }
+    } catch (error) {
+      console.error('Failed to check PIN status:', error);
+      
+      // Check if PIN expired
+      if (error.response?.status === 403 && error.response?.data?.pin_expired) {
+        setPinCheckStatus('expired');
+        setShowPINSetupModal(true);
+      } else {
+        setPinCheckStatus('not-needed');
+      }
+    }
+  };
+
+  // Pass pinCheckStatus to modal via context or prop
+  // For now, we'll use a simple approach
+  const pinSetupStatus = pinCheckStatus;
+
   const handlePasswordSetupComplete = () => {
     setShowPasswordModal(false);
     setNeedsPasswordSetup(false);
     console.log('✅ Password setup complete');
+    // After password setup, check PIN status
+    checkPINStatus();
+  };
+
+  const handlePINSetupComplete = () => {
+    setShowPINSetupModal(false);
+    setPinCheckStatus('not-needed');
+    console.log('✅ PIN setup complete');
   };
 
   const loadAllData = async () => {
@@ -494,6 +537,14 @@ export default function AdminDashboard() {
         isOpen={showPasswordModal}
         onClose={() => setShowPasswordModal(false)}
         onComplete={handlePasswordSetupComplete}
+      />
+
+      {/* Staff PIN Setup Modal */}
+      <StaffPINSetupModal
+        isOpen={showPINSetupModal}
+        onClose={() => setShowPINSetupModal(false)}
+        onComplete={handlePINSetupComplete}
+        pinCheckStatus={pinSetupStatus}
       />
     </div>
   );
