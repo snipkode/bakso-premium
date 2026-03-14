@@ -6,14 +6,16 @@ import { useAuthStore } from '@/store';
 import { Button, Input, Card } from '@/components/ui/BaseComponents';
 import { BaksoLoginAnimation } from '@/components/ui/BaksoLoginAnimation';
 import { BaksoIconAnimation } from '@/components/ui/BaksoIconAnimation';
+import { PINOnboardingModal } from '@/components/ui/PINOnboardingModal';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { customerAuth, staffLogin, customerPINLogin, isLoading, error } = useAuthStore();
+  const { customerAuth, staffLogin, customerPINLogin, isLoading, error, needsPINOnboarding, setNeedsPINOnboarding } = useAuthStore();
 
   const [loginType, setLoginType] = useState('customer');
   const [customerSubTab, setCustomerSubTab] = useState('new');
   const [showPassword, setShowPassword] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -25,7 +27,13 @@ export default function LoginPage() {
     e.preventDefault();
     try {
       await customerAuth(formData.name, formData.phone);
-      navigate('/menu');
+      
+      // Show onboarding for new customers
+      if (!needsPINOnboarding) {
+        setShowOnboarding(true);
+      } else {
+        navigate('/menu');
+      }
     } catch (error) {
       console.error('Customer auth failed:', error);
     }
@@ -40,6 +48,12 @@ export default function LoginPage() {
       console.error('PIN login failed:', error);
       // Error will be shown via store error state
     }
+  };
+
+  const handleOnboardingComplete = async () => {
+    setShowOnboarding(false);
+    setNeedsPINOnboarding(false);
+    navigate('/menu');
   };
 
   const handleStaffLogin = async (e) => {
@@ -443,6 +457,13 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+
+      {/* PIN Onboarding Modal */}
+      <PINOnboardingModal
+        isOpen={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+        onComplete={handleOnboardingComplete}
+      />
     </div>
   );
 }

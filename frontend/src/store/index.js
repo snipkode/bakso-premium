@@ -11,23 +11,28 @@ export const useAuthStore = create(
       isAuthenticated: false,
       isLoading: false,
       error: null,
+      needsPINOnboarding: false,
 
       // Customer login/register
       customerAuth: async (name, phone) => {
         set({ isLoading: true, error: null });
         try {
           const { data } = await authAPI.customerAuth(name, phone);
-          
+
           // Validate user data
           if (!data.user || !data.user.id) {
             throw new Error('Invalid user data from server');
           }
-          
+
+          // Check if user needs PIN onboarding (new customers always need it)
+          const needsPINOnboarding = !data.user.is_pin_set;
+
           set({
             user: data.user,
             token: data.token,
             isAuthenticated: true,
             isLoading: false,
+            needsPINOnboarding,
           });
           localStorage.setItem('token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
@@ -89,11 +94,15 @@ export const useAuthStore = create(
             throw new Error('Invalid user data from server');
           }
 
+          // Check if user needs PIN onboarding
+          const needsPINOnboarding = !data.user.is_pin_set;
+
           set({
             user: data.user,
             token: data.token,
             isAuthenticated: true,
             isLoading: false,
+            needsPINOnboarding,
           });
           localStorage.setItem('token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
@@ -109,6 +118,11 @@ export const useAuthStore = create(
           });
           throw error;
         }
+      },
+
+      // Set needsPINOnboarding flag
+      setNeedsPINOnboarding: (needs) => {
+        set({ needsPINOnboarding: needs });
       },
 
       // Logout
