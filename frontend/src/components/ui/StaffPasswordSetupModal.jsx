@@ -112,12 +112,12 @@ export function StaffPasswordSetupModal({ isOpen, onClose, onComplete }) {
                     Password Baru
                   </label>
                   <div className="relative">
-                    <Input
+                    <input
                       type={showPassword ? 'text' : 'password'}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Minimal 6 karakter"
-                      className="pl-4 pr-11"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
                       disabled={isLoading}
                       autoComplete="new-password"
                     />
@@ -136,12 +136,12 @@ export function StaffPasswordSetupModal({ isOpen, onClose, onComplete }) {
                     Konfirmasi Password
                   </label>
                   <div className="relative">
-                    <Input
+                    <input
                       type={showConfirmPassword ? 'text' : 'password'}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Ulangi password Anda"
-                      className="pl-4 pr-11"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
                       disabled={isLoading}
                       autoComplete="new-password"
                     />
