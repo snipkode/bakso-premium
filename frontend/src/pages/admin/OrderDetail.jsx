@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Clock, CheckCircle, AlertCircle, ShoppingBag, MapPin, Truck,
   User, Phone, Mail, Package, CreditCard, Calendar, Hash, MessageSquare,
-  TrendingUp, DollarSign, ChefHat, Scooter
+  TrendingUp, DollarSign, ChefHat
 } from 'lucide-react';
 import { orderAPI } from '@/lib/api';
 import { Button, Card, Badge, LoadingSpinner } from '@/components/ui/BaseComponents';
