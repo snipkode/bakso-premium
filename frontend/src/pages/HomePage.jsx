@@ -159,29 +159,38 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Features */}
+          {/* Features - Enhanced Cards */}
           <section className="px-4 py-6 -mt-4">
             <div className="grid grid-cols-3 gap-3">
-              <Card className="p-4 text-center bg-white dark:bg-gray-800 shadow-lg border-0">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center mx-auto mb-2 shadow-lg">
-                  <Clock className="w-6 h-6 text-white" />
+              <Card className="p-3 text-center bg-gradient-to-br from-white to-green-50/50 dark:from-gray-800 dark:to-green-900/10 shadow-xl border border-green-100/50 dark:border-green-900/20 hover:shadow-2xl transition-all transform hover:scale-105">
+                <div className="relative mb-2">
+                  <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-lg shadow-green-500/30">
+                    <Clock className="w-7 h-7 text-white" />
+                  </div>
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full animate-ping opacity-75"></div>
                 </div>
                 <p className="text-sm font-bold text-gray-900 dark:text-white">Cepat</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">15-20 menit</p>
+                <p className="text-xs text-green-600 dark:text-green-400 font-semibold mt-1">15-20 menit</p>
               </Card>
-              <Card className="p-4 text-center bg-white dark:bg-gray-800 shadow-lg border-0">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center mx-auto mb-2 shadow-lg">
-                  <Truck className="w-6 h-6 text-white" />
+              <Card className="p-3 text-center bg-gradient-to-br from-white to-blue-50/50 dark:from-gray-800 dark:to-blue-900/10 shadow-xl border border-blue-100/50 dark:border-blue-900/20 hover:shadow-2xl transition-all transform hover:scale-105">
+                <div className="relative mb-2">
+                  <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                    <Truck className="w-7 h-7 text-white" />
+                  </div>
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-400 rounded-full animate-ping opacity-75"></div>
                 </div>
                 <p className="text-sm font-bold text-gray-900 dark:text-white">Delivery</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Min. Rp 50rb</p>
+                <p className="text-xs text-blue-600 dark:text-blue-400 font-semibold mt-1">Min. Rp 50rb</p>
               </Card>
-              <Card className="p-4 text-center bg-white dark:bg-gray-800 shadow-lg border-0">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center mx-auto mb-2 shadow-lg">
-                  <Star className="w-6 h-6 text-white" />
+              <Card className="p-3 text-center bg-gradient-to-br from-white to-orange-50/50 dark:from-gray-800 dark:to-orange-900/10 shadow-xl border border-orange-100/50 dark:border-orange-900/20 hover:shadow-2xl transition-all transform hover:scale-105">
+                <div className="relative mb-2">
+                  <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/30">
+                    <Star className="w-7 h-7 text-white" />
+                  </div>
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-orange-400 rounded-full animate-ping opacity-75"></div>
                 </div>
                 <p className="text-sm font-bold text-gray-900 dark:text-white">Quality</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Premium</p>
+                <p className="text-xs text-orange-600 dark:text-orange-400 font-semibold mt-1">Premium</p>
               </Card>
             </div>
           </section>
