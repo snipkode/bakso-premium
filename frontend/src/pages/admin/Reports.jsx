@@ -5,7 +5,7 @@ import { Card, Button, Badge } from '@/components/ui/BaseComponents';
 import {
   FileText, Download, Calendar, BarChart3, TrendingUp, DollarSign,
   ShoppingBag, Package, Users, ArrowUpRight, ArrowDownRight,
-  Filter, RefreshCw, Printer, FileSpreadsheet, FileType,
+  Filter, RefreshCw, FileSpreadsheet, Clock, CheckCircle,
 } from 'lucide-react';
 
 export default function ReportsPage() {
@@ -59,7 +59,6 @@ export default function ReportsPage() {
           throw new Error('Invalid report type');
       }
 
-      // Create blob and download
       const blob = new Blob([response.data], { 
         type: format === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       });
@@ -73,10 +72,9 @@ export default function ReportsPage() {
       window.URL.revokeObjectURL(url);
 
       loadReports();
-      alert(`✅ Report generated successfully!`);
     } catch (error) {
       console.error('Generate report error:', error);
-      alert('❌ Failed to generate report: ' + (error.response?.data?.error || error.message));
+      alert('Failed to generate report');
     } finally {
       setLoading(null);
     }
@@ -93,223 +91,306 @@ export default function ReportsPage() {
     currentPage * reportsPerPage
   );
 
-  const StatCard = ({ title, value, icon: Icon, color, trend }) => (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700"
-    >
-      <div className="flex items-center justify-between mb-4">
-        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center`}>
-          <Icon className="w-6 h-6 text-white" />
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 pb-8">
+      {/* Header Section */}
+      <div className="bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-blue-700 dark:to-cyan-700 -mx-4 mt-4 mb-6 px-4 pt-8 pb-12">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-white mb-2">Reports & Analytics</h1>
+              <p className="text-blue-100 text-sm">Track your business performance</p>
+            </div>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={loadStats}
+              className="bg-white/20 hover:bg-white/30 text-white border-0"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
+
+          {/* Date Range Filter */}
+          <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-xl p-4 w-fit">
+            <Filter className="w-5 h-5 text-blue-100" />
+            <span className="text-sm font-semibold text-white">Period:</span>
+            <div className="flex gap-2">
+              {[
+                { value: 'today', label: 'Today' },
+                { value: 'week', label: '7 Days' },
+                { value: 'month', label: '30 Days' },
+                { value: 'year', label: 'Year' },
+              ].map((range) => (
+                <button
+                  key={range.value}
+                  onClick={() => setDateRange(range.value)}
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                    dateRange === range.value
+                      ? 'bg-white text-blue-600 shadow-lg'
+                      : 'text-blue-100 hover:bg-white/20'
+                  }`}
+                >
+                  {range.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
-        {trend && (
-          <div className={`flex items-center gap-1 text-sm font-semibold ${
-            trend > 0 ? 'text-green-600' : 'text-red-600'
-          }`}>
-            {trend > 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
-            {Math.abs(trend)}%
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 -mt-8">
+        {/* Stats Grid */}
+        {stats && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-green-500/30">
+                  <DollarSign className="w-6 h-6 text-white" />
+                </div>
+                {stats.revenueTrend && (
+                  <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full ${
+                    stats.revenueTrend > 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                  }`}>
+                    {stats.revenueTrend > 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                    {Math.abs(stats.revenueTrend)}%
+                  </div>
+                )}
+              </div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Revenue</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                Rp {(stats.revenue || 0).toLocaleString('id-ID')}
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                  <ShoppingBag className="w-6 h-6 text-white" />
+                </div>
+                {stats.ordersTrend && (
+                  <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full ${
+                    stats.ordersTrend > 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                  }`}>
+                    {stats.ordersTrend > 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                    {Math.abs(stats.ordersTrend)}%
+                  </div>
+                )}
+              </div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Orders</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {(stats.totalOrders || 0).toLocaleString('id-ID')}
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/30">
+                  <Package className="w-6 h-6 text-white" />
+                </div>
+                {stats.productsTrend && (
+                  <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full ${
+                    stats.productsTrend > 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                  }`}>
+                    {stats.productsTrend > 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                    {Math.abs(stats.productsTrend)}%
+                  </div>
+                )}
+              </div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Products Sold</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {(stats.productsSold || 0).toLocaleString('id-ID')}
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
+                  <Users className="w-6 h-6 text-white" />
+                </div>
+                {stats.customersTrend && (
+                  <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full ${
+                    stats.customersTrend > 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                  }`}>
+                    {stats.customersTrend > 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                    {Math.abs(stats.customersTrend)}%
+                  </div>
+                )}
+              </div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">New Customers</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {(stats.newCustomers || 0).toLocaleString('id-ID')}
+              </p>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Generate Reports Section */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700 mb-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
+              <FileText className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Generate Reports</h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Download reports in PDF or Excel format</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { type: 'daily', label: 'Daily Report', icon: Calendar, desc: 'Daily summary' },
+              { type: 'weekly', label: 'Weekly Report', icon: BarChart3, desc: 'Weekly analytics' },
+              { type: 'monthly', label: 'Monthly Report', icon: TrendingUp, desc: 'Monthly performance' },
+              { type: 'staff', label: 'Staff Report', icon: Users, desc: 'Staff metrics' },
+            ].map((report, idx) => (
+              <motion.div
+                key={report.type}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.1 }}
+                className="group p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400 transition-all"
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <report.icon className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                  <div>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white">{report.label}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{report.desc}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => handleGenerateReport(report.type, 'pdf')}
+                    isLoading={loading === `${report.type}-pdf`}
+                    className="flex-1 text-xs h-9"
+                  >
+                    <FileText className="w-3 h-3 mr-1" />
+                    PDF
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleGenerateReport(report.type, 'xlsx')}
+                    isLoading={loading === `${report.type}-xlsx`}
+                    className="flex-1 text-xs h-9"
+                  >
+                    <FileSpreadsheet className="w-3 h-3 mr-1" />
+                    Excel
+                  </Button>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        {/* Recent Reports */}
+        {paginatedReports.length > 0 && (
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-green-500/30">
+                  <CheckCircle className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900 dark:text-white">Recent Reports</h2>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Previously generated reports</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {paginatedReports.map((report, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400 transition-all"
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{report.name}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Clock className="w-3 h-3 text-gray-400" />
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {new Date(report.createdAt).toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleDownloadReport(report)}
+                    className="flex-shrink-0 ml-4"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download
+                  </Button>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="px-4"
+                >
+                  Previous
+                </Button>
+                <span className="text-sm text-gray-500 dark:text-gray-400 px-4">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-4"
+                >
+                  Next
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
-      <div>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{title}</p>
-        <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
-      </div>
-    </motion.div>
-  );
-
-  return (
-    <div className="space-y-6 pb-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Reports & Analytics</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Generate and download business reports
-          </p>
-        </div>
-        <Button variant="secondary" size="sm" onClick={loadStats}>
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Refresh
-        </Button>
-      </div>
-
-      {/* Date Range Filter */}
-      <Card className="p-4">
-        <div className="flex items-center gap-3">
-          <Filter className="w-5 h-5 text-gray-400" />
-          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Date Range:</span>
-          <div className="flex gap-2">
-            {[
-              { value: 'today', label: 'Today' },
-              { value: 'week', label: 'Last 7 Days' },
-              { value: 'month', label: 'Last 30 Days' },
-              { value: 'year', label: 'Last Year' },
-            ].map((range) => (
-              <Button
-                key={range.value}
-                variant={dateRange === range.value ? 'primary' : 'secondary'}
-                size="sm"
-                onClick={() => setDateRange(range.value)}
-                className="text-xs"
-              >
-                {range.label}
-              </Button>
-            ))}
-          </div>
-        </div>
-      </Card>
-
-      {/* Stats Grid */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard
-            title="Total Revenue"
-            value={`Rp ${stats.revenue?.toLocaleString('id-ID') || 0}`}
-            icon={DollarSign}
-            color="from-green-500 to-emerald-500"
-            trend={stats.revenueTrend}
-          />
-          <StatCard
-            title="Total Orders"
-            value={stats.totalOrders?.toLocaleString('id-ID') || 0}
-            icon={ShoppingBag}
-            color="from-blue-500 to-cyan-500"
-            trend={stats.ordersTrend}
-          />
-          <StatCard
-            title="Products Sold"
-            value={stats.productsSold?.toLocaleString('id-ID') || 0}
-            icon={Package}
-            color="from-orange-500 to-amber-500"
-            trend={stats.productsTrend}
-          />
-          <StatCard
-            title="New Customers"
-            value={stats.newCustomers?.toLocaleString('id-ID') || 0}
-            icon={Users}
-            color="from-purple-500 to-pink-500"
-            trend={stats.customersTrend}
-          />
-        </div>
-      )}
-
-      {/* Generate Reports */}
-      <Card className="p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <FileText className="w-6 h-6 text-primary" />
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">Generate Reports</h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { type: 'daily', label: 'Daily Report', icon: Calendar },
-            { type: 'weekly', label: 'Weekly Report', icon: BarChart3 },
-            { type: 'monthly', label: 'Monthly Report', icon: TrendingUp },
-            { type: 'staff', label: 'Staff Report', icon: Users },
-          ].map((report) => (
-            <div key={report.type} className="space-y-3">
-              <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
-                <report.icon className="w-5 h-5 text-gray-400" />
-                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{report.label}</span>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => handleGenerateReport(report.type, 'pdf')}
-                  isLoading={loading === `${report.type}-pdf`}
-                  className="flex-1 text-xs"
-                >
-                  <FileText className="w-3 h-3 mr-1" />
-                  PDF
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => handleGenerateReport(report.type, 'xlsx')}
-                  isLoading={loading === `${report.type}-xlsx`}
-                  className="flex-1 text-xs"
-                >
-                  <FileSpreadsheet className="w-3 h-3 mr-1" />
-                  Excel
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      {/* Recent Reports */}
-      {paginatedReports.length > 0 && (
-        <Card className="p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <FileText className="w-6 h-6 text-primary" />
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Recent Reports</h2>
-          </div>
-
-          <div className="space-y-3">
-            {paginatedReports.map((report, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
-                    <FileType className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-gray-900 dark:text-white">{report.name}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {new Date(report.createdAt).toLocaleDateString('id-ID', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => handleDownloadReport(report)}
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download
-                </Button>
-              </div>
-            ))}
-          </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-6">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-              >
-                Previous
-              </Button>
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                Page {currentPage} of {totalPages}
-              </span>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages}
-              >
-                Next
-              </Button>
-            </div>
-          )}
-        </Card>
-      )}
     </div>
   );
 }
