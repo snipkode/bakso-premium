@@ -1080,9 +1080,9 @@ export default function LoginPage() {
         </div>
       )}
 
-      {/* Phone Verification Modal */}
+      {/* Phone Verification Modal - Higher z-index to appear on top */}
       {showPhoneVerificationModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[10000] flex items-center justify-center p-4">
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -1165,7 +1165,7 @@ export default function LoginPage() {
         </div>
       )}
 
-      {/* Reset PIN Modal */}
+      {/* Reset PIN Modal - Lower z-index */}
       {showResetPINModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <motion.div
