@@ -9,6 +9,13 @@ import { BaksoIconAnimation } from '@/components/ui/BaksoIconAnimation';
 import { PINOnboardingModal } from '@/components/ui/PINOnboardingModal';
 import { customerPINAPI } from '@/lib/api';
 
+// Role greetings for staff redirect
+const roleGreetings = {
+  admin: { title: 'Administrator', icon: '👨‍💼', color: 'from-purple-500 to-pink-500' },
+  kitchen: { title: 'Kitchen Staff', icon: '👨‍🍳', color: 'from-blue-500 to-cyan-500' },
+  driver: { title: 'Driver', icon: '🛵', color: 'from-green-500 to-emerald-500' },
+};
+
 export default function LoginPage() {
   const navigate = useNavigate();
   const { customerAuth, staffLogin, customerPINLogin, isLoading, error, needsPINOnboarding, setNeedsPINOnboarding } = useAuthStore();
@@ -20,6 +27,9 @@ export default function LoginPage() {
   const [showExistingUserModal, setShowExistingUserModal] = useState(false);
   const [showResetPINModal, setShowResetPINModal] = useState(false);
   const [showPhoneVerificationModal, setShowPhoneVerificationModal] = useState(false);
+  const [showStaffRedirectModal, setShowStaffRedirectModal] = useState(false);
+  const [staffRole, setStaffRole] = useState('admin');
+  const [staffRedirectTimer, setStaffRedirectTimer] = useState(5);
   const [verificationPhone, setVerificationPhone] = useState('');
   const [verificationPhoneError, setVerificationPhoneError] = useState('');
   const [existingUserData, setExistingUserData] = useState(null);
@@ -201,6 +211,34 @@ export default function LoginPage() {
       }
     } catch (error) {
       console.error('❌ Customer auth failed:', error);
+      
+      // Handle staff member trying to login as customer (400 with requires_staff_login)
+      if (error.response?.status === 400 && error.response?.data?.requires_staff_login) {
+        const userRole = error.response.data.role || 'admin';
+        
+        // Set staff role for modal display
+        setStaffRole(userRole);
+        
+        // Show staff redirect modal
+        setShowStaffRedirectModal(true);
+        setStaffRedirectTimer(5);
+        
+        // Start countdown timer
+        const timer = setInterval(() => {
+          setStaffRedirectTimer(prev => {
+            if (prev <= 1) {
+              clearInterval(timer);
+              // Auto redirect to staff login
+              setLoginType('staff');
+              setShowStaffRedirectModal(false);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+        
+        return;
+      }
       
       // Handle existing user (409 Conflict)
       if (error.response?.status === 409 && error.response?.data?.requires_pin_login) {
@@ -1056,6 +1094,62 @@ export default function LoginPage() {
                   {resetLoading ? 'Mengirim...' : 'Verifikasi & Lanjut'}
                 </Button>
               </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Staff Redirect Modal */}
+      {showStaffRedirectModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden"
+          >
+            {/* Header */}
+            <div className={`relative bg-gradient-to-br ${roleGreetings[staffRole]?.color || 'from-purple-500 to-pink-500'} p-6 text-white`}>
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-3xl">
+                  {roleGreetings[staffRole]?.icon || '👤'}
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold">Selamat Datang, {roleGreetings[staffRole]?.title || 'Staff'}! 👋</h2>
+                  <p className="text-sm text-white/90">Anda login sebagai {roleGreetings[staffRole]?.title || 'Staff'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              <div className="mb-6 text-center">
+                <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-4xl">🔑</span>
+                </div>
+                <p className="text-gray-700 dark:text-gray-300 mb-2">
+                  Akun ini terdaftar sebagai <strong className="text-orange-600 dark:text-orange-400">{roleGreetings[staffRole]?.title || 'Staff'}</strong>
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Silakan gunakan form login Staff untuk masuk
+                </p>
+              </div>
+
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-4">
+                <p className="text-sm text-blue-800 dark:text-blue-300 text-center font-semibold">
+                  ⏱️ Redirect otomatis ke login Staff dalam <span className="text-2xl text-blue-600 dark:text-blue-400 mx-1">{staffRedirectTimer}</span> detik
+                </p>
+              </div>
+
+              <Button
+                onClick={() => {
+                  setLoginType('staff');
+                  setShowStaffRedirectModal(false);
+                }}
+                className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 shadow-lg shadow-blue-500/30"
+              >
+                Login Staff Sekarang
+              </Button>
             </div>
           </motion.div>
         </div>

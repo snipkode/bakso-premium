@@ -37,7 +37,8 @@ exports.customerAuth = async (req, res) => {
       if (user.password && user.role !== 'customer') {
         return res.status(400).json({ 
           error: 'Nomor ini sudah terdaftar sebagai Staff. Silakan login sebagai Staff.',
-          requires_staff_login: true
+          requires_staff_login: true,
+          role: user.role
         });
       }
 
