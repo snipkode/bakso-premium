@@ -12,6 +12,7 @@ export const useAuthStore = create(
       isLoading: false,
       error: null,
       needsPINOnboarding: false,
+      needsPasswordSetup: false,
 
       // Validate token on app load
       validateToken: () => {
@@ -77,6 +78,7 @@ export const useAuthStore = create(
             isAuthenticated: true,
             isLoading: false,
             needsPINOnboarding,
+            needsPasswordSetup: data.user?.role !== 'customer' && !data.user?.password,
           });
           localStorage.setItem('token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
@@ -148,6 +150,7 @@ export const useAuthStore = create(
             isAuthenticated: true,
             isLoading: false,
             needsPINOnboarding,
+            needsPasswordSetup: data.user?.role !== 'customer' && !data.user?.password,
           });
           
           // Save to localStorage
@@ -173,6 +176,11 @@ export const useAuthStore = create(
       // Set needsPINOnboarding flag
       setNeedsPINOnboarding: (needs) => {
         set({ needsPINOnboarding: needs });
+      },
+
+      // Set needsPasswordSetup flag
+      setNeedsPasswordSetup: (needs) => {
+        set({ needsPasswordSetup: needs });
       },
 
       // Logout

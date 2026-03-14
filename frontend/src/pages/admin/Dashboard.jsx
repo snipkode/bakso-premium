@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { dashboardAPI, paymentAPI, orderAPI } from '../../lib/api';
 import { Card, LoadingSpinner, Button, Badge } from '../../components/ui/BaseComponents';
+import { StaffPasswordSetupModal } from '../../components/ui/StaffPasswordSetupModal';
 import { formatRupiah, formatDate } from '../../lib/utils';
 import {
   subscribeToUserCount,
@@ -17,25 +18,39 @@ import {
   subscribeToStaffStatus,
   emitStaffStatusUpdate
 } from '../../lib/socket';
+import { useAuthStore } from '../../store';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const { user, needsPasswordSetup, setNeedsPasswordSetup } = useAuthStore();
   const [stats, setStats] = useState(null);
   const [pendingPayments, setPendingPayments] = useState([]);
   const [recentOrders, setRecentOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [onlineCount, setOnlineCount] = useState(0);
   const [staffOnline, setStaffOnline] = useState([]);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   useEffect(() => {
     loadAllData();
     setupSocketListeners();
     updateStaffOnlineStatus('online', 'admin');
 
+    // Check if staff needs to setup password
+    if (needsPasswordSetup) {
+      setShowPasswordModal(true);
+    }
+
     return () => {
       updateStaffOnlineStatus('offline', 'admin');
     };
   }, []);
+
+  const handlePasswordSetupComplete = () => {
+    setShowPasswordModal(false);
+    setNeedsPasswordSetup(false);
+    console.log('✅ Password setup complete');
+  };
 
   const loadAllData = async () => {
     try {
@@ -473,6 +488,13 @@ export default function AdminDashboard() {
           )}
         </div>
       </Card>
+
+      {/* Staff Password Setup Modal */}
+      <StaffPasswordSetupModal
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+        onComplete={handlePasswordSetupComplete}
+      />
     </div>
   );
 }
