@@ -13,10 +13,13 @@ router.get('/:id', orderController.getOrderById);
 router.get('/:id/queue', orderController.getQueueInfo);
 router.patch('/:id/cancel', orderController.cancelOrder);
 
-// Admin/Kitchen routes
+// Admin/Kitchen/Driver routes
 // Get all orders (admin, kitchen, driver)
 router.get('/', authorize('admin', 'kitchen', 'driver'), orderController.getAllOrders);
-router.patch('/:id/status', authorize('admin', 'kitchen'), orderController.updateOrderStatus);
+
+// Update order status (admin, kitchen, driver)
+// Driver can update: ready → out_for_delivery → completed
+router.patch('/:id/status', authorize('admin', 'kitchen', 'driver'), orderController.updateOrderStatus);
 
 // Queue info (public for tracking)
 router.get('/queue/today', orderController.getTodayQueueStats);
