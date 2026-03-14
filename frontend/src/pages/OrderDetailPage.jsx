@@ -24,6 +24,27 @@ function formatPaymentMethod(method) {
     .join(' ');
 }
 
+// Check if order contains only beverages (drinks)
+function isBeverageOnlyOrder(items) {
+  if (!items || items.length === 0) return false;
+  
+  // Check if all items belong to beverage category
+  // Common beverage category names/keywords
+  const beverageKeywords = ['minum', 'drink', 'beverage', 'juice', 'jus', 'es', 'tea', 'teh', 'coffee', 'kopi', 'soda', 'water', 'air'];
+  
+  return items.every(item => {
+    const categoryName = item.category?.name?.toLowerCase() || '';
+    const productName = item.product_name?.toLowerCase() || '';
+    
+    // Check if category or product name contains beverage keywords
+    const isBeverage = beverageKeywords.some(keyword => 
+      categoryName.includes(keyword) || productName.includes(keyword)
+    );
+    
+    return isBeverage;
+  });
+}
+
 // Order status configuration with icons and colors
 const STATUS_CONFIG = {
   pending_payment: {
@@ -127,6 +148,31 @@ export default function OrderDetailPage() {
   const [cancelling, setCancelling] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
+
+  // Check if order is beverage-only (no cooking required)
+  const isBeverageOrder = order ? isBeverageOnlyOrder(order.items) : false;
+
+  // Dynamic timeline steps based on order type
+  const getTimelineSteps = () => {
+    if (isBeverageOrder) {
+      // For beverages: skip "cooking" step, use "prepared" instead
+      return [
+        { status: 'pending_payment', label: 'Dibuat', icon: FileText },
+        { status: 'paid', label: 'Dibayar', icon: CreditCard },
+        { status: 'preparing', label: 'Disiapkan', icon: ChefHat },
+        { status: 'ready', label: 'Siap', icon: CheckCircle2 },
+        { status: 'completed', label: 'Selesai', icon: Star },
+      ];
+    }
+    // Default for food orders
+    return [
+      { status: 'pending_payment', label: 'Dibuat', icon: FileText },
+      { status: 'paid', label: 'Dibayar', icon: CreditCard },
+      { status: 'preparing', label: 'Dimasak', icon: ChefHat },
+      { status: 'ready', label: 'Siap', icon: CheckCircle2 },
+      { status: 'completed', label: 'Selesai', icon: Star },
+    ];
+  };
 
   useEffect(() => {
     loadOrder();
@@ -307,7 +353,11 @@ export default function OrderDetailPage() {
                 <div className="text-6xl drop-shadow-lg">{statusConfig.icon}</div>
               </div>
 
-              <p className="text-white/90 text-sm font-medium mb-4">{statusConfig.description}</p>
+              <p className="text-white/90 text-sm font-medium mb-4">
+                {isBeverageOrder && order.status === 'preparing' 
+                  ? 'Pesanan minuman sedang disiapkan' 
+                  : statusConfig.description}
+              </p>
 
               <div className="flex items-center gap-4">
                 {order.estimated_time && ['preparing', 'ready', 'delivering'].includes(order.status) && (
@@ -336,12 +386,17 @@ export default function OrderDetailPage() {
                   <Package className="w-4 h-4 text-white" strokeWidth={2.5} />
                 </div>
                 <span>Progress Pesanan</span>
+                {isBeverageOrder && (
+                  <Badge variant="secondary" className="ml-2 text-xs font-semibold">
+                    🥤 Minuman
+                  </Badge>
+                )}
               </h3>
             </div>
 
             <div className="relative">
               <div className="flex items-center justify-between">
-                {TIMELINE_STEPS.map((step, index, arr) => {
+                {getTimelineSteps().map((step, index, arr) => {
                   const statusOrder = ['pending_payment', 'paid', 'preparing', 'ready', 'completed'];
                   const currentStatusIndex = statusOrder.indexOf(order.status);
                   const stepIndex = statusOrder.indexOf(step.status);
