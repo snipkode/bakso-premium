@@ -60,16 +60,18 @@ export default function DriverView() {
       console.log('🔄 Loading driver orders...');
       
       // Backend will filter by role (driver sees delivery orders only)
+      // Add timestamp to prevent caching
       const { data } = await orderAPI.getAllOrders({
-        limit: 100
+        limit: 100,
+        t: Date.now() // Cache buster
       });
       
       const ordersList = data.orders || data.rows || data || [];
       console.log(`📦 Loaded ${ordersList.length} total orders`);
       
       // Filter for delivery orders (should already be filtered by backend)
-      const driverOrders = ordersList.filter(o => 
-        o.order_type === 'delivery' && 
+      const driverOrders = ordersList.filter(o =>
+        o.order_type === 'delivery' &&
         ['ready', 'out_for_delivery', 'completed'].includes(o.status)
       );
       
