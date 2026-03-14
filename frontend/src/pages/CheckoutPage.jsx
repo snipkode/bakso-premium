@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, CheckCircle } from 'lucide-react';
 import { useCartStore, useAuthStore } from '../store';
 import { Button, Input, Card } from '../components/ui/BaseComponents';
 import { formatRupiah } from '../lib/utils';
@@ -18,7 +18,7 @@ export default function CheckoutPage() {
   const [eWalletType, setEWalletType] = useState('GoPay');
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [tableNumber, setTableNumber] = useState('');
-  
+
   // Customer data fields (for guest checkout or update)
   const [customerName, setCustomerName] = useState(user?.name || '');
   const [customerPhone, setCustomerPhone] = useState(user?.phone || '');
@@ -33,7 +33,7 @@ export default function CheckoutPage() {
       alert('Mohon isi nama dan nomor telepon');
       return;
     }
-    
+
     // Validation - Order Type
     if (orderType === 'dine-in' && !tableNumber) {
       alert('Mohon isi nomor meja');
@@ -88,7 +88,7 @@ export default function CheckoutPage() {
       navigate(`/order-success/${orderId}`);
     } catch (error) {
       const errorMessage = error.response?.data?.error || 'Gagal membuat pesanan';
-      
+
       // Handle business rule: New customers can't order delivery
       if (error.response?.status === 403) {
         alert('Untuk pesanan delivery, silakan lakukan pesanan takeaway/dine-in terlebih dahulu.');
@@ -102,10 +102,16 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="pb-48">
-      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border px-4 py-3">
+    <div className="min-h-screen bg-gradient-to-b from-orange-50/50 to-background pb-48">
+      {/* Header */}
+      <div className="sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-orange-100 dark:border-gray-800 px-4 py-3">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => navigate(-1)}
+            className="hover:bg-orange-100 dark:hover:bg-gray-800 rounded-full"
+          >
             <ArrowLeft className="w-6 h-6" />
           </Button>
           <h1 className="text-2xl font-bold text-text-primary">Checkout</h1>
@@ -150,15 +156,15 @@ export default function CheckoutPage() {
         </Card>
 
         {/* Order Type Selection */}
-        <Card className="p-4">
+        <Card className="p-4 bg-gradient-to-r from-orange-50 to-orange-100/50 dark:from-gray-800 dark:to-gray-700 border-orange-200 dark:border-gray-600">
           <h3 className="font-semibold mb-3">Tipe Pesanan</h3>
           <div className="grid grid-cols-3 gap-2">
             <button
               onClick={() => setOrderType('dine-in')}
-              className={`p-3 rounded-lg border-2 ${
+              className={`p-3 rounded-xl border-2 transition-all ${
                 orderType === 'dine-in'
-                  ? 'border-primary bg-primary/10'
-                  : 'border-border'
+                  ? 'border-primary bg-primary text-white shadow-md'
+                  : 'border-border bg-white/50 dark:bg-gray-600/50'
               }`}
             >
               <div className="text-2xl mb-1">🍽️</div>
@@ -166,10 +172,10 @@ export default function CheckoutPage() {
             </button>
             <button
               onClick={() => setOrderType('takeaway')}
-              className={`p-3 rounded-lg border-2 ${
+              className={`p-3 rounded-xl border-2 transition-all ${
                 orderType === 'takeaway'
-                  ? 'border-primary bg-primary/10'
-                  : 'border-border'
+                  ? 'border-primary bg-primary text-white shadow-md'
+                  : 'border-border bg-white/50 dark:bg-gray-600/50'
               }`}
             >
               <div className="text-2xl mb-1">🛍️</div>
@@ -177,10 +183,10 @@ export default function CheckoutPage() {
             </button>
             <button
               onClick={() => setOrderType('delivery')}
-              className={`p-3 rounded-lg border-2 ${
+              className={`p-3 rounded-xl border-2 transition-all ${
                 orderType === 'delivery'
-                  ? 'border-primary bg-primary/10'
-                  : 'border-border'
+                  ? 'border-primary bg-primary text-white shadow-md'
+                  : 'border-border bg-white/50 dark:bg-gray-600/50'
               }`}
             >
               <div className="text-2xl mb-1">🛵</div>
@@ -197,6 +203,7 @@ export default function CheckoutPage() {
               placeholder="Contoh: 5"
               value={tableNumber}
               onChange={(e) => setTableNumber(e.target.value)}
+              className="w-full"
             />
           </Card>
         )}
@@ -210,6 +217,7 @@ export default function CheckoutPage() {
               onChange={(e) => setDeliveryAddress(e.target.value)}
               multiline
               rows={3}
+              className="w-full"
             />
           </Card>
         )}
@@ -227,10 +235,10 @@ export default function CheckoutPage() {
               <button
                 key={method.value}
                 onClick={() => setPaymentMethod(method.value)}
-                className={`w-full p-3 rounded-lg border-2 flex items-center gap-3 ${
+                className={`w-full p-3 rounded-xl border-2 flex items-center gap-3 transition-all ${
                   paymentMethod === method.value
                     ? 'border-primary bg-primary/10'
-                    : 'border-border'
+                    : 'border-border hover:bg-orange-50 dark:hover:bg-gray-700'
                 }`}
               >
                 <span className="text-2xl">{method.icon}</span>
@@ -248,7 +256,7 @@ export default function CheckoutPage() {
               <select
                 value={bankName}
                 onChange={(e) => setBankName(e.target.value)}
-                className="w-full p-2 border rounded-lg"
+                className="w-full p-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800"
               >
                 <option value="BCA">BCA</option>
                 <option value="BNI">BNI</option>
@@ -264,6 +272,7 @@ export default function CheckoutPage() {
                 value={accountNumber}
                 onChange={(e) => setAccountNumber(e.target.value)}
                 type="tel"
+                className="w-full"
               />
             </div>
           </Card>
@@ -277,10 +286,10 @@ export default function CheckoutPage() {
                 <button
                   key={wallet}
                   onClick={() => setEWalletType(wallet)}
-                  className={`p-2 rounded-lg border-2 ${
+                  className={`p-3 rounded-xl border-2 transition-all ${
                     eWalletType === wallet
                       ? 'border-primary bg-primary/10'
-                      : 'border-border'
+                      : 'border-border hover:bg-orange-50 dark:hover:bg-gray-700'
                   }`}
                 >
                   {wallet}
@@ -291,7 +300,7 @@ export default function CheckoutPage() {
         )}
 
         {/* Order Items */}
-        <Card className="p-4">
+        <Card className="p-4 bg-gradient-to-r from-orange-50 to-orange-100/50 dark:from-gray-800 dark:to-gray-700 border-orange-200 dark:border-gray-600">
           <h3 className="font-semibold mb-3">Detail Pesanan</h3>
           <div className="space-y-2">
             {items.map((item, idx) => (
@@ -299,7 +308,7 @@ export default function CheckoutPage() {
                 <span className="text-text-secondary">
                   {item.quantity}x {item.product_name}
                 </span>
-                <span className="text-text-primary">
+                <span className="text-text-primary font-medium">
                   {formatRupiah(item.price * item.quantity)}
                 </span>
               </div>
@@ -314,48 +323,55 @@ export default function CheckoutPage() {
             placeholder="Tambahkan catatan (opsional)"
             value={notes}
             onChange={(e) => useCartStore.getState().setNotes(e.target.value)}
+            className="w-full"
           />
         </Card>
 
         {/* Summary */}
-        <Card className="p-4">
+        <Card className="p-4 bg-gradient-to-r from-orange-50 to-orange-100/50 dark:from-gray-800 dark:to-gray-700 border-orange-200 dark:border-gray-600">
           <h3 className="font-semibold mb-3">Ringkasan Pembayaran</h3>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-text-secondary">Subtotal</span>
-              <span className="text-text-primary">{formatRupiah(subtotal)}</span>
+              <span className="text-text-primary font-medium">{formatRupiah(subtotal)}</span>
             </div>
             {deliveryFee > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-text-secondary">Ongkir</span>
-                <span className="text-text-primary">{formatRupiah(deliveryFee)}</span>
+                <span className="text-text-primary font-medium">{formatRupiah(deliveryFee)}</span>
               </div>
             )}
-            <div className="border-t border-border pt-2 flex justify-between">
+            <div className="border-t border-orange-100 dark:border-gray-600 pt-2 flex justify-between items-center">
               <span className="font-semibold text-text-primary">Total</span>
               <span className="text-xl font-bold text-primary">{formatRupiah(total)}</span>
             </div>
           </div>
         </Card>
-      </div>
 
-      {/* Place Order Button */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-xl border-t border-border pb-safe-bottom">
-        <div className="flex items-center justify-between gap-4 max-w-lg mx-auto">
-          <div>
-            <p className="text-sm text-text-tertiary">Total</p>
-            <p className="text-xl font-bold text-primary">{formatRupiah(total)}</p>
+        {/* Place Order Button - Card style inside content flow (above BottomNav) */}
+        <Card className="p-4 bg-gradient-to-r from-orange-50 to-orange-100 dark:from-gray-800 dark:to-gray-700 border-orange-200 dark:border-gray-600 sticky bottom-20 shadow-lg z-30">
+          <div className="flex items-center gap-3">
+            <div className="flex-1">
+              <p className="text-xs text-text-tertiary">Total</p>
+              <p className="text-lg font-bold text-primary">{formatRupiah(total)}</p>
+            </div>
+            <Button
+              onClick={handlePlaceOrder}
+              className="flex-[2] bg-gradient-to-r from-primary to-orange-500 hover:from-primary/90 hover:to-orange-500/90 shadow-lg shadow-primary/30 py-3.5 rounded-full font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              isLoading={loading}
+              disabled={items.length === 0 || loading}
+            >
+              {loading ? (
+                'Memproses...'
+              ) : (
+                <>
+                  <CheckCircle className="w-4 h-4 mr-2 inline" />
+                  Buat Pesanan
+                </>
+              )}
+            </Button>
           </div>
-          <Button 
-            onClick={handlePlaceOrder} 
-            className="flex-1 max-w-xs" 
-            size="lg" 
-            isLoading={loading}
-            disabled={items.length === 0}
-          >
-            {loading ? 'Memproses...' : 'Buat Pesanan'}
-          </Button>
-        </div>
+        </Card>
       </div>
     </div>
   );

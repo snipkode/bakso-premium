@@ -1,10 +1,14 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { Home, Utensils, FileText, User, ShoppingCart } from 'lucide-react';
 import { useCartStore } from '@/store';
 
 export function BottomNav() {
+  const location = useLocation();
   const { getTotalItems } = useCartStore();
   const totalItems = getTotalItems();
+
+  // Hide floating cart button on cart/checkout pages
+  const hideFloatingButton = ['/cart', '/checkout'].includes(location.pathname);
 
   const navItems = [
     { path: '/', icon: Home, label: 'Home' },
@@ -47,8 +51,8 @@ export function BottomNav() {
         </div>
       </nav>
 
-      {/* Floating Cart Button - Shows when items in cart */}
-      {totalItems > 0 && (
+      {/* Floating Cart Button - Shows when items in cart (hidden on cart/checkout pages) */}
+      {!hideFloatingButton && totalItems > 0 && (
         <button
           onClick={() => window.location.href = '/cart'}
           className="fixed bottom-20 right-4 bg-gradient-to-r from-primary to-orange-500 text-white px-4 py-3 rounded-full shadow-lg shadow-primary/30 z-40 flex items-center gap-2 hover:shadow-xl hover:scale-105 transition-all active:scale-95"
