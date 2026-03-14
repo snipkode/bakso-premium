@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -91,131 +91,160 @@ export function ImageWithFallback({
   className,
   fallbackType = 'bowl',
   retryLimit = 3,
+  imageTimeout = 10000, // 10 seconds timeout
   ...props
 }) {
+  const [imageSrc, setImageSrc] = useState(src);
+  const [loading, setLoading] = useState(!!src);
   const [error, setError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
-  const [currentSrc, setCurrentSrc] = useState(src);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loadTimer, setLoadTimer] = useState(null);
+  const retryCountRef = useRef(0);
 
-  const handleError = () => {
-    if (retryCount < retryLimit && src) {
-      // Retry loading the same image with cache bust
-      const timeout = Math.min(1000 * Math.pow(2, retryCount), 5000);
-      setTimeout(() => {
-        const separator = src.includes('?') ? '&' : '?';
-        const newSrc = `${src}${separator}retry=${retryCount + 1}&t=${Date.now()}`;
-        console.log('🔄 Retrying image load:', newSrc);
-        setCurrentSrc(newSrc);
-        setRetryCount(retryCount + 1);
-        setIsLoading(true);
-      }, timeout);
-    } else {
-      console.log('❌ Image load failed after retries:', src);
-      setError(true);
-      setIsLoading(false);
-    }
-  };
-
-  const handleLoad = () => {
-    console.log('✅ Image loaded successfully:', currentSrc);
-    setIsLoading(false);
-    // Reset retry count on successful load
-    if (retryCount > 0) {
-      setRetryCount(0);
-    }
-  };
-
-  // Reset state when src changes
+  // Keep ref in sync with state
   useEffect(() => {
-    if (src !== currentSrc) {
-      setIsLoading(true);
-      setError(false);
-      setRetryCount(0);
-      setCurrentSrc(src);
-    }
+    retryCountRef.current = retryCount;
+  }, [retryCount]);
+
+  // Reset state when src prop changes
+  useEffect(() => {
+    setImageSrc(src);
+    setError(false);
+    setRetryCount(0);
+    retryCountRef.current = 0;
+    // Only show loading if there's a valid src
+    setLoading(!!src);
+    
+    // Cleanup timer on unmount or src change
+    return () => {
+      if (loadTimer) clearTimeout(loadTimer);
+    };
   }, [src]);
 
-  // Show loading animation while loading
-  if (isLoading) {
+  const handleLoad = () => {
+    console.log('✅ Image loaded successfully');
+    if (loadTimer) clearTimeout(loadTimer);
+    setLoading(false);
+    setError(false);
+  };
+
+  const handleError = () => {
+    const currentRetry = retryCountRef.current;
+    console.log('❌ Image error, retry:', currentRetry, 'of', retryLimit);
+    
+    if (currentRetry < retryLimit && src) {
+      // Exponential backoff retry
+      const delay = Math.min(1000 * Math.pow(2, currentRetry), 5000);
+      
+      const timer = setTimeout(() => {
+        const separator = src.includes('?') ? '&' : '?';
+        const newRetryCount = currentRetry + 1;
+        const newSrc = `${src}${separator}retry=${newRetryCount}&t=${Date.now()}`;
+        console.log('🔄 Retrying with:', newSrc, '(attempt', newRetryCount, ')');
+        
+        // Force remount by setting error state first
+        setError(true);
+        setLoading(false);
+        
+        // Then trigger new load
+        setTimeout(() => {
+          setImageSrc(newSrc);
+          setRetryCount(newRetryCount);
+          retryCountRef.current = newRetryCount;
+          setLoading(true);
+          setError(false);
+        }, 50);
+      }, delay);
+      
+      return () => clearTimeout(timer);
+    } else {
+      console.log('❌ All retries exhausted, showing fallback');
+      setError(true);
+      setLoading(false);
+    }
+  };
+
+  // Setup timeout for image loading
+  useEffect(() => {
+    if (loading && src) {
+      const timer = setTimeout(() => {
+        console.log('⏰ Image load timeout after', imageTimeout, 'ms');
+        handleError();
+      }, imageTimeout);
+      
+      setLoadTimer(timer);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, src, imageTimeout]);
+
+  // Watch retryCount changes
+  useEffect(() => {
+    console.log('👀 retryCount changed to:', retryCount);
+  }, [retryCount]);
+
+  // No src at all - show static fallback immediately (no loading)
+  if (!src && !imageSrc) {
+    return (
+      <div className={cn('bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center', className)}>
+        {fallbackType === 'bowl' && <BowlIcon className="w-1/2 h-1/2" />}
+        {fallbackType === 'food' && <FoodIcon className="w-1/2 h-1/2" />}
+        {fallbackType === 'drink' && <DrinkIcon className="w-1/2 h-1/2" />}
+        {fallbackType === 'emoji' && <div className="w-1/2 h-1/2 flex items-center justify-center text-5xl">🍜</div>}
+      </div>
+    );
+  }
+
+  // Show loading animation with SVG (only when there's a src to load)
+  if (loading) {
     return (
       <div className={cn('relative overflow-hidden bg-gradient-to-br from-orange-100 to-orange-200 dark:from-gray-700 dark:to-gray-800', className)}>
-        {/* Shimmer Loading Animation */}
-        <div className="absolute inset-0">
-          <div className="w-full h-full bg-gradient-to-r from-transparent via-white/20 dark:via-white/10 to-transparent shimmer-loading" />
-        </div>
-        {/* Center Loading Icon */}
-        <div className="absolute inset-0 flex items-center justify-center">
+        {/* Shimmer effect */}
+        <div className="absolute inset-0 shimmer-loading" />
+        {/* Loading spinner with animation */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
           <motion.div
             initial={{ scale: 0.8, opacity: 0.5 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.3 }}
             className="w-12 h-12 relative"
           >
-            {/* Animated Loading Ring */}
             <svg className="w-full h-full animate-spin" viewBox="0 0 100 100">
-              <circle
-                cx="50"
-                cy="50"
-                r="40"
-                stroke="currentColor"
-                strokeWidth="6"
-                fill="none"
-                className="text-orange-200 dark:text-gray-600"
-              />
-              <path
-                d="M50 10 A40 40 0 0 1 90 50"
-                stroke="currentColor"
-                strokeWidth="6"
-                fill="none"
-                strokeLinecap="round"
-                className="text-orange-500"
-              >
-                <animateTransform
-                  attributeName="transform"
-                  type="rotate"
-                  from="0 50 50"
-                  to="360 50 50"
-                  dur="1s"
-                  repeatCount="indefinite"
-                />
-              </path>
+              <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="6" fill="none" className="text-orange-200 dark:text-gray-600" />
+              <path d="M50 10 A40 40 0 0 1 90 50" stroke="currentColor" strokeWidth="6" fill="none" strokeLinecap="round" className="text-orange-500" />
             </svg>
-            {/* Food Icon in Center */}
             <div className="absolute inset-0 flex items-center justify-center text-lg">
               {fallbackType === 'drink' ? '🥤' : '🍜'}
             </div>
           </motion.div>
+          <div className="text-xs text-orange-700 dark:text-orange-300 font-medium">
+            Loading... ({retryCount + 1}/{retryLimit + 1})
+          </div>
         </div>
       </div>
     );
   }
 
-  // Show static SVG fallback on error (no animation)
-  if (!currentSrc || error) {
+  // Show static SVG fallback on error (NO animation)
+  if (error || !imageSrc) {
     return (
       <div className={cn('bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center', className)}>
         {fallbackType === 'bowl' && <BowlIcon className="w-1/2 h-1/2" />}
         {fallbackType === 'food' && <FoodIcon className="w-1/2 h-1/2" />}
         {fallbackType === 'drink' && <DrinkIcon className="w-1/2 h-1/2" />}
-        {fallbackType === 'emoji' && (
-          <div className="w-1/2 h-1/2 flex items-center justify-center text-5xl">
-            🍜
-          </div>
-        )}
+        {fallbackType === 'emoji' && <div className="w-1/2 h-1/2 flex items-center justify-center text-5xl">🍜</div>}
       </div>
     );
   }
 
-  // Show actual image when loaded successfully
+  // Show actual image
   return (
     <img
-      key={currentSrc}
-      src={currentSrc}
+      key={imageSrc}
+      src={imageSrc}
       alt={alt}
       className={cn('w-full h-full object-cover', className)}
-      onError={handleError}
       onLoad={handleLoad}
+      onError={handleError}
       {...props}
     />
   );
