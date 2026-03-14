@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, FileText, MapPin, Truck, ShoppingBag, ChefHat, CheckCircle, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Clock, MapPin, Truck, ShoppingBag, ChefHat, CheckCircle, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { orderAPI } from '../lib/api';
 import { Button, Card, LoadingSpinner, Badge, IconButton } from '../components/ui/BaseComponents';
 import { subscribeToOrderUpdates } from '../lib/socket';
@@ -11,12 +11,30 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [isMobile, setIsMobile] = useState(false);
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 10,
+    limit: 4, // Default for mobile
     total: 0,
     totalPages: 0,
   });
+
+  useEffect(() => {
+    // Check if mobile on mount and resize
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    // Update limit based on screen size
+    setPagination(prev => ({
+      ...prev,
+      limit: isMobile ? 4 : 8,
+      page: 1, // Reset to first page when limit changes
+    }));
+  }, [isMobile]);
 
   useEffect(() => {
     loadOrders();
@@ -26,7 +44,7 @@ export default function OrdersPage() {
     });
 
     return () => unsubscribe();
-  }, [filter, pagination.page]);
+  }, [filter, pagination.page, isMobile]);
 
   const loadOrders = async () => {
     try {
@@ -246,27 +264,154 @@ export default function OrdersPage() {
       {/* Orders List */}
       <div className="px-4 space-y-3">
         {orders.length === 0 && !loading ? (
-          <div className="py-16">
-            <Card className="p-8 text-center bg-gradient-to-b from-white to-orange-50/50 dark:from-gray-800 dark:to-gray-800/50">
-              <div className="w-20 h-20 mx-auto mb-4 relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-orange-500/20 rounded-full animate-pulse"></div>
-                <div className="absolute inset-2 bg-gradient-to-r from-primary/10 to-orange-500/10 rounded-full flex items-center justify-center">
-                  <FileText className="w-8 h-8 text-primary" />
+          <div className="py-12">
+            <Card className="p-8 text-center bg-gradient-to-b from-white to-orange-50/50 dark:from-gray-800 dark:to-gray-800/50 border-0 shadow-xl overflow-hidden relative">
+              {/* Decorative Background */}
+              <div className="absolute inset-0 opacity-5 overflow-hidden">
+                <svg viewBox="0 0 400 400" className="w-full h-full">
+                  <text x="40" y="80" fontSize="40">🍜</text>
+                  <text x="120" y="60" fontSize="40">🍲</text>
+                  <text x="200" y="100" fontSize="40">🍛</text>
+                  <text x="280" y="70" fontSize="40">🍱</text>
+                  <text x="60" y="160" fontSize="40">🍢</text>
+                  <text x="160" y="140" fontSize="40">🍡</text>
+                  <text x="260" y="170" fontSize="40">🍜</text>
+                  <text x="100" y="240" fontSize="40">🍲</text>
+                  <text x="200" y="220" fontSize="40">🍛</text>
+                  <text x="300" y="250" fontSize="40">🍱</text>
+                  <text x="80" y="320" fontSize="40">🍢</text>
+                  <text x="180" y="300" fontSize="40">🍡</text>
+                  <text x="280" y="330" fontSize="40">🍜</text>
+                </svg>
+              </div>
+
+              <div className="relative z-10">
+                {/* Animated SVG Illustration - Happy Customer with Empty Order */}
+                <div className="w-48 h-48 mx-auto mb-6 relative">
+                  <svg viewBox="0 0 200 200" className="w-full h-full">
+                    <defs>
+                      <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#FFEDD5"/>
+                        <stop offset="100%" stopColor="#FED7AA"/>
+                      </linearGradient>
+                      <linearGradient id="skinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#FED7AA"/>
+                        <stop offset="100%" stopColor="#FDBA74"/>
+                      </linearGradient>
+                      <linearGradient id="shirtGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#FF6B35"/>
+                        <stop offset="100%" stopColor="#EA580C"/>
+                      </linearGradient>
+                      <linearGradient id="phoneGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#6B7280"/>
+                        <stop offset="100%" stopColor="#374151"/>
+                      </linearGradient>
+                    </defs>
+                    
+                    {/* Background Circle */}
+                    <circle cx="100" cy="100" r="90" fill="url(#bgGradient)" opacity="0.5"/>
+                    <circle cx="100" cy="100" r="80" fill="none" stroke="#FFA94D" strokeWidth="2" strokeDasharray="5,5" opacity="0.3">
+                      <animateTransform attributeName="transform" type="rotate" from="0 100 100" to="360 100 100" dur="20s" repeatCount="indefinite"/>
+                    </circle>
+                    
+                    {/* Ground Shadow */}
+                    <ellipse cx="100" cy="175" rx="40" ry="8" fill="#000" opacity="0.1"/>
+                    
+                    {/* Body - Sitting */}
+                    <ellipse cx="100" cy="140" rx="35" ry="25" fill="url(#shirtGrad)"/>
+                    
+                    {/* Legs - Sitting */}
+                    <ellipse cx="75" cy="160" rx="12" ry="8" fill="#1F2937"/>
+                    <ellipse cx="125" cy="160" rx="12" ry="8" fill="#1F2937"/>
+                    
+                    {/* Head */}
+                    <circle cx="100" cy="95" r="28" fill="url(#skinGrad)"/>
+                    
+                    {/* Hair */}
+                    <path d="M72 90 Q75 65 100 65 Q125 65 128 90 Q132 82 128 75 Q125 60 100 60 Q75 60 72 75 Q68 82 72 90" fill="#1F2937"/>
+                    <circle cx="100" cy="75" r="20" fill="#1F2937"/>
+                    
+                    {/* Confused/Thinking Eyes */}
+                    <circle cx="88" cy="92" r="4" fill="#1F2937"/>
+                    <circle cx="112" cy="92" r="4" fill="#1F2937"/>
+                    <circle cx="89" cy="91" r="1.5" fill="white"/>
+                    <circle cx="113" cy="91" r="1.5" fill="white"/>
+                    
+                    {/* Eyebrows - Confused */}
+                    <path d="M82 84 Q88 80 94 84" stroke="#1F2937" strokeWidth="2" fill="none"/>
+                    <path d="M106 84 Q112 80 118 84" stroke="#1F2937" strokeWidth="2" fill="none"/>
+                    
+                    {/* Small Mouth - Thinking */}
+                    <circle cx="100" cy="108" r="3" fill="#1F2937"/>
+                    
+                    {/* Blush */}
+                    <ellipse cx="78" cy="100" rx="5" ry="3" fill="#FCA5A5" opacity="0.5"/>
+                    <ellipse cx="122" cy="100" rx="5" ry="3" fill="#FCA5A5" opacity="0.5"/>
+                    
+                    {/* Arm holding phone */}
+                    <path d="M65 130 Q50 135 45 120" stroke="url(#skinGrad)" strokeWidth="6" strokeLinecap="round" fill="none"/>
+                    
+                    {/* Phone */}
+                    <rect x="32" y="105" width="18" height="28" rx="3" fill="url(#phoneGrad)"/>
+                    <rect x="34" y="108" width="14" height="20" rx="1" fill="#1F2937"/>
+                    <circle cx="41" cy="130" r="1.5" fill="#6B7280"/>
+                    
+                    {/* Other arm resting */}
+                    <path d="M135 130 Q150 135 155 125" stroke="url(#skinGrad)" strokeWidth="6" strokeLinecap="round" fill="none"/>
+                    
+                    {/* Empty Order List Icon - Floating */}
+                    <g transform="translate(145, 50)">
+                      <rect x="0" y="0" width="30" height="40" rx="3" fill="white" stroke="#FFA94D" strokeWidth="2"/>
+                      <line x1="5" y1="10" x2="25" y2="10" stroke="#D1D5DB" strokeWidth="2"/>
+                      <line x1="5" y1="18" x2="25" y2="18" stroke="#D1D5DB" strokeWidth="2"/>
+                      <line x1="5" y1="26" x2="18" y2="26" stroke="#D1D5DB" strokeWidth="2"/>
+                      <text x="15" y="38" fontSize="8" textAnchor="middle" fill="#FF6B35">🍜</text>
+                    </g>
+                    
+                    {/* Question marks floating */}
+                    <text x="60" y="50" fontSize="16" fill="#FFA94D" opacity="0.8">?</text>
+                    <text x="140" y="40" fontSize="14" fill="#FFA94D" opacity="0.6">?</text>
+                    
+                    {/* Sparkles */}
+                    <text x="50" y="35" fontSize="12" opacity="0.7">✨</text>
+                    <text x="150" y="70" fontSize="10" opacity="0.6">✨</text>
+                    
+                    {/* Animated dots around */}
+                    <circle cx="40" cy="80" r="3" fill="#FFA94D" opacity="0.6">
+                      <animate attributeName="opacity" values="0.6;0.2;0.6" dur="1.5s" repeatCount="indefinite"/>
+                    </circle>
+                    <circle cx="160" cy="100" r="3" fill="#FFA94D" opacity="0.6">
+                      <animate attributeName="opacity" values="0.6;0.2;0.6" dur="1.5s" repeatCount="indefinite" begin="0.5s"/>
+                    </circle>
+                    <circle cx="100" cy="40" r="3" fill="#FFA94D" opacity="0.6">
+                      <animate attributeName="opacity" values="0.6;0.2;0.6" dur="1.5s" repeatCount="indefinite" begin="1s"/>
+                    </circle>
+                  </svg>
+                </div>
+                
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                  Belum ada pesanan
+                </h3>
+                <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm max-w-xs mx-auto">
+                  Mulai pesan bakso favoritmu dan nikmati kelezatannya!
+                </p>
+                <Button
+                  onClick={() => navigate('/menu')}
+                  className="bg-gradient-to-r from-primary to-orange-500 hover:from-primary/90 hover:to-orange-500/90 shadow-lg shadow-primary/30 py-3 px-6 rounded-full font-semibold"
+                >
+                  <ShoppingBag className="w-4 h-4 mr-2 inline" />
+                  Lihat Menu
+                </Button>
+                
+                {/* Decorative Food Emojis */}
+                <div className="flex justify-center gap-3 mt-6 text-2xl">
+                  <span className="animate-bounce" style={{animationDelay: '0ms'}}>🍜</span>
+                  <span className="animate-bounce" style={{animationDelay: '100ms'}}>🍲</span>
+                  <span className="animate-bounce" style={{animationDelay: '200ms'}}>🍛</span>
+                  <span className="animate-bounce" style={{animationDelay: '300ms'}}>🍱</span>
+                  <span className="animate-bounce" style={{animationDelay: '400ms'}}>🥢</span>
                 </div>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                Belum ada pesanan
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">
-                Mulai pesan bakso favoritmu dan nikmati kelezatannya!
-              </p>
-              <Button
-                onClick={() => navigate('/menu')}
-                className="bg-gradient-to-r from-primary to-orange-500 hover:from-primary/90 hover:to-orange-500/90 shadow-lg shadow-primary/30"
-              >
-                <ShoppingBag className="w-4 h-4 mr-2" />
-                Lihat Menu
-              </Button>
             </Card>
           </div>
         ) : (
@@ -280,67 +425,79 @@ export default function OrdersPage() {
               />
             ))}
 
-            {/* Pagination */}
+            {/* Pagination - Responsive */}
             {pagination.totalPages > 1 && (
-              <div className="pt-4 flex items-center justify-between gap-2">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => handlePageChange(pagination.page - 1)}
-                  disabled={pagination.page === 1}
-                  className="flex items-center gap-1"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  <span className="hidden sm:inline">Prev</span>
-                </Button>
+              <div className="pt-4 pb-8">
+                <Card className="p-4 bg-gradient-to-r from-orange-50 to-orange-100/50 dark:from-gray-800 dark:to-gray-700 border-orange-200 dark:border-gray-600 shadow-lg">
+                  <div className="flex items-center justify-between gap-2">
+                    {/* Previous Button */}
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handlePageChange(pagination.page - 1)}
+                      disabled={pagination.page === 1}
+                      className="flex items-center gap-1 bg-white dark:bg-gray-800 hover:bg-orange-50 dark:hover:bg-gray-600"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      <span className="hidden sm:inline text-xs font-medium">Prev</span>
+                    </Button>
 
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                    let pageNum;
-                    if (pagination.totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (pagination.page <= 3) {
-                      pageNum = i + 1;
-                    } else if (pagination.page >= pagination.totalPages - 2) {
-                      pageNum = pagination.totalPages - 4 + i;
-                    } else {
-                      pageNum = pagination.page - 2 + i;
-                    }
+                    {/* Page Numbers */}
+                    <div className="flex items-center gap-1.5 overflow-x-auto">
+                      {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                        let pageNum;
+                        if (pagination.totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (pagination.page <= 3) {
+                          pageNum = i + 1;
+                        } else if (pagination.page >= pagination.totalPages - 2) {
+                          pageNum = pagination.totalPages - 4 + i;
+                        } else {
+                          pageNum = pagination.page - 2 + i;
+                        }
 
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => handlePageChange(pageNum)}
-                        className={`w-9 h-9 rounded-full text-sm font-medium transition-all ${
-                          pagination.page === pageNum
-                            ? 'bg-gradient-to-r from-primary to-orange-500 text-white shadow-lg shadow-primary/30 scale-110'
-                            : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-orange-100 dark:border-gray-700 hover:border-orange-300'
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    );
-                  })}
-                </div>
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => handlePageChange(pageNum)}
+                            className={`w-9 h-9 rounded-full text-xs font-bold transition-all flex-shrink-0 ${
+                              pagination.page === pageNum
+                                ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF8C42] text-white shadow-lg shadow-orange-500/30 scale-110'
+                                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-orange-100 dark:border-gray-700 hover:border-orange-300 dark:hover:border-gray-600 hover:bg-orange-50 dark:hover:bg-gray-700'
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+                    </div>
 
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => handlePageChange(pagination.page + 1)}
-                  disabled={pagination.page === pagination.totalPages}
-                  className="flex items-center gap-1"
-                >
-                  <span className="hidden sm:inline">Next</span>
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
+                    {/* Next Button */}
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handlePageChange(pagination.page + 1)}
+                      disabled={pagination.page === pagination.totalPages}
+                      className="flex items-center gap-1 bg-white dark:bg-gray-800 hover:bg-orange-50 dark:hover:bg-gray-600"
+                    >
+                      <span className="hidden sm:inline text-xs font-medium">Next</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+
+                  {/* Page Info */}
+                  <div className="mt-3 pt-3 border-t border-orange-100 dark:border-gray-600 text-center">
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      <span className="font-bold text-primary">Halaman {pagination.page}</span> dari{' '}
+                      <span className="font-bold text-primary">{pagination.totalPages}</span>
+                      {' '}({pagination.total} pesanan)
+                    </p>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-500 mt-1">
+                      Menampilkan {Math.min((pagination.page - 1) * pagination.limit + 1, pagination.total)}-{Math.min(pagination.page * pagination.limit, pagination.total)} dari {pagination.total} pesanan
+                    </p>
+                  </div>
+                </Card>
               </div>
-            )}
-
-            {/* Page Info */}
-            {pagination.totalPages > 0 && (
-              <p className="text-center text-xs text-gray-500 dark:text-gray-400 pt-2">
-                Halaman {pagination.page} dari {pagination.totalPages} ({pagination.total} pesanan)
-              </p>
             )}
           </>
         )}
