@@ -34,14 +34,25 @@ export default function HomePage() {
   const loadData = async () => {
     try {
       setLoading(true);
+      console.log('🔄 Loading featured and bestseller products...');
+      
       const [featuredRes, bestSellerRes] = await Promise.all([
         productAPI.getProducts({ is_featured: true, limit: 6, sort_by: 'featured' }),
         productAPI.getProducts({ limit: 6, sort_by: 'bestseller' }),
       ]);
-      setFeaturedProducts(featuredRes.data.products || featuredRes.data.rows || []);
-      setBestSellerProducts(bestSellerRes.data.products || bestSellerRes.data.rows || []);
+      
+      console.log('Featured:', featuredRes.data);
+      console.log('Best Seller:', bestSellerRes.data);
+      
+      const featured = featuredRes.data.products || featuredRes.data.rows || [];
+      const bestSeller = bestSellerRes.data.products || bestSellerRes.data.rows || [];
+      
+      setFeaturedProducts(featured);
+      setBestSellerProducts(bestSeller);
+      
+      console.log(`✅ Loaded ${featured.length} featured, ${bestSeller.length} best sellers`);
     } catch (error) {
-      console.error('Failed to load data:', error);
+      console.error('❌ Failed to load data:', error);
     } finally {
       setLoading(false);
     }
