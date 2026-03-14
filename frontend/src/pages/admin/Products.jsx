@@ -228,8 +228,8 @@ export default function AdminProducts() {
     setSubmitting(true);
     try {
       await productAPI.updateStock(stockProduct.id, {
-        stock: parseInt(formData.stock),
-        min_stock: parseInt(formData.min_stock),
+        stock: parseInt(formData.stock) || 0,
+        min_stock: parseInt(formData.min_stock) || 10,
       });
       alert('✅ Stock updated');
       closeModal();
@@ -560,7 +560,7 @@ export default function AdminProducts() {
                   </label>
                   <Input
                     type="number"
-                    value={formData.stock}
+                    value={formData.stock || ''}
                     onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
                     className="py-2.5 text-sm"
                   />
@@ -571,7 +571,7 @@ export default function AdminProducts() {
                   </label>
                   <Input
                     type="number"
-                    value={formData.min_stock}
+                    value={formData.min_stock || ''}
                     onChange={(e) => setFormData({ ...formData, min_stock: e.target.value })}
                     className="py-2.5 text-sm"
                   />
@@ -586,8 +586,8 @@ export default function AdminProducts() {
                     type="number"
                     min="0"
                     max="5"
-                    value={formData.spicy_level}
-                    onChange={(e) => setFormData({ ...formData, spicy_level: parseInt(e.target.value) })}
+                    value={formData.spicy_level || ''}
+                    onChange={(e) => setFormData({ ...formData, spicy_level: parseInt(e.target.value) || 0 })}
                     className="py-2.5 text-sm"
                   />
                 </div>
@@ -647,7 +647,7 @@ export default function AdminProducts() {
                 </label>
                 <Input
                   type="number"
-                  value={formData.stock}
+                  value={formData.stock || ''}
                   onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
                   className="py-2.5 text-sm"
                 />
@@ -658,7 +658,7 @@ export default function AdminProducts() {
                 </label>
                 <Input
                   type="number"
-                  value={formData.min_stock}
+                  value={formData.min_stock || ''}
                   onChange={(e) => setFormData({ ...formData, min_stock: e.target.value })}
                   className="py-2.5 text-sm"
                 />
