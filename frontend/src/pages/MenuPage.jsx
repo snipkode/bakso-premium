@@ -215,7 +215,9 @@ export default function MenuPage() {
                               src={product.image}
                               alt={product.name}
                               className="group-hover:scale-110 transition-transform duration-500"
-                              fallbackType={product.category?.name?.toLowerCase().includes('minum') ? 'drink' : 'food'}
+                              fallbackType={product.category?.name?.toLowerCase().includes('minum') || product.name?.toLowerCase().includes('es ') || product.name?.toLowerCase().includes('jus') ? 'drink' : 'food'}
+                              retryLimit={3}
+                              imageTimeout={8000}
                             />
 
                             <div className="absolute top-2 left-2 flex flex-col gap-1">
