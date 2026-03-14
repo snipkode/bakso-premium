@@ -217,7 +217,7 @@ export default function MenuPage() {
                               className="w-full h-full object-cover"
                               fallbackType={product.category?.name?.toLowerCase().includes('minum') || product.name?.toLowerCase().includes('es ') || product.name?.toLowerCase().includes('jus') ? 'drink' : 'food'}
                               retryLimit={3}
-                              imageTimeout={8000}
+                              imageTimeout={3000}
                             />
 
                             <div className="absolute top-2 left-2 flex flex-col gap-1">

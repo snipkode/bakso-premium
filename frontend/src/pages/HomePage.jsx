@@ -255,7 +255,7 @@ export default function HomePage() {
                         className="w-full h-full object-cover"
                         fallbackType={product.category?.name?.toLowerCase().includes('minum') || product.name?.toLowerCase().includes('es ') || product.name?.toLowerCase().includes('jus') ? 'drink' : 'food'}
                         retryLimit={3}
-                        imageTimeout={8000}
+                        imageTimeout={3000}
                       />
                       {activeTab === 'featured' && (
                         <Badge className="absolute top-2 right-2 text-xs bg-gradient-to-r from-blue-500 to-cyan-500 border-0 shadow-md">⭐</Badge>
