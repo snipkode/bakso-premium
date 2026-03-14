@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -104,23 +104,37 @@ export function ImageWithFallback({
       const timeout = Math.min(1000 * Math.pow(2, retryCount), 5000);
       setTimeout(() => {
         const separator = src.includes('?') ? '&' : '?';
-        setCurrentSrc(`${src}${separator}retry=${retryCount + 1}&t=${Date.now()}`);
+        const newSrc = `${src}${separator}retry=${retryCount + 1}&t=${Date.now()}`;
+        console.log('🔄 Retrying image load:', newSrc);
+        setCurrentSrc(newSrc);
         setRetryCount(retryCount + 1);
         setIsLoading(true);
       }, timeout);
     } else {
+      console.log('❌ Image load failed after retries:', src);
       setError(true);
       setIsLoading(false);
     }
   };
 
   const handleLoad = () => {
+    console.log('✅ Image loaded successfully:', currentSrc);
     setIsLoading(false);
     // Reset retry count on successful load
     if (retryCount > 0) {
       setRetryCount(0);
     }
   };
+
+  // Reset state when src changes
+  useEffect(() => {
+    if (src !== currentSrc) {
+      setIsLoading(true);
+      setError(false);
+      setRetryCount(0);
+      setCurrentSrc(src);
+    }
+  }, [src]);
 
   // Show loading animation while loading
   if (isLoading) {
@@ -196,6 +210,7 @@ export function ImageWithFallback({
   // Show actual image when loaded successfully
   return (
     <img
+      key={currentSrc}
       src={currentSrc}
       alt={alt}
       className={cn('w-full h-full object-cover', className)}
