@@ -268,15 +268,43 @@ exports.getUserOrders = async (req, res) => {
 exports.getAllOrders = async (req, res) => {
   try {
     const { status, order_type, date, limit = 50, offset = 0 } = req.query;
+    const userRole = req.user.role;
 
     const where = {};
-    if (status) where.status = status;
-    if (order_type) where.order_type = order_type;
+    
+    // Role-based filtering
+    if (userRole === 'driver') {
+      // Driver only sees delivery orders
+      where.order_type = 'delivery';
+      // Driver sees ready, out_for_delivery, completed orders
+      if (status) {
+        where.status = status;
+      } else {
+        where.status = ['ready', 'out_for_delivery', 'completed'];
+      }
+    } else if (userRole === 'kitchen') {
+      // Kitchen sees paid, preparing, ready orders
+      if (status) {
+        where.status = status;
+      } else {
+        where.status = ['paid', 'preparing', 'ready'];
+      }
+    } else {
+      // Admin sees all, customer sees own orders
+      if (status) where.status = status;
+      if (order_type) where.order_type = order_type;
+    }
+    
     if (date) {
       where.createdAt = {
         [Op.gte]: new Date(date + 'T00:00:00'),
         [Op.lt]: new Date(date + 'T23:59:59'),
       };
+    }
+
+    // For customer, only show their own orders
+    if (userRole === 'customer') {
+      where.user_id = req.user.id;
     }
 
     const orders = await Order.findAndCountAll({
@@ -293,6 +321,7 @@ exports.getAllOrders = async (req, res) => {
 
     res.json({ success: true, ...orders });
   } catch (error) {
+    console.error('Get all orders error:', error);
     res.status(500).json({ error: 'Failed to get orders' });
   }
 };
