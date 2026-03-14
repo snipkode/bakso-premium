@@ -13,6 +13,50 @@ export const useAuthStore = create(
       error: null,
       needsPINOnboarding: false,
 
+      // Validate token on app load
+      validateToken: () => {
+        const token = localStorage.getItem('token');
+        const userStr = localStorage.getItem('user');
+        
+        if (!token || !userStr) {
+          console.log('⚠️ No token or user in localStorage, clearing state...');
+          set({
+            user: null,
+            token: null,
+            isAuthenticated: false,
+            needsPINOnboarding: false,
+          });
+          return false;
+        }
+        
+        try {
+          const user = JSON.parse(userStr);
+          
+          // Check if token is expired (JWT exp claim)
+          const tokenPayload = JSON.parse(atob(token.split('.')[1]));
+          const now = Date.now() / 1000;
+          
+          if (tokenPayload.exp && tokenPayload.exp < now) {
+            console.log('❌ Token expired at', new Date(tokenPayload.exp * 1000));
+            get().logout();
+            return false;
+          }
+          
+          console.log('✅ Token valid for user:', user.name);
+          set({
+            user,
+            token,
+            isAuthenticated: true,
+            needsPINOnboarding: !user.is_pin_set,
+          });
+          return true;
+        } catch (error) {
+          console.error('❌ Invalid token or user data:', error);
+          get().logout();
+          return false;
+        }
+      },
+
       // Customer login/register
       customerAuth: async (name, phone) => {
         set({ isLoading: true, error: null });
@@ -133,15 +177,29 @@ export const useAuthStore = create(
 
       // Logout
       logout: () => {
+        console.log('🚪 User logging out...');
+        
+        // Disconnect socket
         disconnectSocket();
+        
+        // Clear localStorage
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        
+        // Clear state
         set({
           user: null,
           token: null,
           isAuthenticated: false,
+          isLoading: false,
           error: null,
+          needsPINOnboarding: false,
         });
+        
+        console.log('✅ Logout successful, redirecting to login...');
+        
+        // Redirect to login
+        window.location.href = '/';
       },
 
       // Update user

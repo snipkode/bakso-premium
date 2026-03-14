@@ -32,22 +32,12 @@ import { BottomNav } from '@/components/BottomNav';
 import { Toaster } from '@/components/Toaster';
 
 function App() {
-  const { isAuthenticated, user, token } = useAuthStore();
+  const { isAuthenticated, user, token, validateToken } = useAuthStore();
   const { darkMode, setOnline, setPushEnabled } = useAppStore();
 
   useEffect(() => {
-    // Check for saved token on mount
-    const savedToken = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('user');
-    
-    if (savedToken && savedUser && !token) {
-      // Token exists but not in store (page refresh)
-      useAuthStore.setState({
-        token: savedToken,
-        user: JSON.parse(savedUser),
-        isAuthenticated: true,
-      });
-    }
+    // Validate token on mount
+    validateToken();
 
     // Online/offline detection
     const handleOnline = () => setOnline(true);
