@@ -332,12 +332,12 @@ export default function HomePage() {
                   </div>
                   
                   <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-                    {activeTab === 'featured' ? 'Belum Ada Menu Favorit' : 'Belum Ada Best Seller'}
+                    {activeTab === 'featured' ? '🍜 Belum Ada Menu Favorit' : '🔥 Belum Ada Best Seller'}
                   </h3>
                   <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">
                     {activeTab === 'featured' 
-                      ? 'Menu favorit akan muncul di sini setelah ditambahkan' 
-                      : 'Menu best seller akan muncul di sini setelah ada yang memesan'}
+                      ? 'Yuk coba produk favorit kami! Menu bakso paling diminati akan muncul di sini.' 
+                      : 'Tunggu apa lagi? Pesan sekarang dan jadilah yang pertama menikmati bakso premium kami!'}
                   </p>
                   
                   {/* Food emojis decoration */}
