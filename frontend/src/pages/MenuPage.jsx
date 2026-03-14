@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, SlidersHorizontal, X, Utensils, Flame, Star, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, SlidersHorizontal, X, Utensils, Flame, Star } from 'lucide-react';
 import { useAuthStore, useCartStore } from '@/store';
 import { productAPI } from '@/lib/api';
-import { Button, Input, Card, Badge, LoadingSpinner } from '@/components/ui/BaseComponents';
+import { Button, Input, Card, Badge, LoadingSpinner, Pagination } from '@/components/ui/BaseComponents';
 import { FadeIn, StaggerGrid, ScaleOnHover, PulseBadge } from '@/components/ui/Animations';
 import { BaksoLoadingAnimation } from '@/components/ui/LoadingAnimation';
 
@@ -56,18 +56,21 @@ export default function MenuPage() {
         category: selectedCategory !== 'all' ? selectedCategory : undefined,
         search: searchQuery || undefined,
       };
-      
+
       const [categoriesRes, productsRes] = await Promise.all([
         productAPI.getCategories(),
         productAPI.getProducts(params),
       ]);
-      
+
       setCategories(categoriesRes.data.categories || []);
       setProducts(productsRes.data.products || productsRes.data.rows || []);
+      
+      // Handle pagination from response
+      const paginationData = productsRes.data.pagination || {};
       setPagination(prev => ({
         ...prev,
-        total: productsRes.data?.total || 0,
-        totalPages: productsRes.data?.totalPages || 0,
+        total: paginationData.total || productsRes.data?.total || 0,
+        totalPages: paginationData.totalPages || productsRes.data?.totalPages || 0,
       }));
     } catch (error) {
       console.error('Failed to load data:', error);
@@ -296,68 +299,22 @@ export default function MenuPage() {
               {pagination.totalPages > 1 && (
                 <div className="pt-6 pb-8">
                   <Card className="p-4 bg-gradient-to-r from-orange-50 to-orange-100/50 dark:from-gray-800 dark:to-gray-700 border-orange-200 dark:border-gray-600 shadow-lg">
-                    <div className="flex items-center justify-between gap-2">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handlePageChange(pagination.page - 1)}
-                        disabled={pagination.page === 1}
-                        className="flex items-center gap-1 bg-white dark:bg-gray-800 hover:bg-orange-50 dark:hover:bg-gray-600"
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                        <span className="hidden sm:inline text-xs font-medium">Prev</span>
-                      </Button>
-
-                      <div className="flex items-center gap-1.5 overflow-x-auto">
-                        {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                          let pageNum;
-                          if (pagination.totalPages <= 5) {
-                            pageNum = i + 1;
-                          } else if (pagination.page <= 3) {
-                            pageNum = i + 1;
-                          } else if (pagination.page >= pagination.totalPages - 2) {
-                            pageNum = pagination.totalPages - 4 + i;
-                          } else {
-                            pageNum = pagination.page - 2 + i;
-                          }
-
-                          return (
-                            <button
-                              key={pageNum}
-                              onClick={() => handlePageChange(pageNum)}
-                              className={`w-9 h-9 rounded-full text-xs font-bold transition-all flex-shrink-0 ${
-                                pagination.page === pageNum
-                                  ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF8C42] text-white shadow-lg shadow-orange-500/30 scale-110'
-                                  : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-orange-100 dark:border-gray-700 hover:border-orange-300 dark:hover:border-gray-600 hover:bg-orange-50 dark:hover:bg-gray-700'
-                              }`}
-                            >
-                              {pageNum}
-                            </button>
-                          );
-                        })}
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <Pagination
+                        currentPage={pagination.page}
+                        totalPages={pagination.totalPages}
+                        onPageChange={handlePageChange}
+                      />
+                      <div className="text-center sm:text-right">
+                        <p className="text-xs text-gray-600 dark:text-gray-400">
+                          <span className="font-bold text-primary">Halaman {pagination.page}</span> dari{' '}
+                          <span className="font-bold text-primary">{pagination.totalPages}</span>
+                          {' '}({pagination.total} menu)
+                        </p>
+                        <p className="text-[10px] text-gray-500 dark:text-gray-500 mt-1">
+                          Menampilkan {Math.min((pagination.page - 1) * pagination.limit + 1, pagination.total)}-{Math.min(pagination.page * pagination.limit, pagination.total)} dari {pagination.total} menu
+                        </p>
                       </div>
-
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handlePageChange(pagination.page + 1)}
-                        disabled={pagination.page === pagination.totalPages}
-                        className="flex items-center gap-1 bg-white dark:bg-gray-800 hover:bg-orange-50 dark:hover:bg-gray-600"
-                      >
-                        <span className="hidden sm:inline text-xs font-medium">Next</span>
-                        <ChevronRight className="w-4 h-4" />
-                      </Button>
-                    </div>
-
-                    <div className="mt-3 pt-3 border-t border-orange-100 dark:border-gray-600 text-center">
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
-                        <span className="font-bold text-primary">Halaman {pagination.page}</span> dari{' '}
-                        <span className="font-bold text-primary">{pagination.totalPages}</span>
-                        {' '}({pagination.total} menu)
-                      </p>
-                      <p className="text-[10px] text-gray-500 dark:text-gray-500 mt-1">
-                        Menampilkan {Math.min((pagination.page - 1) * pagination.limit + 1, pagination.total)}-{Math.min(pagination.page * pagination.limit, pagination.total)} dari {pagination.total} menu
-                      </p>
                     </div>
                   </Card>
                 </div>

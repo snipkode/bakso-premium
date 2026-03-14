@@ -112,7 +112,7 @@ exports.deleteCategory = async (req, res) => {
 // Get all products
 exports.getProducts = async (req, res) => {
   try {
-    const { category_id, search, is_featured, limit = 50, sort_by } = req.query;
+    const { category_id, search, is_featured, limit = 50, page = 1, sort_by } = req.query;
 
     const where = { is_available: true };
     if (category_id) where.category_id = category_id;
@@ -131,19 +131,36 @@ exports.getProducts = async (req, res) => {
       order = [['name', 'ASC']];
     }
 
-    const products = await Product.findAll({
+    const limitInt = parseInt(limit);
+    const pageInt = parseInt(page);
+    const offset = (pageInt - 1) * limitInt;
+
+    const { count, rows } = await Product.findAndCountAll({
       where,
       include: [{
         model: Category,
         as: 'category',
         attributes: ['id', 'name', 'icon'],
       }],
-      limit: parseInt(limit),
+      limit: limitInt,
+      offset,
       order,
     });
 
-    res.json({ success: true, products });
+    const totalPages = Math.ceil(count / limitInt);
+
+    res.json({ 
+      success: true, 
+      products: rows,
+      pagination: {
+        total: count,
+        page: pageInt,
+        limit: limitInt,
+        totalPages,
+      }
+    });
   } catch (error) {
+    console.error('Get products error:', error);
     res.status(500).json({ error: 'Failed to get products' });
   }
 };
