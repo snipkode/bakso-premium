@@ -80,24 +80,39 @@ export const emitStaffStatusUpdate = (userId, status, department) => {
 
 export const subscribeToOrderUpdates = (callback) => {
   const sock = getSocket();
+  
   if (!sock) {
-    // Socket not ready yet, will retry on next render
-    console.log('⚠️ Socket not initialized yet, waiting for connection...');
-    return () => {};
+    // Socket not ready yet, retry after delay
+    console.log('⏳ Socket not initialized, retrying in 500ms...');
+    const timeout = setTimeout(() => {
+      subscribeToOrderUpdates(callback);
+    }, 500);
+    return () => clearTimeout(timeout);
   }
 
   if (!sock.connected) {
     // Socket exists but not connected, wait for connection
     const connectHandler = () => {
+      console.log('🟢 Socket connected, subscribing to order updates...');
       sock.on('order:updated', callback);
     };
     sock.once('connect', connectHandler);
+    
+    // Also try to subscribe immediately if connection is in progress
+    const timeout = setTimeout(() => {
+      if (sock.connected && !sock.hasListeners('order:updated')) {
+        sock.on('order:updated', callback);
+      }
+    }, 1000);
+    
     return () => {
       sock.off('connect', connectHandler);
       sock.off('order:updated', callback);
+      clearTimeout(timeout);
     };
   }
 
+  console.log('📡 Subscribing to order updates...');
   sock.on('order:updated', callback);
   return () => sock.off('order:updated', callback);
 };

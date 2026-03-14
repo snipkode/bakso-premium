@@ -11,7 +11,7 @@ import { orderAPI } from '@/lib/api';
 import { useAuthStore } from '@/store';
 import { Button, Card, Badge } from '@/components/ui/BaseComponents';
 import { formatRupiah, formatDateTime, getStatusLabel, getStatusColor, cn } from '@/lib/utils';
-import { subscribeToOrderUpdates } from '@/lib/socket';
+import { getSocket, subscribeToOrderUpdates } from '@/lib/socket';
 import { OrderDetailSkeleton } from '@/components/ui/Skeletons.jsx';
 import { FadeIn, SlideUp } from '@/components/ui/Animations';
 
@@ -122,7 +122,19 @@ export default function OrderDetailPage() {
   useEffect(() => {
     loadOrder();
 
+    // Check socket status
+    const sock = getSocket();
+    if (!sock) {
+      console.log('⏳ Socket not initialized yet, order updates will be limited');
+    } else if (!sock.connected) {
+      console.log('⏳ Socket connecting, order updates will be enabled once connected');
+    } else {
+      console.log('🟢 Socket ready, enabling real-time order updates');
+    }
+
+    // Setup real-time updates
     const unsubscribe = subscribeToOrderUpdates((data) => {
+      console.log('📨 Order update received:', data);
       if (data.order_id === id || data.orderId === id) {
         loadOrder();
       }
