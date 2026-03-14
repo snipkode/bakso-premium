@@ -56,14 +56,26 @@ export default function KitchenView() {
 
   const loadOrders = async () => {
     try {
-      const { data } = await orderAPI.getAllOrders({ 
-        status: 'paid,preparing,ready,completed',
-        limit: 50 
+      setLoading(true);
+      console.log('🔄 Loading kitchen orders...');
+      
+      const { data } = await orderAPI.getAllOrders({
+        limit: 100
       });
+      
       const ordersList = data.orders || data.rows || data || [];
-      setOrders(ordersList.filter(o => ['paid', 'preparing', 'ready', 'completed'].includes(o.status)));
+      console.log(`📦 Loaded ${ordersList.length} total orders`);
+      
+      // Filter for kitchen-relevant orders
+      const kitchenOrders = ordersList.filter(o => 
+        ['paid', 'preparing', 'ready', 'completed'].includes(o.status)
+      );
+      
+      console.log(`🍳 Kitchen orders: ${kitchenOrders.length}`);
+      setOrders(kitchenOrders);
     } catch (error) {
       console.error('Failed to load orders:', error);
+      alert('Gagal load orders: ' + (error.response?.data?.error || error.message));
     } finally {
       setLoading(false);
     }
