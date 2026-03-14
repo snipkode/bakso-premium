@@ -90,8 +90,9 @@ export function ImageWithFallback({
   alt,
   className,
   fallbackType = 'bowl',
-  retryLimit = 3,
-  imageTimeout = 10000, // 10 seconds timeout
+  retryLimit = 2,
+  imageTimeout = 3000,
+  priority = false, // Priority loading for above-the-fold images
   ...props
 }) {
   const [imageSrc, setImageSrc] = useState(src);
@@ -139,19 +140,27 @@ export function ImageWithFallback({
       const timer = setTimeout(() => {
         const separator = src.includes('?') ? '&' : '?';
         const newRetryCount = currentRetry + 1;
-        const newSrc = `${src}${separator}retry=${newRetryCount}&t=${Date.now()}`;
+        // Use unique timestamp to prevent caching
+        const newSrc = `${src}${separator}retry=${newRetryCount}&t=${Date.now()}&r=${Math.random()}`;
         console.log('🔄 Retrying with:', newSrc, '(attempt', newRetryCount, ')');
         
-        // Direct update without error state toggle (smoother)
-        setImageSrc(newSrc);
-        setRetryCount(newRetryCount);
-        retryCountRef.current = newRetryCount;
-        // Keep loading state true during retry
+        // Force re-mount by setting empty first
+        setImageSrc('');
+        setLoading(false);
+        
+        // Then set new src after small delay to force re-mount
+        setTimeout(() => {
+          retryCountRef.current = newRetryCount;
+          setRetryCount(newRetryCount);
+          setImageSrc(newSrc);
+          setLoading(true);
+          console.log('📷 New image src set, retry:', newRetryCount);
+        }, 50);
       }, delay);
       
       return () => clearTimeout(timer);
     } else {
-      console.log('❌ All retries exhausted, showing fallback');
+      console.log('❌ All retries exhausted (', retryLimit, '), showing fallback');
       setError(true);
       setLoading(false);
     }
@@ -238,6 +247,8 @@ export function ImageWithFallback({
       className={cn('w-full h-full object-cover animate-fade-in', className)}
       onLoad={handleLoad}
       onError={handleError}
+      loading={priority ? 'eager' : 'lazy'}
+      fetchPriority={priority ? 'high' : 'auto'}
       {...props}
     />
   );

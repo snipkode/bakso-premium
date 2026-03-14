@@ -242,7 +242,7 @@ export default function HomePage() {
             {/* Products Grid */}
             {(activeTab === 'featured' ? featuredProducts : bestSellerProducts).length > 0 ? (
               <div className="grid grid-cols-2 gap-3">
-                {(activeTab === 'featured' ? featuredProducts : bestSellerProducts).map((product) => (
+                {(activeTab === 'featured' ? featuredProducts : bestSellerProducts).map((product, index) => (
                   <Card
                     key={product.id}
                     onClick={() => navigate(`/product/${product.id}`)}
@@ -254,8 +254,9 @@ export default function HomePage() {
                         alt={product.name}
                         className="w-full h-full object-cover"
                         fallbackType={product.category?.name?.toLowerCase().includes('minum') || product.name?.toLowerCase().includes('es ') || product.name?.toLowerCase().includes('jus') ? 'drink' : 'food'}
-                        retryLimit={3}
+                        retryLimit={2}
                         imageTimeout={3000}
+                        priority={index < 6}
                       />
                       {activeTab === 'featured' && (
                         <Badge className="absolute top-2 right-2 text-xs bg-gradient-to-r from-blue-500 to-cyan-500 border-0 shadow-md">⭐</Badge>
