@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../store';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, User, Moon, Bell, HelpCircle, Settings, Shield, Star, ChevronRight, Mail, Phone, Edit2, X, CheckCircle } from 'lucide-react';
+import { LogOut, User, Moon, Bell, HelpCircle, Settings, Shield, Star, ChevronRight, Mail, Phone, Edit2, X, CheckCircle, RefreshCw } from 'lucide-react';
 import { Button, Card, IconButton, Input } from '../components/ui/BaseComponents';
 import { useAppStore } from '../store';
 import { orderAPI, loyaltyAPI, authAPI } from '../lib/api';
@@ -31,17 +31,26 @@ export default function ProfilePage() {
   const fetchStats = async () => {
     try {
       setLoading(true);
+      console.log('🔄 Fetching profile stats...');
+      
       const [ordersRes, loyaltyRes] = await Promise.all([
-        orderAPI.getMyOrders({ limit: 1 }),
-        loyaltyAPI.getLoyaltyPoints().catch(() => ({ data: { points: 0 } })),
+        orderAPI.getMyOrders({ limit: 1, page: 1 }),
+        loyaltyAPI.getLoyaltyPoints().catch((err) => {
+          console.log('⚠️ Loyalty API error, using fallback:', err.message);
+          return { data: { points: 0, total_points: 0 } };
+        }),
       ]);
 
+      console.log('📊 Orders response:', ordersRes.data);
+      console.log('🎁 Loyalty response:', loyaltyRes.data);
+
       setStats({
-        totalOrders: ordersRes.data?.total || 0,
-        loyaltyPoints: loyaltyRes.data?.points || loyaltyRes.data?.loyalty_points || 0,
+        totalOrders: ordersRes.data?.total || ordersRes.data?.count || ordersRes.data?.totalOrders || 0,
+        loyaltyPoints: loyaltyRes.data?.points || loyaltyRes.data?.total_points || loyaltyRes.data?.loyalty_points || 0,
       });
     } catch (error) {
-      console.error('Failed to fetch stats:', error);
+      console.error('❌ Failed to fetch stats:', error.message);
+      setStats({ totalOrders: 0, loyaltyPoints: 0 });
     } finally {
       setLoading(false);
     }
@@ -168,16 +177,34 @@ export default function ProfilePage() {
             {/* Stats */}
             <div className="grid grid-cols-2 gap-3 mt-4">
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <Star className="w-4 h-4 text-white/80" />
-                  <span className="text-xs text-white/80">Total Pesanan</span>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <Star className="w-4 h-4 text-white/80" />
+                    <span className="text-xs text-white/80">Total Pesanan</span>
+                  </div>
+                  <button
+                    onClick={fetchStats}
+                    className="text-white/60 hover:text-white transition-colors"
+                    title="Refresh"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                  </button>
                 </div>
                 <p className="text-2xl font-bold">{loading ? '-' : stats.totalOrders}</p>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <Shield className="w-4 h-4 text-white/80" />
-                  <span className="text-xs text-white/80">Poin Loyalty</span>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-white/80" />
+                    <span className="text-xs text-white/80">Poin Loyalty</span>
+                  </div>
+                  <button
+                    onClick={fetchStats}
+                    className="text-white/60 hover:text-white transition-colors"
+                    title="Refresh"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                  </button>
                 </div>
                 <p className="text-2xl font-bold">{loading ? '-' : stats.loyaltyPoints}</p>
               </div>
