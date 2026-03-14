@@ -43,7 +43,7 @@ exports.getStats = async (req, res) => {
       attributes: [
         'status',
         'total',
-        [Order.sequelize.fn('COUNT', Order.sequelize.col('Order.id')), 'count'],
+        [Order.sequelize.fn('COUNT', Order.sequelize.col('id')), 'count'],
       ],
       group: ['status'],
       raw: true,
@@ -59,7 +59,7 @@ exports.getStats = async (req, res) => {
       raw: true,
     });
 
-    const revenue = completedOrders.reduce((sum, o) => sum + o.total, 0);
+    const revenue = completedOrders.reduce((sum, o) => sum + parseFloat(o.total || 0), 0);
 
     // Get new customers
     const newCustomers = await User.count({
@@ -80,7 +80,7 @@ exports.getStats = async (req, res) => {
       raw: true,
     });
 
-    const productsSold = orderItems[0]?.total || 0;
+    const productsSold = parseInt(orderItems[0]?.total || 0);
 
     // Calculate completion rate
     const totalOrders = await Order.count({
