@@ -21,8 +21,11 @@ export default function LoginPage() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showExistingUserModal, setShowExistingUserModal] = useState(false);
   const [showResetPINModal, setShowResetPINModal] = useState(false);
+  const [showPhoneVerificationModal, setShowPhoneVerificationModal] = useState(false);
   const [existingUserData, setExistingUserData] = useState(null);
   const [redirectTimer, setRedirectTimer] = useState(4);
+  const [verificationPhone, setVerificationPhone] = useState('');
+  const [verificationPhoneError, setVerificationPhoneError] = useState('');
   const [resetEmail, setResetEmail] = useState('');
   const [resetEmailError, setResetEmailError] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
@@ -144,18 +147,35 @@ export default function LoginPage() {
 
     setResetEmailError('');
 
+    // Show phone verification modal for security
+    setShowPhoneVerificationModal(true);
+  };
+
+  const handlePhoneVerificationSubmit = async () => {
+    // Validate phone
+    if (!verificationPhone || !/^08[0-9]{8,}$/.test(verificationPhone)) {
+      setVerificationPhoneError('Nomor HP tidak valid. Gunakan format 08xxxxxxxxxx');
+      return;
+    }
+
+    setVerificationPhoneError('');
+
     try {
       setResetLoading(true);
       console.log('📧 Sending reset PIN request...');
+      console.log('📊 Phone:', verificationPhone);
+      console.log('📧 Email:', resetEmail);
       
       // Call forgot PIN API - requires phone for verification
-      const response = await customerPINAPI.forgotPIN(formData.phone, resetEmail);
+      const response = await customerPINAPI.forgotPIN(verificationPhone, resetEmail);
       console.log('✅ Reset email sent:', response.data);
 
       // Get message from response
       const successMessage = response.data?.message || 'Link reset PIN akan dikirim ke email Anda';
       setResetSuccessMessage(successMessage);
       setResetSent(true);
+      setShowPhoneVerificationModal(false);
+      setVerificationPhone('');
     } catch (error) {
       console.error('❌ Failed to send reset email:', error);
       const errorMsg = error.response?.data?.error || 'Gagal mengirim link reset PIN';
@@ -163,6 +183,12 @@ export default function LoginPage() {
     } finally {
       setResetLoading(false);
     }
+  };
+
+  const handleClosePhoneVerification = () => {
+    setShowPhoneVerificationModal(false);
+    setVerificationPhone('');
+    setVerificationPhoneError('');
   };
 
   const handleCloseResetModal = () => {
@@ -1049,6 +1075,91 @@ export default function LoginPage() {
                   </Button>
                 </>
               )}
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Phone Verification Modal */}
+      {showPhoneVerificationModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden"
+          >
+            {/* Header */}
+            <div className="relative bg-gradient-to-br from-blue-500 to-cyan-500 p-6 text-white">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                  <Phone className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold">Verifikasi Nomor HP</h2>
+                  <p className="text-sm text-white/90">Untuk keamanan akun Anda</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                <p className="text-sm text-blue-800 dark:text-blue-300">
+                  <strong>🔒 Keamanan:</strong> Kami perlu memverifikasi nomor HP Anda untuk mengirim link reset PIN.
+                </p>
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Nomor WhatsApp
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="tel"
+                    value={verificationPhone}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '');
+                      setVerificationPhone(value);
+                      setVerificationPhoneError('');
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handlePhoneVerificationSubmit();
+                      }
+                    }}
+                    placeholder="081234567890"
+                    maxLength={13}
+                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    disabled={resetLoading}
+                  />
+                </div>
+                {verificationPhoneError && (
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-1 ml-3 flex items-center gap-1">
+                    <span>⚠️</span>
+                    <span>{verificationPhoneError}</span>
+                  </p>
+                )}
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="secondary"
+                  onClick={handleClosePhoneVerification}
+                  className="flex-1"
+                  disabled={resetLoading}
+                >
+                  Batal
+                </Button>
+                <Button
+                  onClick={handlePhoneVerificationSubmit}
+                  isLoading={resetLoading}
+                  className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 shadow-lg shadow-blue-500/30"
+                >
+                  {resetLoading ? 'Mengirim...' : 'Verifikasi & Lanjut'}
+                </Button>
+              </div>
             </div>
           </motion.div>
         </div>
