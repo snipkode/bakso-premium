@@ -25,11 +25,24 @@ export default function LoginPage() {
 
   const handleCustomerAuth = async (e) => {
     e.preventDefault();
+    
+    // Validate phone format
+    if (!/^08[0-9]{8,}$/.test(formData.phone)) {
+      alert('Nomor WhatsApp tidak valid. Gunakan format 08xxxxxxxxxx');
+      return;
+    }
+    
     try {
-      await customerAuth(formData.name, formData.phone);
+      const result = await customerAuth(formData.name, formData.phone);
       
-      // Show onboarding for new customers
-      if (!needsPINOnboarding) {
+      // Check if user already exists
+      if (result?.is_existing_user) {
+        // Show welcome back message
+        console.log('Welcome back!', result.user.name);
+      }
+      
+      // Show onboarding for new customers or customers without PIN
+      if (!result?.is_existing_user || !result?.user?.is_pin_set) {
         setShowOnboarding(true);
       } else {
         navigate('/menu');
@@ -288,6 +301,10 @@ export default function LoginPage() {
                     <p className="text-xs text-center text-gray-500 dark:text-gray-400 mt-4">
                       👋 Selamat datang! Anda akan langsung login dengan nomor WhatsApp
                     </p>
+                    
+                    <div className="text-xs text-center text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl border border-blue-200 dark:border-blue-800">
+                      ℹ️ Jika nomor sudah terdaftar, Anda akan login otomatis
+                    </div>
                   </motion.form>
                 ) : (
                   <motion.form

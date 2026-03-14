@@ -20,10 +20,26 @@ exports.customerAuth = async (req, res) => {
       return res.status(400).json({ error: 'Name and phone are required' });
     }
 
+    // Validate phone format (Indonesian phone)
+    if (!/^08[0-9]{8,}$/.test(phone)) {
+      return res.status(400).json({ 
+        error: 'Nomor WhatsApp tidak valid. Gunakan format 08xxxxxxxxxx' 
+      });
+    }
+
     // Find or create user
     let user = await User.findOne({ where: { phone } });
+    let isExistingUser = false;
 
     if (user) {
+      // Check if user has a password (staff account)
+      if (user.password && user.role !== 'customer') {
+        return res.status(400).json({ 
+          error: 'Nomor ini sudah terdaftar sebagai Staff. Silakan login sebagai Staff.',
+          requires_staff_login: true
+        });
+      }
+
       // Update name if changed
       if (user.name !== name) {
         user.name = name;
@@ -31,6 +47,8 @@ exports.customerAuth = async (req, res) => {
       }
       user.last_active = new Date();
       await user.save();
+      
+      isExistingUser = true;
     } else {
       user = await User.create({ name, phone, role: 'customer' });
     }
@@ -39,6 +57,7 @@ exports.customerAuth = async (req, res) => {
 
     res.json({
       success: true,
+      is_existing_user: isExistingUser,
       token,
       user: {
         id: user.id,
@@ -47,6 +66,7 @@ exports.customerAuth = async (req, res) => {
         role: user.role,
         completed_orders: user.completed_orders,
         loyalty_points: user.loyalty_points,
+        is_pin_set: user.is_pin_set,
       },
     });
   } catch (error) {
