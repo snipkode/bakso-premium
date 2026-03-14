@@ -214,7 +214,7 @@ export default function MenuPage() {
                             <ImageWithFallback
                               src={product.image}
                               alt={product.name}
-                              className="group-hover:scale-110 transition-transform duration-500"
+                              className="w-full h-full object-cover"
                               fallbackType={product.category?.name?.toLowerCase().includes('minum') || product.name?.toLowerCase().includes('es ') || product.name?.toLowerCase().includes('jus') ? 'drink' : 'food'}
                               retryLimit={3}
                               imageTimeout={8000}
