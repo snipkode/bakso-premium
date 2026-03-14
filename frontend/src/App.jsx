@@ -15,6 +15,7 @@ import OrderDetailPage from './pages/OrderDetailPage';
 import TrackOrderPage from './pages/TrackOrderPage';
 import ProfilePage from './pages/ProfilePage';
 import LoginPage from './pages/LoginPage';
+import NotificationSettingsPage from './pages/NotificationSettingsPage';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminOrders from './pages/admin/Orders';
 import AdminProducts from './pages/admin/Products';
@@ -120,6 +121,14 @@ function App() {
             element={
               <ProtectedRoute roles={['customer']}>
                 <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute roles={['customer', 'admin', 'kitchen', 'driver']}>
+                <NotificationSettingsPage />
               </ProtectedRoute>
             }
           />

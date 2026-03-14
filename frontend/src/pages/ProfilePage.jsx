@@ -11,9 +11,9 @@ export default function ProfilePage() {
 
   const menuItems = [
     { icon: <User className="w-5 h-5" />, label: 'Edit Profile', onClick: () => {} },
-    { icon: <Bell className="w-5 h-5" />, label: 'Notifikasi', onClick: () => {} },
+    { icon: <Bell className="w-5 h-5" />, label: 'Notifications', onClick: () => navigate('/notifications') },
     { icon: <Moon className="w-5 h-5" />, label: darkMode ? 'Light Mode' : 'Dark Mode', onClick: toggleDarkMode },
-    { icon: <HelpCircle className="w-5 h-5" />, label: 'Bantuan', onClick: () => {} },
+    { icon: <HelpCircle className="w-5 h-5" />, label: 'Help & Support', onClick: () => {} },
   ];
 
   return (
