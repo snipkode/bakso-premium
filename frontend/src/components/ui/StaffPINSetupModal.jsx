@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { KeyRound, Eye, EyeOff, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Button, Input } from '@/components/ui/BaseComponents';
