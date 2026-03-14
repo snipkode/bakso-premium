@@ -197,18 +197,111 @@ exports.getProfile = async (req, res) => {
 // Update profile
 exports.updateProfile = async (req, res) => {
   try {
-    const { name, email } = req.body;
+    const { name, email, password } = req.body;
 
     const user = await User.findByPk(req.user.id);
 
     if (name) user.name = name;
     if (email) user.email = email;
+    
+    // Hash password if provided
+    if (password) {
+      const bcrypt = require('bcryptjs');
+      user.password = await bcrypt.hash(password, 10);
+    }
 
     await user.save();
 
-    res.json({ success: true, user });
+    res.json({ 
+      success: true, 
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+      }
+    });
   } catch (error) {
+    console.error('Update profile error:', error);
     res.status(500).json({ error: 'Failed to update profile' });
+  }
+};
+
+// Update user password (for staff 2FA setup)
+exports.updatePassword = async (req, res) => {
+  try {
+    const { password } = req.body;
+    const userId = req.user.id;
+
+    if (!password || password.length < 6) {
+      return res.status(400).json({ 
+        error: 'Password minimal 6 karakter' 
+      });
+    }
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Hash password
+    const bcrypt = require('bcryptjs');
+    user.password = await bcrypt.hash(password, 10);
+    await user.save();
+
+    res.json({ 
+      success: true, 
+      message: 'Password updated successfully',
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+      }
+    });
+  } catch (error) {
+    console.error('Update password error:', error);
+    res.status(500).json({ error: 'Failed to update password' });
+  }
+};
+
+// Admin update user password
+exports.adminUpdateUserPassword = async (req, res) => {
+  try {
+    const { userId, password } = req.body;
+
+    if (!password || password.length < 6) {
+      return res.status(400).json({ 
+        error: 'Password minimal 6 karakter' 
+      });
+    }
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Hash password
+    const bcrypt = require('bcryptjs');
+    user.password = await bcrypt.hash(password, 10);
+    await user.save();
+
+    res.json({ 
+      success: true, 
+      message: 'User password updated successfully',
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+      }
+    });
+  } catch (error) {
+    console.error('Admin update password error:', error);
+    res.status(500).json({ error: 'Failed to update user password' });
   }
 };
 

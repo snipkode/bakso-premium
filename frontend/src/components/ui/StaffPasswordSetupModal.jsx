@@ -59,14 +59,27 @@ export function StaffPasswordSetupModal({ isOpen, onClose, onComplete, isBypassa
     try {
       setIsLoading(true);
       
-      // Update password
-      await authAPI.updateProfile({ password });
+      // Use dedicated password update endpoint
+      const response = await fetch('/api/password/update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({ password }),
+      });
       
-      console.log('✅ Password updated successfully');
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Gagal mengatur password');
+      }
+      
+      console.log('✅ Password updated successfully:', data);
       onComplete();
     } catch (error) {
       console.error('❌ Failed to set password:', error);
-      setError(error.response?.data?.error || 'Gagal mengatur password');
+      setError(error.message || 'Gagal mengatur password');
     } finally {
       setIsLoading(false);
     }
