@@ -175,6 +175,8 @@ exports.createProduct = async (req, res) => {
       calories,
       spicy_level,
       customizations,
+      stock,
+      min_stock,
     } = req.body;
 
     const product = await Product.create({
@@ -190,10 +192,13 @@ exports.createProduct = async (req, res) => {
       calories,
       spicy_level: spicy_level || 0,
       customizations: customizations || [],
+      stock: stock || 100,
+      min_stock: min_stock || 10,
     });
 
     res.json({ success: true, product });
   } catch (error) {
+    console.error('Create product error:', error);
     res.status(500).json({ error: 'Failed to create product' });
   }
 };
@@ -307,6 +312,8 @@ exports.updateProductStock = async (req, res) => {
 // Get low stock products (admin only)
 exports.getLowStockProducts = async (req, res) => {
   try {
+    console.log('🔍 Getting low stock products...');
+    
     const products = await Product.findAll({
       where: {
         is_available: true,
@@ -316,14 +323,25 @@ exports.getLowStockProducts = async (req, res) => {
         as: 'category',
       }],
       order: [['stock', 'ASC']],
+      raw: false, // Need instances for filtering
     });
 
+    console.log(`Found ${products.length} products`);
+    
     // Filter products with stock <= min_stock
-    const lowStockProducts = products.filter(p => p.stock <= p.min_stock);
+    const lowStockProducts = products.filter(p => {
+      const isLow = p.stock <= p.min_stock;
+      if (isLow) {
+        console.log(`  Low stock: ${p.name} (stock: ${p.stock}, min: ${p.min_stock})`);
+      }
+      return isLow;
+    });
 
+    console.log(`Found ${lowStockProducts.length} low stock products`);
     res.json({ success: true, products: lowStockProducts });
   } catch (error) {
-    console.error('Get low stock products error:', error);
-    res.status(500).json({ error: 'Failed to get low stock products' });
+    console.error('❌ Get low stock products error:', error.message);
+    console.error('Stack:', error.stack);
+    res.status(500).json({ error: 'Failed to get low stock products', details: error.message });
   }
 };

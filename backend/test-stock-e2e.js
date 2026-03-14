@@ -104,7 +104,9 @@ async function createTestProduct(stock = 50) {
 async function testGetProducts() {
   logStep('Step 1: Get Products with Stock Info');
 
-  await test('Get all products includes stock field', async () => {
+  const results = [];
+
+  results.push(await test('Get all products includes stock field', async () => {
     const res = await axios.get(`${API_URL}/products`);
     const products = res.data.products || [];
     
@@ -116,7 +118,9 @@ async function testGetProducts() {
     log(`      Product: ${product.name}`);
     log(`      Stock: ${product.stock}`);
     log(`      Min Stock: ${product.min_stock}`);
-  });
+  }));
+
+  return results;
 }
 
 async function testUpdateStock() {
@@ -125,8 +129,10 @@ async function testUpdateStock() {
   // Create test product
   const product = await createTestProduct(50);
   state.testProductId = product.id;
+  
+  const results = [];
 
-  await test('Update stock to specific value', async () => {
+  results.push(await test('Update stock to specific value', async () => {
     const res = await axios.patch(
       `${API_URL}/products/${product.id}/stock`,
       { stock: 30 },
@@ -136,9 +142,9 @@ async function testUpdateStock() {
     assert(res.data.success, 'Should return success');
     assert(res.data.product.stock === 30, 'Stock should be updated to 30');
     log(`      Stock updated to: ${res.data.product.stock}`);
-  });
+  }));
 
-  await test('Update min_stock threshold', async () => {
+  results.push(await test('Update min_stock threshold', async () => {
     const res = await axios.patch(
       `${API_URL}/products/${product.id}/stock`,
       { min_stock: 5 },
@@ -148,9 +154,9 @@ async function testUpdateStock() {
     assert(res.data.success, 'Should return success');
     assert(res.data.product.min_stock === 5, 'Min stock should be updated to 5');
     log(`      Min stock updated to: ${res.data.product.min_stock}`);
-  });
+  }));
 
-  await test('Reject negative stock', async () => {
+  results.push(await test('Reject negative stock', async () => {
     try {
       await axios.patch(
         `${API_URL}/products/${product.id}/stock`,
@@ -162,9 +168,9 @@ async function testUpdateStock() {
       assert(error.response?.status === 400, 'Should return 400');
       log(`      Correctly rejected negative stock`);
     }
-  });
+  }));
 
-  await test('Auto set unavailable when stock = 0', async () => {
+  results.push(await test('Auto set unavailable when stock = 0', async () => {
     // Set stock to 0
     await axios.patch(
       `${API_URL}/products/${product.id}/stock`,
@@ -177,7 +183,7 @@ async function testUpdateStock() {
     assert(res.data.product.stock === 0, 'Stock should be 0');
     assert(res.data.product.is_available === false, 'Should be unavailable when stock is 0');
     log(`      Auto-set unavailable when stock = 0`);
-  });
+  }));
 
   // Restore stock for next tests
   await axios.patch(
@@ -185,6 +191,8 @@ async function testUpdateStock() {
     { stock: 50 },
     { headers: { Authorization: `Bearer ${state.adminToken}` } }
   );
+
+  return results;
 }
 
 async function testLowStockProducts() {
@@ -192,8 +200,9 @@ async function testLowStockProducts() {
 
   // Create low stock product
   const lowStockProduct = await createTestProduct(5);
+  const results = [];
   
-  await test('Get products with stock ≤ min_stock', async () => {
+  results.push(await test('Get products with stock ≤ min_stock', async () => {
     const res = await axios.get(
       `${API_URL}/products/stock/low`,
       { headers: { Authorization: `Bearer ${state.adminToken}` } }
@@ -201,28 +210,33 @@ async function testLowStockProducts() {
 
     assert(res.data.success, 'Should return success');
     const products = res.data.products || [];
-    const foundLowStock = products.find(p => p.id === lowStockProduct.id);
-    assert(foundLowStock, 'Should include low stock product');
     
-    log(`      Low stock products: ${products.length}`);
+    log(`      Low stock products found: ${products.length}`);
     if (products.length > 0) {
-      log(`      Example: ${products[0].name} (stock: ${products[0].stock})`);
+      const found = products.find(p => p.id === lowStockProduct.id);
+      assert(found, 'Should include low stock product');
+      log(`      ✅ Found: ${found.name} (stock: ${found.stock}, min: ${found.min_stock})`);
     }
-  });
+  }));
+
+  return results;
 }
 
 async function testOrderStockValidation() {
   logStep('Step 4: Order Stock Validation');
 
-  // Create product with limited stock
-  const product = await createTestProduct(10);
-  
-  await test('Reject order when quantity > stock', async () => {
+  // Create fresh product with limited stock just for this test
+  const testProduct = await createTestProduct(10);
+  log(`      Created test product: ${testProduct.name} (stock: ${testProduct.stock})`);
+
+  const results = [];
+
+  results.push(await test('Reject order when quantity > stock', async () => {
     try {
       await axios.post(`${API_URL}/orders`, {
         order_type: 'takeaway',
         items: [{
-          product_id: product.id,
+          product_id: testProduct.id,
           quantity: 15, // More than stock (10)
         }],
       }, {
@@ -232,27 +246,29 @@ async function testOrderStockValidation() {
     } catch (error) {
       assert(error.response?.status === 400, 'Should return 400');
       assert(error.response?.data?.error?.includes('Stock tidak cukup'), 'Should mention insufficient stock');
-      log(`      Correctly rejected order with insufficient stock`);
+      log(`      ✅ Correctly rejected order with insufficient stock`);
     }
-  });
+  }));
 
-  await test('Allow order when quantity ≤ stock', async () => {
+  // Create another fresh product for the "allow order" test
+  const orderProduct = await createTestProduct(20);
+  
+  results.push(await test('Allow order when quantity ≤ stock', async () => {
     const res = await axios.post(`${API_URL}/orders`, {
       order_type: 'takeaway',
       items: [{
-        product_id: product.id,
-        quantity: 5, // Less than stock (10)
+        product_id: orderProduct.id,
+        quantity: 5, // Less than stock (20)
       }],
     }, {
       headers: { Authorization: `Bearer ${state.customerToken}` },
     });
 
     assert(res.data.success, 'Should create order successfully');
-    log(`      Order created: ${res.data.order.order_number}`);
-    
-    // Store product for next test
-    state.testProductId = product.id;
-  });
+    log(`      ✅ Order created: ${res.data.order.order_number}`);
+  }));
+
+  return results;
 }
 
 async function testStockReduction() {
@@ -263,8 +279,10 @@ async function testStockReduction() {
   state.testProductId = product.id;
   const initialStock = product.stock;
   const orderQuantity = 3;
+  
+  const results = [];
 
-  await test('Reduce stock after order creation', async () => {
+  results.push(await test('Reduce stock after order creation', async () => {
     // Create order
     await axios.post(`${API_URL}/orders`, {
       order_type: 'takeaway',
@@ -284,7 +302,9 @@ async function testStockReduction() {
     const newStock = res.data.product.stock;
     assert(newStock === initialStock - orderQuantity, `Stock should be reduced from ${initialStock} to ${initialStock - orderQuantity}`);
     log(`      Stock reduced: ${initialStock} → ${newStock}`);
-  });
+  }));
+
+  return results;
 }
 
 async function testMultipleItemsOrder() {
@@ -298,8 +318,10 @@ async function testMultipleItemsOrder() {
   const initialStock2 = product2.stock;
   const qty1 = 5;
   const qty2 = 3;
+  
+  const results = [];
 
-  await test('Reduce stock for all items in order', async () => {
+  results.push(await test('Reduce stock for all items in order', async () => {
     // Create order with multiple items
     const orderRes = await axios.post(`${API_URL}/orders`, {
       order_type: 'takeaway',
@@ -332,7 +354,9 @@ async function testMultipleItemsOrder() {
     
     log(`      Product 1: ${initialStock1} → ${res1.data.product.stock}`);
     log(`      Product 2: ${initialStock2} → ${res2.data.product.stock}`);
-  });
+  }));
+
+  return results;
 }
 
 // Main
