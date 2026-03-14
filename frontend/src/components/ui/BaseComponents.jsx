@@ -142,18 +142,11 @@ export function ImageWithFallback({
         const newSrc = `${src}${separator}retry=${newRetryCount}&t=${Date.now()}`;
         console.log('🔄 Retrying with:', newSrc, '(attempt', newRetryCount, ')');
         
-        // Force remount by setting error state first
-        setError(true);
-        setLoading(false);
-        
-        // Then trigger new load
-        setTimeout(() => {
-          setImageSrc(newSrc);
-          setRetryCount(newRetryCount);
-          retryCountRef.current = newRetryCount;
-          setLoading(true);
-          setError(false);
-        }, 50);
+        // Direct update without error state toggle (smoother)
+        setImageSrc(newSrc);
+        setRetryCount(newRetryCount);
+        retryCountRef.current = newRetryCount;
+        // Keep loading state true during retry
       }, delay);
       
       return () => clearTimeout(timer);
@@ -242,7 +235,7 @@ export function ImageWithFallback({
       key={imageSrc}
       src={imageSrc}
       alt={alt}
-      className={cn('w-full h-full object-cover', className)}
+      className={cn('w-full h-full object-cover animate-fade-in', className)}
       onLoad={handleLoad}
       onError={handleError}
       {...props}

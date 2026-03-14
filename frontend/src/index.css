@@ -45,6 +45,20 @@
     animation: shimmer 1.5s infinite linear;
   }
 
+  /* Fade in animation for images */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
   /* iOS-style button */
   .btn-ios {
     @apply px-6 py-3 rounded-full font-medium text-base
