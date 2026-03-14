@@ -286,7 +286,7 @@ export default function AdminProducts() {
   };
 
   const filteredProducts = products;
-  const totalPages = Math.ceil(totalCount / pageSize);
+  const totalPages = Math.ceil(totalCount / pageSize) || 1;
 
   const getStockStatus = (product) => {
     if (product.stock === 0) return { label: 'Out of Stock', color: 'bg-red-500', textColor: 'text-red-600' };
@@ -491,7 +491,7 @@ export default function AdminProducts() {
       </div>
 
       {/* Empty State */}
-      {filteredProducts.length === 0 && (
+      {filteredProducts.length === 0 && !loading && (
         <Card className="p-12 text-center">
           <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
             <Package className="w-8 h-8 text-gray-400" />
@@ -500,9 +500,9 @@ export default function AdminProducts() {
         </Card>
       )}
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between py-3">
+      {/* Pagination - Always show when there are products */}
+      {!loading && filteredProducts.length > 0 && totalPages > 0 && (
+        <div className="flex items-center justify-between py-4 border-t border-gray-200 dark:border-gray-800">
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-500 dark:text-gray-400">Show:</span>
             <select
@@ -514,9 +514,9 @@ export default function AdminProducts() {
               <option value={24}>24</option>
               <option value={48}>48</option>
             </select>
-          </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            {totalCount} products
+            <span className="text-xs text-gray-500 dark:text-gray-400 ml-2 hidden sm:inline">
+              {totalCount} products
+            </span>
           </div>
           <Pagination
             currentPage={currentPage}
