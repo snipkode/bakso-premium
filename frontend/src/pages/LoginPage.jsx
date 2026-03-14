@@ -9,13 +9,6 @@ import { BaksoIconAnimation } from '@/components/ui/BaksoIconAnimation';
 import { PINOnboardingModal } from '@/components/ui/PINOnboardingModal';
 import { customerPINAPI } from '@/lib/api';
 
-// Role greetings for staff redirect
-const roleGreetings = {
-  admin: { title: 'Administrator', icon: '👨‍💼', color: 'from-purple-500 to-pink-500' },
-  kitchen: { title: 'Kitchen Staff', icon: '👨‍🍳', color: 'from-blue-500 to-cyan-500' },
-  driver: { title: 'Driver', icon: '🛵', color: 'from-green-500 to-emerald-500' },
-};
-
 export default function LoginPage() {
   const navigate = useNavigate();
   const { customerAuth, staffLogin, customerPINLogin, isLoading, error, needsPINOnboarding, setNeedsPINOnboarding } = useAuthStore();
@@ -24,25 +17,11 @@ export default function LoginPage() {
   const [customerSubTab, setCustomerSubTab] = useState('new');
   const [showPassword, setShowPassword] = useState(false);
   const [showPIN, setShowPIN] = useState(false);
-  const [staffLoginType, setStaffLoginType] = useState('password'); // 'password' or 'pin'
-  const [showExpiredPINModal, setShowExpiredPINModal] = useState(false);
-  const [expiredPINUserData, setExpiredPINUserData] = useState(null);
+  const [staffLoginType, setStaffLoginType] = useState('password');
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showExistingUserModal, setShowExistingUserModal] = useState(false);
-  const [showResetPINModal, setShowResetPINModal] = useState(false);
-  const [showPhoneVerificationModal, setShowPhoneVerificationModal] = useState(false);
-  const [showStaffRedirectModal, setShowStaffRedirectModal] = useState(false);
-  const [staffRole, setStaffRole] = useState('admin');
-  const [staffRedirectTimer, setStaffRedirectTimer] = useState(5);
-  const [verificationPhone, setVerificationPhone] = useState('');
-  const [verificationPhoneError, setVerificationPhoneError] = useState('');
   const [existingUserData, setExistingUserData] = useState(null);
   const [redirectTimer, setRedirectTimer] = useState(4);
-  const [resetEmail, setResetEmail] = useState('');
-  const [resetEmailError, setResetEmailError] = useState('');
-  const [resetLoading, setResetLoading] = useState(false);
-  const [resetSent, setResetSent] = useState(false);
-  const [resetSuccessMessage, setResetSuccessMessage] = useState('');
   const [formErrors, setFormErrors] = useState({
     name: '',
     phone: '',
@@ -151,65 +130,6 @@ export default function LoginPage() {
     return isValid;
   };
 
-  const handleResetPIN = async () => {
-    if (!resetEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(resetEmail)) {
-      setResetEmailError('Email tidak valid');
-      return;
-    }
-
-    setResetEmailError('');
-
-    // Show phone verification modal instead of prompt
-    setShowPhoneVerificationModal(true);
-  };
-
-  const handlePhoneVerificationSubmit = async () => {
-    // Validate phone
-    if (!verificationPhone || !/^08[0-9]{8,}$/.test(verificationPhone)) {
-      setVerificationPhoneError('Nomor HP tidak valid. Gunakan format 08xxxxxxxxxx');
-      return;
-    }
-
-    setVerificationPhoneError('');
-
-    try {
-      setResetLoading(true);
-      console.log('📧 Sending reset PIN email to:', resetEmail);
-      console.log('📊 Phone:', verificationPhone);
-      
-      const response = await customerPINAPI.forgotPIN(verificationPhone, resetEmail);
-      console.log('✅ Reset email sent:', response.data);
-      
-      // Get message from response
-      const successMessage = response.data?.message || 'Permintaan reset PIN telah dikirim';
-      
-      setResetSent(true);
-      setShowPhoneVerificationModal(false);
-      setVerificationPhone('');
-      
-      // Store message for display
-      setResetSuccessMessage(successMessage);
-    } catch (error) {
-      console.error('❌ Failed to send reset email:', error);
-      const errorMsg = error.response?.data?.error || error.message || 'Gagal mengirim link reset PIN';
-      alert('⚠️ ' + errorMsg);
-    } finally {
-      setResetLoading(false);
-    }
-  };
-
-  const handleClosePhoneVerification = () => {
-    setShowPhoneVerificationModal(false);
-    setVerificationPhone('');
-    setVerificationPhoneError('');
-  };
-
-  const handleCloseResetModal = () => {
-    setShowResetPINModal(false);
-    setResetEmail('');
-    setResetSent(false);
-  };
-
   const handleCustomerAuth = async (e) => {
     e.preventDefault();
     
@@ -223,7 +143,24 @@ export default function LoginPage() {
       
       console.log('📊 Login result:', result);
       
-      // New user - proceed with onboarding
+      // Check if user is actually staff (should use staff login instead)
+      if (result?.user?.role && result.user.role !== 'customer') {
+        alert(
+          '⚠️ Akun Staff Terdeteksi!\n\n' +
+          `Akun ini terdaftar sebagai ${result.user.role}.\n\n` +
+          'Silakan gunakan form login Staff untuk masuk.'
+        );
+        
+        // Redirect to staff login
+        setLoginType('staff');
+        setFormData({
+          ...formData,
+          phone: result.user.phone
+        });
+        return;
+      }
+      
+      // New customer - proceed with onboarding
       const shouldShowOnboarding = !result?.user?.is_pin_set;
       
       if (shouldShowOnboarding) {
@@ -233,34 +170,6 @@ export default function LoginPage() {
       }
     } catch (error) {
       console.error('❌ Customer auth failed:', error);
-      
-      // Handle staff member trying to login as customer (400 with requires_staff_login)
-      if (error.response?.status === 400 && error.response?.data?.requires_staff_login) {
-        const userRole = error.response.data.role || 'admin';
-        
-        // Set staff role for modal display
-        setStaffRole(userRole);
-        
-        // Show staff redirect modal
-        setShowStaffRedirectModal(true);
-        setStaffRedirectTimer(5);
-        
-        // Start countdown timer
-        const timer = setInterval(() => {
-          setStaffRedirectTimer(prev => {
-            if (prev <= 1) {
-              clearInterval(timer);
-              // Auto redirect to staff login
-              setLoginType('staff');
-              setShowStaffRedirectModal(false);
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
-        
-        return;
-      }
       
       // Handle existing user (409 Conflict)
       if (error.response?.status === 409 && error.response?.data?.requires_pin_login) {
@@ -458,34 +367,6 @@ export default function LoginPage() {
       } catch (error) {
         console.error('Staff login failed:', error);
       }
-    }
-  };
-
-  const handleExpiredPINConfirm = async () => {
-    // Validate password confirmation
-    if (!formData.password) {
-      alert('⚠️ Password harus diisi untuk konfirmasi');
-      return;
-    }
-
-    try {
-      // Verify password first
-      const result = await staffLogin(formData.phone, formData.password);
-      
-      // Password verified - proceed to PIN setup
-      setShowExpiredPINModal(false);
-      setCustomerSubTab('new');
-      setFormData({
-        ...formData,
-        name: expiredPINUserData?.name || '',
-        phone: expiredPINUserData?.phone || '',
-        password: '',
-        pin: ''
-      });
-      setShowOnboarding(true);
-    } catch (error) {
-      console.error('❌ Password confirmation failed:', error);
-      alert('⚠️ Password salah. Silakan coba lagi.');
     }
   };
 
@@ -1125,338 +1006,6 @@ export default function LoginPage() {
                   </Button>
                 </>
               )}
-            </div>
-          </motion.div>
-        </div>
-      )}
-
-      {/* Reset PIN Modal */}
-      {showResetPINModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden"
-          >
-            {/* Header */}
-            <div className="relative bg-gradient-to-br from-orange-500 to-amber-500 p-6 text-white">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                  <KeyRound className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold">Reset PIN</h2>
-                  <p className="text-sm text-white/90">Kirim link reset via email</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="p-6">
-              {!resetSent ? (
-                <>
-                  <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
-                    <p className="text-sm text-blue-800 dark:text-blue-300">
-                      <strong>ℹ️ Info:</strong> Link reset PIN akan dikirim ke email Anda. Link ini hanya berlaku selama 1 jam.
-                    </p>
-                  </div>
-
-                  <div className="mb-6">
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                      Email
-                    </label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <input
-                        type="email"
-                        value={resetEmail}
-                        onChange={(e) => {
-                          setResetEmail(e.target.value);
-                          setResetEmailError('');
-                        }}
-                        placeholder="nama@email.com"
-                        className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                        disabled={resetLoading}
-                      />
-                    </div>
-                    {resetEmailError && (
-                      <p className="text-xs text-red-600 dark:text-red-400 mt-1 ml-3 flex items-center gap-1">
-                        <span>⚠️</span>
-                        <span>{resetEmailError}</span>
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex gap-3">
-                    <Button
-                      variant="secondary"
-                      onClick={handleCloseResetModal}
-                      className="flex-1"
-                      disabled={resetLoading}
-                    >
-                      Batal
-                    </Button>
-                    <Button
-                      onClick={handleResetPIN}
-                      isLoading={resetLoading}
-                      className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg shadow-orange-500/30"
-                    >
-                      {resetLoading ? 'Mengirim...' : 'Kirim Link Reset'}
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <div className="text-center py-8">
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4"
-                  >
-                    <CheckCircle className="w-10 h-10 text-white" />
-                  </motion.div>
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                    Permintaan Reset Dikirim!
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-6">
-                    {resetSuccessMessage}<br />
-                    <strong className="text-gray-900 dark:text-white">{resetEmail}</strong>
-                  </p>
-                  <Button
-                    onClick={handleCloseResetModal}
-                    className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 shadow-lg"
-                  >
-                    Tutup
-                  </Button>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        </div>
-      )}
-
-      {/* Phone Verification Modal */}
-      {showPhoneVerificationModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden"
-          >
-            {/* Header */}
-            <div className="relative bg-gradient-to-br from-blue-500 to-cyan-500 p-6 text-white">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                  <Phone className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold">Verifikasi Nomor HP</h2>
-                  <p className="text-sm text-white/90">Untuk keamanan akun Anda</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="p-6">
-              <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
-                <p className="text-sm text-blue-800 dark:text-blue-300">
-                  <strong>🔒 Keamanan:</strong> Kami perlu memverifikasi nomor HP Anda untuk mengirim link reset PIN.
-                </p>
-              </div>
-
-              <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Nomor WhatsApp
-                </label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="tel"
-                    value={verificationPhone}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, '');
-                      setVerificationPhone(value);
-                      setVerificationPhoneError('');
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handlePhoneVerificationSubmit();
-                      }
-                    }}
-                    placeholder="081234567890"
-                    maxLength={13}
-                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    disabled={resetLoading}
-                  />
-                </div>
-                {verificationPhoneError && (
-                  <p className="text-xs text-red-600 dark:text-red-400 mt-1 ml-3 flex items-center gap-1">
-                    <span>⚠️</span>
-                    <span>{verificationPhoneError}</span>
-                  </p>
-                )}
-              </div>
-
-              <div className="flex gap-3">
-                <Button
-                  variant="secondary"
-                  onClick={handleClosePhoneVerification}
-                  className="flex-1"
-                  disabled={resetLoading}
-                >
-                  Batal
-                </Button>
-                <Button
-                  onClick={handlePhoneVerificationSubmit}
-                  isLoading={resetLoading}
-                  className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 shadow-lg shadow-blue-500/30"
-                >
-                  {resetLoading ? 'Mengirim...' : 'Verifikasi & Lanjut'}
-                </Button>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
-
-      {/* Staff Redirect Modal */}
-      {showStaffRedirectModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden"
-          >
-            {/* Header */}
-            <div className={`relative bg-gradient-to-br ${roleGreetings[staffRole]?.color || 'from-purple-500 to-pink-500'} p-6 text-white`}>
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-3xl">
-                  {roleGreetings[staffRole]?.icon || '👤'}
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold">Selamat Datang, {roleGreetings[staffRole]?.title || 'Staff'}! 👋</h2>
-                  <p className="text-sm text-white/90">Anda login sebagai {roleGreetings[staffRole]?.title || 'Staff'}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="p-6">
-              <div className="mb-6 text-center">
-                <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-4xl">🔑</span>
-                </div>
-                <p className="text-gray-700 dark:text-gray-300 mb-2">
-                  Akun ini terdaftar sebagai <strong className="text-orange-600 dark:text-orange-400">{roleGreetings[staffRole]?.title || 'Staff'}</strong>
-                </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Silakan gunakan form login Staff untuk masuk
-                </p>
-              </div>
-
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-4">
-                <p className="text-sm text-blue-800 dark:text-blue-300 text-center font-semibold">
-                  ⏱️ Redirect otomatis ke login Staff dalam <span className="text-2xl text-blue-600 dark:text-blue-400 mx-1">{staffRedirectTimer}</span> detik
-                </p>
-              </div>
-
-              <Button
-                onClick={() => {
-                  setLoginType('staff');
-                  setShowStaffRedirectModal(false);
-                }}
-                className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 shadow-lg shadow-blue-500/30"
-              >
-                Login Staff Sekarang
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      )}
-
-      {/* Expired PIN Confirmation Modal */}
-      {showExpiredPINModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden"
-          >
-            {/* Header */}
-            <div className="relative bg-gradient-to-br from-amber-500 to-orange-500 p-6 text-white">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-3xl">
-                  🔄
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold">PIN Kadaluarsa</h2>
-                  <p className="text-sm text-white/90">Konfirmasi untuk reset PIN</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="p-6">
-              <div className="mb-6">
-                <div className="w-20 h-20 bg-gradient-to-br from-amber-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Shield className="w-10 h-10 text-white" />
-                </div>
-                <p className="text-gray-700 dark:text-gray-300 text-center mb-4">
-                  <strong className="text-amber-600 dark:text-amber-400">{expiredPINUserData?.name}</strong><br/>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">{expiredPINUserData?.role}</span>
-                </p>
-                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 mb-4">
-                  <p className="text-sm text-amber-800 dark:text-amber-300 text-center">
-                    🔒 PIN Anda sudah kadaluarsa (reset 1 bulan).<br/><br/>
-                    <strong>Untuk keamanan, silakan konfirmasi dengan password untuk mengatur PIN baru.</strong>
-                  </p>
-                </div>
-              </div>
-
-              <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Password Konfirmasi
-                </label>
-                <div className="relative">
-                  <Input
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder="Masukkan password Anda"
-                    className="pl-4 pr-11"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setShowExpiredPINModal(false);
-                    setExpiredPINUserData(null);
-                    setFormData({ ...formData, password: '' });
-                  }}
-                  className="flex-1"
-                >
-                  Batal
-                </Button>
-                <Button
-                  onClick={handleExpiredPINConfirm}
-                  className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg shadow-amber-500/30"
-                >
-                  Konfirmasi & Reset PIN
-                </Button>
-              </div>
             </div>
           </motion.div>
         </div>
