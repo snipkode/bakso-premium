@@ -22,6 +22,7 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 const queueRoutes = require('./routes/queueRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const userRoutes = require('./routes/userRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -61,6 +62,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/queue', queueRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

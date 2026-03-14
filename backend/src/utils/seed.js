@@ -12,25 +12,25 @@ const seedDatabase = async () => {
 
     // Create admin
     const adminHash = await bcrypt.hash('admin123', 10);
-    await sequelize.query(`INSERT INTO user (id, name, phone, password, role, status, completed_orders, loyalty_points, createdAt, updatedAt) 
+    await sequelize.query(`INSERT INTO user (id, name, phone, password, role, status, completed_orders, loyalty_points, createdAt, updatedAt)
       VALUES (UUID(), 'Admin', '081234567890', '${adminHash}', 'admin', 'active', 0, 0, NOW(), NOW())`);
     console.log('✅ Admin created (phone: 081234567890, password: admin123)');
 
     // Create kitchen staff
     const kitchenHash = await bcrypt.hash('kitchen123', 10);
-    await sequelize.query(`INSERT INTO user (id, name, phone, password, role, status, completed_orders, loyalty_points, createdAt, updatedAt) 
+    await sequelize.query(`INSERT INTO user (id, name, phone, password, role, status, completed_orders, loyalty_points, createdAt, updatedAt)
       VALUES (UUID(), 'Kitchen Staff', '081234567891', '${kitchenHash}', 'kitchen', 'active', 0, 0, NOW(), NOW())`);
     console.log('✅ Kitchen staff created');
 
     // Create driver
     const driverHash = await bcrypt.hash('driver123', 10);
-    await sequelize.query(`INSERT INTO user (id, name, phone, password, role, status, completed_orders, loyalty_points, createdAt, updatedAt) 
+    await sequelize.query(`INSERT INTO user (id, name, phone, password, role, status, completed_orders, loyalty_points, createdAt, updatedAt)
       VALUES (UUID(), 'Driver', '081234567892', '${driverHash}', 'driver', 'active', 0, 0, NOW(), NOW())`);
     console.log('✅ Driver created');
 
     // Create demo customers
     const customerHash = await bcrypt.hash('customer123', 10);
-    await sequelize.query(`INSERT INTO user (id, name, phone, password, role, status, completed_orders, loyalty_points, createdAt, updatedAt) VALUES 
+    await sequelize.query(`INSERT INTO user (id, name, phone, password, role, status, completed_orders, loyalty_points, createdAt, updatedAt) VALUES
       (UUID(), 'Budi Santoso', '081234567893', '${customerHash}', 'customer', 'active', 5, 500, NOW(), NOW()),
       (UUID(), 'Siti Nurhaliza', '081234567894', '${customerHash}', 'customer', 'active', 3, 300, NOW(), NOW()),
       (UUID(), 'Ahmad Rizki', '081234567895', '${customerHash}', 'customer', 'active', 10, 1000, NOW(), NOW()),
@@ -67,7 +67,7 @@ const seedDatabase = async () => {
     ]);
     console.log('✅ Categories created');
 
-    // Create products
+    // Create products with stock and min_stock
     const products = await Product.bulkCreate([
       // Bakso Utama
       {
@@ -75,10 +75,12 @@ const seedDatabase = async () => {
         name: 'Bakso Beranak',
         description: 'Bakso besar isi bakso kecil + telur puyuh',
         price: 35000,
-        image: '/images/bakso-beranak.jpg',
+        image: '/uploads/products/bakso-beranak.jpg',
         is_featured: true,
         preparation_time: 10,
         spicy_level: 0,
+        stock: 50,
+        min_stock: 10,
         customizations: [
           { name: 'Level Pedas', options: ['Tidak Pedas', 'Sedang', 'Pedas', 'Extra Pedas'], price: 0 },
           { name: 'Tambahan Mie', options: ['Ya'], price: 5000 },
@@ -89,30 +91,39 @@ const seedDatabase = async () => {
         name: 'Bakso Komplit',
         description: 'Bakso halus + bakso urat + tahu + siomay',
         price: 30000,
-        image: '/images/bakso-komplit.jpg',
+        image: '/uploads/products/bakso-komplit.jpg',
         is_featured: true,
         preparation_time: 8,
         spicy_level: 0,
+        stock: 60,
+        min_stock: 15,
+        customizations: [
+          { name: 'Level Pedas', options: ['Tidak Pedas', 'Sedang', 'Pedas'], price: 0 },
+        ],
       },
       {
         category_id: categories[0].id,
         name: 'Bakso Urat',
         description: 'Bakso dengan tekstur urat yang kenyal',
         price: 25000,
-        image: '/images/bakso-urat.jpg',
+        image: '/uploads/products/bakso-urat.jpg',
         is_featured: true,
         preparation_time: 8,
         spicy_level: 0,
+        stock: 80,
+        min_stock: 20,
       },
       {
         category_id: categories[0].id,
         name: 'Bakso Halus',
         description: 'Bakso halus dengan kuah gurih',
         price: 20000,
-        image: '/images/bakso-halus.jpg',
+        image: '/uploads/products/bakso-halus.jpg',
         is_featured: false,
         preparation_time: 8,
         spicy_level: 0,
+        stock: 100,
+        min_stock: 25,
       },
 
       // Bakso Kecil
@@ -121,20 +132,24 @@ const seedDatabase = async () => {
         name: 'Bakso Kecil (5 butir)',
         description: 'Porsi kecil 5 butir bakso',
         price: 12000,
-        image: '/images/bakso-kecil.jpg',
+        image: '/uploads/products/bakso-kecil.jpg',
         is_featured: false,
         preparation_time: 5,
         spicy_level: 0,
+        stock: 150,
+        min_stock: 30,
       },
       {
         category_id: categories[1].id,
         name: 'Tahu Bakso',
         description: 'Tahu isi bakso dengan kuah',
         price: 10000,
-        image: '/images/tahu-bakso.jpg',
+        image: '/uploads/products/tahu-bakso.jpg',
         is_featured: false,
         preparation_time: 5,
         spicy_level: 0,
+        stock: 100,
+        min_stock: 20,
       },
 
       // Minuman
@@ -143,30 +158,36 @@ const seedDatabase = async () => {
         name: 'Es Teh Manis',
         description: 'Teh manis dingin',
         price: 5000,
-        image: '/images/es-teh.jpg',
+        image: '/uploads/products/es-teh.jpg',
         is_featured: false,
         preparation_time: 2,
         spicy_level: 0,
+        stock: 200,
+        min_stock: 50,
       },
       {
         category_id: categories[2].id,
         name: 'Es Jeruk',
         description: 'Jeruk peras segar',
         price: 8000,
-        image: '/images/es-jeruk.jpg',
+        image: '/uploads/products/es-jeruk.jpg',
         is_featured: false,
         preparation_time: 3,
         spicy_level: 0,
+        stock: 180,
+        min_stock: 40,
       },
       {
         category_id: categories[2].id,
         name: 'Es Campur',
         description: 'Es campur spesial',
         price: 15000,
-        image: '/images/es-campur.jpg',
+        image: '/uploads/products/es-campur.jpg',
         is_featured: true,
         preparation_time: 5,
         spicy_level: 0,
+        stock: 80,
+        min_stock: 15,
       },
 
       // Makanan Pendamping
@@ -175,23 +196,27 @@ const seedDatabase = async () => {
         name: 'Gorengan (3 pcs)',
         description: 'Bakwan + Tahu Isi + Tempe',
         price: 10000,
-        image: '/images/gorengan.jpg',
+        image: '/uploads/products/gorengan.jpg',
         is_featured: false,
         preparation_time: 3,
         spicy_level: 0,
+        stock: 120,
+        min_stock: 25,
       },
       {
         category_id: categories[3].id,
         name: 'Lumpia Goreng',
         description: 'Lumpia goreng renyah (2 pcs)',
         price: 12000,
-        image: '/images/lumpia.jpg',
+        image: '/uploads/products/lumpia.jpg',
         is_featured: false,
         preparation_time: 3,
         spicy_level: 0,
+        stock: 100,
+        min_stock: 20,
       },
     ]);
-    console.log('✅ Products created');
+    console.log('✅ Products created with stock management');
 
     // Create vouchers
     await Voucher.bulkCreate([
