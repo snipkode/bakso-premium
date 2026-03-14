@@ -24,10 +24,7 @@ export default function ProfilePage() {
     email: '',
   });
   const [updating, setUpdating] = useState(false);
-  const [showResetPINModal, setShowResetPINModal] = useState(false);
-  const [resetEmail, setResetEmail] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
-  const [resetSent, setResetSent] = useState(false);
 
   useEffect(() => {
     fetchStats();
@@ -91,26 +88,42 @@ export default function ProfilePage() {
   };
 
   const handleResetPIN = async () => {
-    if (!resetEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(resetEmail)) {
-      alert('Email tidak valid');
+    // Check if email is set
+    if (!user?.email) {
+      alert('⚠️ Email belum ditambahkan!\n\nSilakan update profile Anda terlebih dahulu untuk menambahkan email, kemudian coba reset PIN lagi.');
+      setShowEditModal(true);
       return;
     }
 
+    // Confirm before sending
+    const confirmed = confirm(
+      '📧 Reset PIN via Email\n\n' +
+      'Link reset PIN akan dikirim ke:\n' +
+      `${user.email}\n\n` +
+      'Link ini hanya berlaku selama 1 jam.\n\n' +
+      'Lanjutkan?'
+    );
+
+    if (!confirmed) return;
+
     try {
       setResetLoading(true);
-      await customerPINAPI.forgotPIN(resetEmail);
-      setResetSent(true);
+      console.log('📧 Sending reset PIN email to:', user.email);
+      const response = await customerPINAPI.forgotPIN(user.email);
+      console.log('✅ Reset email sent:', response.data);
+      
+      alert(
+        '✅ Email Terkirim!\n\n' +
+        `Link reset PIN telah dikirim ke:\n${user.email}\n\n` +
+        'Cek inbox dan spam folder Anda.\n' +
+        'Link berlaku selama 1 jam.'
+      );
     } catch (error) {
+      console.error('❌ Failed to send reset email:', error);
       alert(error.response?.data?.error || 'Gagal mengirim link reset PIN');
     } finally {
       setResetLoading(false);
     }
-  };
-
-  const handleCloseResetModal = () => {
-    setShowResetPINModal(false);
-    setResetEmail('');
-    setResetSent(false);
   };
 
   const menuItems = [
@@ -127,7 +140,7 @@ export default function ProfilePage() {
       icon: <KeyRound className="w-5 h-5" />,
       label: 'Reset PIN',
       subtitle: 'Atur ulang PIN via email',
-      onClick: () => setShowResetPINModal(true),
+      onClick: handleResetPIN,
       gradient: 'from-orange-50 to-amber-50',
       iconBg: 'bg-orange-100 dark:bg-orange-900/30',
       iconColor: 'text-orange-600 dark:text-orange-400',
@@ -414,103 +427,6 @@ export default function ProfilePage() {
                   )}
                 </Button>
               </div>
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {/* Reset PIN Modal */}
-      {showResetPINModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md bg-white dark:bg-gray-900 shadow-2xl">
-            <div className="p-6">
-              {/* Modal Header */}
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 flex items-center justify-center">
-                    <KeyRound className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-bold text-gray-900 dark:text-white">Reset PIN</h2>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Kirim link reset via email</p>
-                  </div>
-                </div>
-                <button
-                  onClick={handleCloseResetModal}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-                >
-                  <X className="w-5 h-5 text-gray-500" />
-                </button>
-              </div>
-
-              {/* Content */}
-              {!resetSent ? (
-                <>
-                  <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
-                    <p className="text-sm text-blue-800 dark:text-blue-300">
-                      <strong>ℹ️ Info:</strong> Link reset PIN akan dikirim ke email Anda. Link ini hanya berlaku selama 1 jam.
-                    </p>
-                  </div>
-
-                  <div className="mb-6">
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                      Email
-                    </label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <input
-                        type="email"
-                        value={resetEmail}
-                        onChange={(e) => setResetEmail(e.target.value)}
-                        placeholder="nama@email.com"
-                        className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                        disabled={resetLoading}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <Button
-                      variant="secondary"
-                      onClick={handleCloseResetModal}
-                      className="flex-1"
-                      disabled={resetLoading}
-                    >
-                      Batal
-                    </Button>
-                    <Button
-                      onClick={handleResetPIN}
-                      isLoading={resetLoading}
-                      className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg shadow-orange-500/30"
-                    >
-                      {resetLoading ? 'Mengirim...' : 'Kirim Link Reset'}
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <div className="text-center py-8">
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4"
-                  >
-                    <CheckCircle className="w-10 h-10 text-white" />
-                  </motion.div>
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                    Email Terkirim!
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-6">
-                    Link reset PIN telah dikirim ke<br />
-                    <strong className="text-gray-900 dark:text-white">{resetEmail}</strong>
-                  </p>
-                  <Button
-                    onClick={handleCloseResetModal}
-                    className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 shadow-lg"
-                  >
-                    Tutup
-                  </Button>
-                </div>
-              )}
             </div>
           </Card>
         </div>

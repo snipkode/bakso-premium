@@ -7,6 +7,7 @@ import { Button, Input, Card } from '@/components/ui/BaseComponents';
 import { BaksoLoginAnimation } from '@/components/ui/BaksoLoginAnimation';
 import { BaksoIconAnimation } from '@/components/ui/BaksoIconAnimation';
 import { PINOnboardingModal } from '@/components/ui/PINOnboardingModal';
+import { customerPINAPI } from '@/lib/api';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -133,9 +134,12 @@ export default function LoginPage() {
 
     try {
       setResetLoading(true);
-      await customerPINAPI.forgotPIN(resetEmail);
+      console.log('📧 Sending reset PIN email to:', resetEmail);
+      const response = await customerPINAPI.forgotPIN(resetEmail);
+      console.log('✅ Reset email sent:', response.data);
       setResetSent(true);
     } catch (error) {
+      console.error('❌ Failed to send reset email:', error);
       alert(error.response?.data?.error || 'Gagal mengirim link reset PIN');
     } finally {
       setResetLoading(false);
