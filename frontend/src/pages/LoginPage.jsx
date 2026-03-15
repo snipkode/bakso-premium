@@ -303,34 +303,24 @@ export default function LoginPage() {
 
   const handlePINLogin = async (e) => {
     e.preventDefault();
-    
+
     // Validate form
     if (!validateForm('existing-customer')) {
       return;
     }
-    
+
     try {
       console.log('🔑 Attempting PIN login...');
       const result = await customerPINLogin(formData.phone, formData.pin);
-      
-      console.log('✅ PIN login successful!');
-      console.log('📊 Token received:', result?.token ? 'Yes' : 'No');
-      console.log('📊 User:', result?.user);
-      
-      // Check if token is in localStorage
-      const storedToken = localStorage.getItem('token');
-      const storedUser = localStorage.getItem('user');
-      console.log('💾 Token in localStorage:', storedToken ? 'Yes' : 'No');
-      console.log('💾 User in localStorage:', storedUser ? 'Yes' : 'No');
 
-      if (storedToken && storedUser) {
-        console.log('✅ Authentication ready! Navigating to menu...');
-        navigate('/menu');
-      } else {
-        console.error('❌ ERROR: Token not saved to localStorage!');
-        toast({ title: 'Error', description: 'Gagal menyimpan sesi login.', variant: 'error' });
-        // ⛔ DO NOT redirect - stay on login page
-      }
+      console.log('✅ PIN login successful!');
+      console.log('📊 Result:', result);
+
+      // Direct redirect after successful login
+      // Store already saved token to localStorage
+      console.log('🎯 Redirecting to menu...');
+      navigate('/menu');
+      
     } catch (error) {
       console.error('❌ PIN login failed:', error);
       console.error('Error response:', error.response);

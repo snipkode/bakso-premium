@@ -158,20 +158,27 @@ export const useAuthStore = create(
           // Check if user needs PIN onboarding
           const needsPINOnboarding = !data.user.is_pin_set;
 
-          set({
+          // Save auth data
+          const authData = {
             user: data.user,
             token: data.token,
             isAuthenticated: true,
             isLoading: false,
             needsPINOnboarding,
             needsPasswordSetup: data.user?.role !== 'customer' && !data.user?.password,
-          });
-          
-          // Save to localStorage
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('user', JSON.stringify(data.user));
-          console.log('💾 Token saved to localStorage:', data.token ? '✅' : '❌');
-          console.log('💾 User saved to localStorage:', data.user ? '✅' : '❌');
+          };
+
+          set(authData);
+
+          // Save to localStorage IMMEDIATELY
+          if (data.token) {
+            localStorage.setItem('token', data.token);
+            console.log('💾 Token saved to localStorage: ✅');
+          }
+          if (data.user) {
+            localStorage.setItem('user', JSON.stringify(data.user));
+            console.log('💾 User saved to localStorage: ✅');
+          }
 
           // Connect socket with validated user data
           connectSocket(data.user.id, data.user.role || 'customer', window.location.pathname);
