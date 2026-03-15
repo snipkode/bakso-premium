@@ -88,9 +88,19 @@ export default function ProfilePage() {
   };
 
   const handleResetPIN = async () => {
-    // Check if email is set
+    // 🔒 SECURITY CHECK: Don't show reset modal if email not set
     if (!user?.email) {
-      alert('⚠️ Email belum ditambahkan!\n\nSilakan update profile Anda terlebih dahulu untuk menambahkan email, kemudian coba reset PIN lagi.');
+      // Show toast notification instead of alert
+      const toastEvent = new CustomEvent('show-toast', {
+        detail: {
+          title: 'Email Diperlukan',
+          description: 'Silakan update profile Anda terlebih dahulu untuk menambahkan email, kemudian coba reset PIN lagi.',
+          variant: 'warning',
+        },
+      });
+      window.dispatchEvent(toastEvent);
+      
+      // Redirect to edit modal
       setShowEditModal(true);
       return;
     }
@@ -156,11 +166,13 @@ export default function ProfilePage() {
     {
       icon: <KeyRound className="w-5 h-5" />,
       label: 'Reset PIN',
-      subtitle: 'Atur ulang PIN via email',
+      subtitle: user?.email ? 'Atur ulang PIN via email' : 'Email diperlukan',
       onClick: handleResetPIN,
       gradient: 'from-orange-50 to-amber-50',
       iconBg: 'bg-orange-100 dark:bg-orange-900/30',
       iconColor: 'text-orange-600 dark:text-orange-400',
+      disabled: !user?.email, // Disable button if email not set
+      opacity: !user?.email ? 'opacity-50' : 'opacity-100',
     },
     {
       icon: <Bell className="w-5 h-5" />,
@@ -310,8 +322,8 @@ export default function ProfilePage() {
         {menuItems.map((item, idx) => (
           <Card
             key={idx}
-            onClick={item.onClick}
-            className={`p-4 bg-gradient-to-r ${item.gradient} cursor-pointer hover:shadow-md transition-all transform hover:scale-[1.01] border-l-4`}
+            onClick={item.disabled ? undefined : item.onClick}
+            className={`p-4 bg-gradient-to-r ${item.gradient} ${item.disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:shadow-md'} transition-all transform ${!item.disabled && 'hover:scale-[1.01]'} border-l-4 ${item.opacity || ''}`}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -323,7 +335,11 @@ export default function ProfilePage() {
                   <p className="text-xs text-gray-500 dark:text-gray-400">{item.subtitle}</p>
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-gray-400" />
+              {item.disabled ? (
+                <X className="w-5 h-5 text-gray-400" />
+              ) : (
+                <ChevronRight className="w-5 h-5 text-gray-400" />
+              )}
             </div>
           </Card>
         ))}
