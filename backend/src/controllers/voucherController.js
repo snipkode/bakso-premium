@@ -25,15 +25,15 @@ exports.getVouchers = async (req, res) => {
       },
     });
 
-    // Filter active vouchers for customers
+    // Filter active vouchers for customers (if authenticated)
     let filteredVouchers = vouchers;
-    if (req.user.role === 'customer') {
+    if (req.user && req.user.role === 'customer') {
       const now = new Date();
       filteredVouchers = vouchers.filter(v => 
         v.is_active && 
         v.valid_from <= now && 
         v.valid_until >= now &&
-        v.usage_limit > v.used_count
+        (!v.usage_limit || v.used_count < v.usage_limit)
       );
     }
 

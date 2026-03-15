@@ -25,6 +25,7 @@ import AdminProducts from '@/pages/admin/Products';
 import AdminPayments from '@/pages/admin/Payments';
 import AdminUsers from '@/pages/admin/Users';
 import AdminReports from '@/pages/admin/Reports';
+import AdminVouchers from '@/pages/admin/Vouchers';
 import AdminLayout from '@/components/admin/AdminLayout';
 import KitchenView from '@/pages/kitchen/KitchenView';
 import DriverView from '@/pages/driver/DriverView';
@@ -144,6 +145,7 @@ function App() {
             <Route path="payments" element={<AdminPayments />} />
             <Route path="products" element={<AdminProducts />} />
             <Route path="reports" element={<AdminReports />} />
+            <Route path="vouchers" element={<AdminVouchers />} />
             <Route path="users" element={<AdminUsers />} />
           </Route>
 

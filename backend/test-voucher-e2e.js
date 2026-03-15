@@ -73,20 +73,82 @@ const state = {
 // ==================== HELPER FUNCTIONS ====================
 
 async function adminLogin() {
-  const response = await axios.post(`${API_URL}/auth/staff`, {
-    phone: '081234567890',
-    password: 'admin123',
-  });
-  return response.data.token;
+  try {
+    const response = await axios.post(`${API_URL}/auth/staff`, {
+      phone: '081234567890',
+      password: 'admin123',
+    });
+    
+    // Handle 2FA setup required
+    if (response.data.requires_2fa_setup) {
+      console.log('   ℹ️  Admin 2FA setup required, setting up PIN...');
+      const setupToken = response.data.setup_token;
+      
+      // Set PIN for admin
+      await axios.post(
+        `${API_URL}/customer-pin/set`,
+        { pin: '123456' },
+        { headers: { Authorization: `Bearer ${setupToken}` } }
+      );
+      
+      // Login again with PIN to get full token
+      const fullLoginResponse = await axios.post(`${API_URL}/auth/staff`, {
+        phone: '081234567890',
+        pin: '123456',
+      });
+      
+      return fullLoginResponse.data.token;
+    }
+    
+    return response.data.token;
+  } catch (error) {
+    // If admin login fails, try with PIN directly
+    if (error.response?.status === 401) {
+      console.log('   ℹ️  Trying admin login with PIN...');
+      const response = await axios.post(`${API_URL}/auth/staff`, {
+        phone: '081234567890',
+        pin: '123456',
+      });
+      return response.data.token;
+    }
+    throw error;
+  }
 }
 
 async function customerRegister(name, phone) {
-  const response = await axios.post(`${API_URL}/auth/customer`, {
-    name,
-    phone,
-  });
-  state.customer = response.data.user;
-  return response.data.token;
+  try {
+    const response = await axios.post(`${API_URL}/auth/customer`, {
+      name,
+      phone,
+    });
+    state.customer = response.data.user;
+    return response.data.token;
+  } catch (error) {
+    // If user already exists (409), login with PIN instead
+    if (error.response?.status === 409) {
+      console.log(`   ℹ️  Customer ${phone} already exists, logging in with PIN...`);
+      // Try to login with default PIN
+      try {
+        const loginResponse = await axios.post(`${API_URL}/customer-pin/verify`, {
+          phone,
+          pin: '123456', // Default test PIN
+        });
+        state.customer = loginResponse.data.user;
+        return loginResponse.data.token;
+      } catch (loginError) {
+        console.log(`   ⚠️  PIN login failed, using anonymous customer`);
+        // Create new customer with different phone
+        const newPhone = phone + Math.floor(Math.random() * 1000);
+        const retryResponse = await axios.post(`${API_URL}/auth/customer`, {
+          name,
+          phone: newPhone,
+        });
+        state.customer = retryResponse.data.user;
+        return retryResponse.data.token;
+      }
+    }
+    throw error;
+  }
 }
 
 async function getProducts() {

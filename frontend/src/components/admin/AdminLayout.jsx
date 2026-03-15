@@ -8,6 +8,7 @@ import {
   CreditCard,
   FileBarChart,
   Users,
+  Tag,
   Menu,
   X,
   LogOut,
@@ -74,6 +75,12 @@ export default function AdminLayout() {
       path: '/admin/products',
       label: 'Products',
       icon: Package,
+      badge: null,
+    },
+    {
+      path: '/admin/vouchers',
+      label: 'Vouchers',
+      icon: Tag,
       badge: null,
     },
     {

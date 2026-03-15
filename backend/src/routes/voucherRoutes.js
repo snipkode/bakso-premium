@@ -4,11 +4,11 @@ const voucherController = require('../controllers/voucherController');
 const { auth, authorize } = require('../middleware/auth');
 const { validateCreateVoucher, validateUpdateVoucher } = require('../middleware/validators');
 
-// Public routes (customers can view active vouchers)
-router.get('/', voucherController.getVouchers);
-router.post('/validate', voucherController.validateVoucher);
+// Customer routes (authenticated users can view active vouchers)
+router.get('/', auth, voucherController.getVouchers);
+router.post('/validate', auth, voucherController.validateVoucher);
 
-// Admin routes
+// Admin routes (protected)
 router.get('/:id', auth, authorize('admin'), voucherController.getVoucherById);
 router.post('/', auth, authorize('admin'), validateCreateVoucher, voucherController.createVoucher);
 router.put('/:id', auth, authorize('admin'), validateUpdateVoucher, voucherController.updateVoucher);
