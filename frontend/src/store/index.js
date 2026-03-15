@@ -183,7 +183,7 @@ export const useAuthStore = create(
             error: error.response?.data?.error || 'PIN login failed',
             isLoading: false,
           });
-          throw error;
+          throw error; // ⚠️ RE-THROW ERROR SO FRONTEND CAN HANDLE IT
         }
       },
 
