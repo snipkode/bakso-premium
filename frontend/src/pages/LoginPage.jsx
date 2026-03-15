@@ -16,7 +16,7 @@ import { useToast } from '@/components/Toast';
 export default function LoginPage() {
   const navigate = useNavigate();
   const toast = useToast();
-  const { customerAuth, staffLogin, customerPINLogin, isLoading, error, needsPINOnboarding, setNeedsPINOnboarding } = useAuthStore();
+  const { customerAuth, staffLogin, customerPINLogin, isLoading, error, needsPINOnboarding, setNeedsPINOnboarding, isAuthenticated, user } = useAuthStore();
 
   const [loginType, setLoginType] = useState('customer');
   const [customerSubTab, setCustomerSubTab] = useState('new');
@@ -53,6 +53,24 @@ export default function LoginPage() {
     password: '',
     pin: '',
   });
+
+  // 🔐 Redirect if already logged in
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      console.log('✅ User already logged in, redirecting...');
+      
+      // Redirect based on role
+      if (user.role === 'admin') {
+        navigate('/admin');
+      } else if (user.role === 'kitchen') {
+        navigate('/kitchen');
+      } else if (user.role === 'driver') {
+        navigate('/driver');
+      } else if (user.role === 'customer') {
+        navigate('/menu');
+      }
+    }
+  }, [isAuthenticated, user, navigate]);
 
   // Validation functions
   const validateName = (name) => {
