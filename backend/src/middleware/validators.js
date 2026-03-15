@@ -281,3 +281,15 @@ exports.validateSavePushSubscription = [
   body('keys').isObject(),
   handleValidationErrors,
 ];
+
+exports.validateUpdateVoucher = [
+  body('code').optional({ checkFalsy: true }).trim().isLength({ min: 3, max: 50 }).matches(/^[A-Z0-9]+$/),
+  body('name').optional({ checkFalsy: true }).trim().isLength({ min: 3, max: 255 }),
+  body('type').optional().isIn(['percentage', 'fixed']),
+  body('value').optional().isInt({ min: 1 }),
+  body('min_purchase').optional().isInt({ min: 0 }),
+  body('max_discount').optional().isInt({ min: 0 }),
+  body('usage_limit').optional().isInt({ min: 1 }),
+  body('is_active').optional().isBoolean(),
+  handleValidationErrors,
+];

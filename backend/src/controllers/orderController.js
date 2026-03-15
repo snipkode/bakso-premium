@@ -78,7 +78,7 @@ exports.createOrder = async (req, res) => {
       }
     }
 
-    // Apply voucher
+    // Apply voucher with validation
     let discount = 0;
     if (voucher_code) {
       const voucher = await Voucher.findOne({
@@ -90,17 +90,27 @@ exports.createOrder = async (req, res) => {
         },
       });
 
-      if (voucher) {
-        if (voucher.min_purchase <= subtotal) {
-          if (voucher.type === 'percentage') {
-            discount = Math.floor((subtotal * voucher.value) / 100);
-            if (voucher.max_discount && discount > voucher.max_discount) {
-              discount = voucher.max_discount;
-            }
-          } else {
-            discount = voucher.value;
-          }
+      if (!voucher) {
+        return res.status(400).json({ error: 'Voucher tidak valid atau sudah kadaluarsa' });
+      }
+
+      if (voucher.min_purchase > subtotal) {
+        return res.status(400).json({ 
+          error: `Minimum pembelian untuk voucher ini adalah Rp ${voucher.min_purchase.toLocaleString()}` 
+        });
+      }
+
+      if (voucher.usage_limit && voucher.used_count >= voucher.usage_limit) {
+        return res.status(400).json({ error: 'Kuota voucher sudah habis' });
+      }
+
+      if (voucher.type === 'percentage') {
+        discount = Math.floor((subtotal * voucher.value) / 100);
+        if (voucher.max_discount && discount > voucher.max_discount) {
+          discount = voucher.max_discount;
         }
+      } else {
+        discount = voucher.value;
       }
     }
 
@@ -358,15 +368,15 @@ exports.updateOrderStatus = async (req, res) => {
     // Mark as completed
     if (status === 'completed') {
       order.completed_at = new Date();
-      
+
       // Update user's completed orders
       const user = await User.findByPk(order.user_id, { transaction });
       user.completed_orders += 1;
-      
+
       // Add loyalty points (1% of total)
       const pointsEarned = Math.floor(order.total / 100);
       user.loyalty_points += pointsEarned;
-      
+
       await LoyaltyPoint.create({
         user_id: user.id,
         points: pointsEarned,
@@ -374,7 +384,18 @@ exports.updateOrderStatus = async (req, res) => {
         type: 'earned',
         description: `Earned ${pointsEarned} points from order ${order.order_number}`,
       }, { transaction });
-      
+
+      // Increment voucher usage if voucher was used
+      if (order.voucher_code) {
+        const voucher = await Voucher.findOne({ 
+          where: { code: order.voucher_code },
+          transaction 
+        });
+        if (voucher) {
+          await voucher.increment('used_count', { transaction });
+        }
+      }
+
       await user.save({ transaction });
     }
 
@@ -382,12 +403,23 @@ exports.updateOrderStatus = async (req, res) => {
     if (status === 'cancelled') {
       order.cancelled_at = new Date();
       order.cancellation_reason = req.body.cancellation_reason || null;
-      
+
       // Refund loyalty points if used
       if (order.loyalty_points_used > 0) {
         const user = await User.findByPk(order.user_id, { transaction });
         user.loyalty_points += order.loyalty_points_used;
         await user.save({ transaction });
+      }
+
+      // Decrement voucher usage if order was cancelled
+      if (order.voucher_code && order.completed_at === null) {
+        const voucher = await Voucher.findOne({ 
+          where: { code: order.voucher_code },
+          transaction 
+        });
+        if (voucher && voucher.used_count > 0) {
+          await voucher.decrement('used_count', { transaction });
+        }
       }
     }
 
