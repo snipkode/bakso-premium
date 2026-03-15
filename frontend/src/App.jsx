@@ -15,6 +15,7 @@ import OrderDetailPage from '@/pages/OrderDetailPage';
 import CustomerOrderDetail from '@/pages/CustomerOrderDetail';
 import TrackOrderPage from '@/pages/TrackOrderPage';
 import ProfilePage from '@/pages/ProfilePage';
+import ResetPINPage from '@/pages/ResetPINPage';
 import LoginPage from '@/pages/LoginPage';
 import NotificationSettingsPage from '@/pages/NotificationSettingsPage';
 import AdminDashboard from '@/pages/admin/Dashboard';
@@ -86,6 +87,7 @@ function App() {
           {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/reset-pin" element={<ResetPINPage />} />
           <Route path="/menu" element={<MenuPage />} />
           <Route path="/product/:id" element={<ProductDetailPage />} />
           <Route path="/cart" element={<CartPage />} />

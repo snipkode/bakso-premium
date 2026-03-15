@@ -1,160 +1,192 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Home } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ArrowLeft, Home, ShoppingBag, Utensils, User } from 'lucide-react';
 import { Button } from '../components/ui/BaseComponents';
 
 export default function NotFoundPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
-      {/* Bakso SVG Illustration */}
-      <div className="w-64 h-64 mb-8">
-        <svg
-          viewBox="0 0 200 200"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-full h-full"
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-orange-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 flex items-center justify-center p-4 overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          animate={{ 
+            y: [0, -20, 0],
+            rotate: [0, 5, -5, 0],
+          }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-20 left-10 text-6xl opacity-20"
         >
-          {/* Bowl */}
-          <ellipse cx="100" cy="150" rx="70" ry="25" fill="#E5E7EB" />
-          <path
-            d="M30 150C30 150 40 180 100 180C160 180 170 150 170 150"
-            fill="#D1D5DB"
-          />
-          
-          {/* Soup */}
-          <ellipse cx="100" cy="145" rx="65" ry="20" fill="#FCD34D" />
-          
-          {/* Bakso Balls */}
-          <circle cx="80" cy="140" r="15" fill="#92400E" />
-          <circle cx="120" cy="140" r="15" fill="#92400E" />
-          <circle cx="100" cy="130" r="15" fill="#92400E" />
-          <circle cx="80" cy="140" r="8" fill="#B45309" />
-          <circle cx="120" cy="140" r="8" fill="#B45309" />
-          <circle cx="100" cy="130" r="8" fill="#B45309" />
-          
-          {/* Noodles */}
-          <path
-            d="M50 145C50 145 70 140 100 140C130 140 150 145 150 145"
-            stroke="#F59E0B"
-            strokeWidth="3"
-            strokeLinecap="round"
-            fill="none"
-          />
-          <path
-            d="M55 150C55 150 75 145 100 145C125 145 145 150 145 150"
-            stroke="#F59E0B"
-            strokeWidth="3"
-            strokeLinecap="round"
-            fill="none"
-          />
-          
-          {/* Steam */}
-          <path
-            d="M70 120C70 120 73 110 70 100M100 115C100 115 103 105 100 95M130 120C130 120 133 110 130 100"
-            stroke="#9CA3AF"
-            strokeWidth="3"
-            strokeLinecap="round"
-            fill="none"
-            opacity="0.6"
-          />
-          
-          {/* Chopsticks */}
-          <rect
-            x="140"
-            y="80"
-            width="8"
-            height="80"
-            fill="#78350F"
-            transform="rotate(30 140 80)"
-          />
-          <rect
-            x="150"
-            y="80"
-            width="8"
-            height="80"
-            fill="#92400E"
-            transform="rotate(30 150 80)"
-          />
-          
-          {/* 404 Text */}
-          <text
-            x="100"
-            y="70"
-            textAnchor="middle"
-            className="text-4xl font-bold"
-            fill="#000"
-            style={{ fontSize: '24px', fontWeight: 'bold' }}
-          >
-            404
-          </text>
-        </svg>
+          🍜
+        </motion.div>
+        <motion.div
+          animate={{ 
+            y: [0, 30, 0],
+            rotate: [0, -5, 5, 0],
+          }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          className="absolute bottom-40 right-10 text-5xl opacity-20"
+        >
+          🥟
+        </motion.div>
+        <motion.div
+          animate={{ 
+            y: [0, -25, 0],
+            rotate: [0, 8, -8, 0],
+          }}
+          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          className="absolute top-1/2 left-1/4 text-4xl opacity-20"
+        >
+          🍲
+        </motion.div>
+        <motion.div
+          animate={{ 
+            y: [0, 20, 0],
+            rotate: [0, -6, 6, 0],
+          }}
+          transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+          className="absolute bottom-1/3 right-1/4 text-6xl opacity-20"
+        >
+          🥢
+        </motion.div>
       </div>
 
-      {/* Error Message */}
-      <h1 className="text-3xl font-bold text-text-primary mb-2">
-        Ups! Halaman Tidak Ditemukan
-      </h1>
-      
-      <p className="text-text-tertiary text-center mb-8 max-w-md">
-        Maaf, halaman yang Anda cari tidak dapat ditemukan. 
-        Mungkin URL salah atau halaman sudah dipindahkan.
-      </p>
-
-      {/* Action Buttons */}
-      <div className="flex gap-3">
-        <Button
-          variant="secondary"
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2"
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="text-center max-w-2xl relative z-10"
+      >
+        {/* 404 Number with Shadow Effect */}
+        <motion.div
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.2 }}
+          className="relative mb-8"
         >
-          <ArrowLeft className="w-5 h-5" />
-          Kembali
-        </Button>
-        
-        <Button
-          variant="primary"
-          onClick={() => navigate('/')}
-          className="flex items-center gap-2"
+          <h1 className="text-[120px] sm:text-[150px] md:text-[180px] font-extrabold leading-none">
+            <span className="bg-gradient-to-br from-orange-500 via-amber-500 to-orange-600 bg-clip-text text-transparent drop-shadow-2xl">
+              404
+            </span>
+          </h1>
+          
+          {/* Decorative Bowl */}
+          <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-32 h-8 bg-gradient-to-r from-orange-400 to-amber-400 rounded-full blur-md opacity-50" />
+        </motion.div>
+
+        {/* Error Message */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
         >
-          <Home className="w-5 h-5" />
-          Beranda
-        </Button>
-      </div>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-3">
+            Ups! Halaman Tidak Ditemukan
+          </h2>
+          
+          <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base mb-8 max-w-md mx-auto leading-relaxed">
+            Maaf, halaman yang Anda cari tidak dapat ditemukan. 
+            Mungkin URL salah atau halaman sudah dipindahkan.
+          </p>
+        </motion.div>
 
-      {/* Quick Links */}
-      <div className="mt-8 p-4 bg-surface rounded-xl">
-        <p className="text-sm font-medium text-text-primary mb-3">
-          🔍 Cari menu lainnya:
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => navigate('/menu')}
-            className="text-sm text-primary hover:underline"
+        {/* Action Buttons */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="flex flex-col sm:flex-row gap-3 justify-center mb-8"
+        >
+          <Button
+            variant="secondary"
+            onClick={() => navigate(-1)}
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-lg"
           >
-            🍜 Lihat Menu
-          </button>
-          <span className="text-text-tertiary">•</span>
-          <button
-            onClick={() => navigate('/orders')}
-            className="text-sm text-primary hover:underline"
-          >
-            📋 Pesanan Saya
-          </button>
-          <span className="text-text-tertiary">•</span>
-          <button
-            onClick={() => navigate('/profile')}
-            className="text-sm text-primary hover:underline"
-          >
-            👤 Profil
-          </button>
-        </div>
-      </div>
+            <ArrowLeft className="w-5 h-5" />
+            Kembali
+          </Button>
 
-      {/* Footer */}
-      <p className="mt-8 text-xs text-text-tertiary">
-        © 2026 Bakso Premium. Dibuat dengan ❤️ untuk pecinta bakso.
-      </p>
+          <Button
+            variant="primary"
+            onClick={() => navigate('/')}
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg shadow-orange-500/30"
+          >
+            <Home className="w-5 h-5" />
+            Beranda
+          </Button>
+        </motion.div>
+
+        {/* Quick Links Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+          className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 dark:border-gray-700"
+        >
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center justify-center gap-2">
+            <span>🔍</span>
+            Cari menu lainnya:
+          </h3>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <button
+              onClick={() => navigate('/menu')}
+              className="group p-4 rounded-2xl bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-700 dark:to-gray-700 hover:shadow-lg transition-all transform hover:scale-105"
+            >
+              <div className="w-12 h-12 mx-auto mb-2 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <ShoppingBag className="w-6 h-6 text-white" />
+              </div>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                Lihat Menu
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                🍜 Bakso lezat
+              </p>
+            </button>
+
+            <button
+              onClick={() => navigate('/orders')}
+              className="group p-4 rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-gray-700 dark:to-gray-700 hover:shadow-lg transition-all transform hover:scale-105"
+            >
+              <div className="w-12 h-12 mx-auto mb-2 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Utensils className="w-6 h-6 text-white" />
+              </div>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                Pesanan Saya
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                📋 Lacak order
+              </p>
+            </button>
+
+            <button
+              onClick={() => navigate('/profile')}
+              className="group p-4 rounded-2xl bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-700 dark:to-gray-700 hover:shadow-lg transition-all transform hover:scale-105"
+            >
+              <div className="w-12 h-12 mx-auto mb-2 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <User className="w-6 h-6 text-white" />
+              </div>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                Profil
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                👤 Akun saya
+              </p>
+            </button>
+          </div>
+        </motion.div>
+
+        {/* Footer */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1 }}
+          className="mt-8 text-xs text-gray-500 dark:text-gray-400"
+        >
+          © 2026 Bakso Premium. Dibuat dengan 🍜 untuk pecinta bakso.
+        </motion.p>
+      </motion.div>
     </div>
   );
 }
