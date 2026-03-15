@@ -24,6 +24,7 @@ const reportRoutes = require('./routes/reportRoutes');
 const userRoutes = require('./routes/userRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const customerPinRoutes = require('./routes/customerPinRoutes');
+const staff2FARoutes = require('./routes/staff2FARoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -65,6 +66,7 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/customer-pin', customerPinRoutes);
+app.use('/api/staff-2fa', staff2FARoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

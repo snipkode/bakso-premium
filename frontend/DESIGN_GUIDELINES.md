@@ -258,3 +258,467 @@
 
 *Last updated: 2026-03-15*
 *Design system version: Compact v1.0*
+
+---
+
+## Order Status Flow (Based on E2E Tests)
+
+### Complete Status Flow
+
+```
+pending_payment → waiting_verification → paid → preparing → ready → out_for_delivery → completed
+                                                                            ↓
+                                                                    rejected/cancelled
+```
+
+### Flow by Order Type
+
+#### 🍽️ Dine-In Flow
+```
+pending_payment → paid → preparing → ready → completed
+```
+- Skip `out_for_delivery` status
+- From `ready` can directly go to `completed`
+
+#### 🛍️ Takeaway Flow
+```
+pending_payment → paid → preparing → ready → completed
+```
+- Same as dine-in
+- From `ready` can directly go to `completed`
+
+#### 🛵 Delivery Flow
+```
+pending_payment → paid → preparing → ready → out_for_delivery → completed
+```
+- Must go through `out_for_delivery` status
+- Driver handles this status update
+
+### Status Transitions Table
+
+| Current Status | Next Available Status |
+|----------------|----------------------|
+| `pending_payment` | `paid`, `cancelled` |
+| `waiting_verification` | `paid`, `cancelled` |
+| `paid` | `preparing`, `cancelled` |
+| `preparing` | `ready`, `cancelled` |
+| `ready` | `out_for_delivery`, `completed` |
+| `out_for_delivery` | `completed` |
+| `completed` | (none) |
+| `cancelled` | (none) |
+| `rejected` | (none) |
+
+### Implementation Notes
+
+1. **Progress Bar**: Shows `out_for_delivery` step only for delivery orders
+2. **Status Buttons**: Available transitions depend on current status
+3. **Driver Role**: Only driver can update to `out_for_delivery` status
+4. **Auto-transitions**: Some status changes trigger automatic actions:
+   - `paid` → assigns queue number
+   - `completed` → awards loyalty points, increments completed_orders
+
+---
+
+## Context-Aware Status Labels (Customer View)
+
+Status labels displayed to customers are **dynamic** based on order type for better UX.
+
+### Status Display by Order Type
+
+| Status | Dine-In (🍽️) | Takeaway (🛍️) | Delivery (🛵) |
+|--------|---------------|----------------|---------------|
+| `pending_payment` | Menunggu Pembayaran | Menunggu Pembayaran | Menunggu Pembayaran |
+| `paid` | Dibayar - Menunggu Antrian | Dibayar - Menunggu Antrian | Dibayar - Menunggu Konfirmasi |
+| `preparing` | Sedang Dimasak | Sedang Diracik | Sedang Dimasak |
+| `ready` | **Siap Disajikan** | **Siap Diambil** | **Siap Diantar** |
+| `out_for_delivery` | Sedang Diantar | Sedang Diantar | **Driver Menuju Lokasi** |
+| `completed` | **Selamat Menikmati** | **Selamat Menikmati** | **Pesanan Tercapai** |
+| `cancelled` | Dibatalkan | Dibatalkan | Dibatalkan |
+
+### Status Descriptions by Order Type
+
+| Status | Dine-In Description | Takeaway Description | Delivery Description |
+|--------|---------------------|----------------------|----------------------|
+| `paid` | Silakan tunggu di meja Anda | Silakan tunggu nomor antrian dipanggil | Menunggu driver untuk pengantaran |
+| `preparing` | Dapur sedang menyiapkan pesanan Anda | Barista sedang meracik minuman Anda | Dapur sedang menyiapkan pesanan Anda |
+| `ready` | Pesanan akan segera disajikan | Silakan ambil di kasir | Driver akan segera berangkat |
+| `out_for_delivery` | Pesanan sedang dalam pengantaran | Pesanan sedang dalam pengantaran | Driver sedang menuju lokasi Anda |
+| `completed` | Selamat menikmati hidangan Anda! | Terima kasih, sampai jumpa lagi! | Pesanan telah tiba, selamat menikmati! |
+
+### Implementation Example
+
+```javascript
+// Context-aware status label function
+const getStatusLabelShort = (status, orderType) => {
+  if (status === 'ready') {
+    if (orderType === 'takeaway') return 'Siap Diambil';
+    if (orderType === 'dine-in') return 'Siap Disajikan';
+    return 'Siap Diantar'; // default for delivery
+  }
+  if (status === 'out_for_delivery') return 'Dikirim';
+  
+  const labels = {
+    pending_payment: 'Belum Bayar',
+    paid: 'Dibayar',
+    preparing: 'Disiapkan',
+    completed: 'Selesai',
+  };
+  return labels[status] || getStatusLabel(status);
+};
+```
+
+### Customer Messaging
+
+**Track Card Display:**
+- **Dine-In**: "Lacak Pesanan - Siap disajikan"
+- **Takeaway**: "Lacak Pesanan - Siap diambil"
+- **Delivery**: "Lacak Pesanan - Siap diantrar" / "Sedang dikirim"
+
+**Filter Badges:**
+- Show order count per status
+- Icon changes based on context (🍽️ for ready)
+
+---
+
+## Role-Based Views & Permissions
+
+### Customer Role (`/orders`)
+
+**View:**
+- Own orders only
+- Filter by status (all, pending_payment, paid, preparing, ready, out_for_delivery, completed)
+- Context-aware status labels
+
+**Actions:**
+- View order details
+- Track active orders
+- Create reviews for completed orders
+
+**UI Components:**
+- `OrdersPage.jsx` - Main orders list
+- `OrderDetail.jsx` - Order tracking view
+- `OrderSuccessPage.jsx` - Post-order confirmation
+
+---
+
+### Kitchen Role (`/kitchen`)
+
+**View:**
+- All orders with status: `paid`, `preparing`, `ready`, `completed`
+- Filter tabs: All, Pending, Cooking, Ready
+- Order items with notes
+
+**Actions:**
+- `paid` → `preparing` (Start Cooking)
+- `preparing` → `ready` (Mark Ready)
+- `ready` → `completed` (Complete - for dine-in/takeaway)
+
+**UI Components:**
+- `KitchenView.jsx` - Kitchen order management
+- Stats: Pending, Cooking, Ready, Done
+
+**Status Flow for Kitchen:**
+```
+paid → preparing → ready → completed
+```
+
+---
+
+### Driver Role (`/driver`)
+
+**View:**
+- Delivery orders only (`order_type = 'delivery'`)
+- Filter: All, Ready, On Way
+- Customer info & delivery address
+
+**Actions:**
+- `ready` → `out_for_delivery` (Pick Up Order)
+- `out_for_delivery` → `completed` (Mark Delivered)
+- Call customer
+- Navigate to address (Google Maps)
+
+**UI Components:**
+- `DriverView.jsx` - Delivery management
+- Stats: Ready, On Way, Done
+
+**Status Flow for Driver:**
+```
+ready → out_for_delivery → completed
+```
+
+---
+
+### Admin Role (`/admin/orders`, `/admin/orders/:id`)
+
+**View:**
+- All orders (no filter by role)
+- Full order details with customer info
+- Payment verification
+
+**Actions:**
+- All status transitions available
+- Payment verification
+- Order cancellation
+
+**UI Components:**
+- `Orders.jsx` - Admin orders list
+- `OrderDetail.jsx` - Full order management
+- `Payments.jsx` - Payment verification
+
+**Full Status Flow:**
+```
+pending_payment → paid → preparing → ready → out_for_delivery → completed
+                          ↓              ↓
+                    cancelled      cancelled
+```
+
+---
+
+## Status Flow Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                     COMPLETE ORDER LIFECYCLE                         │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  ┌──────────────────┐                                               │
+│  │ pending_payment  │ ─────────────────────┐                       │
+│  └────────┬─────────┘                      │                       │
+│           │                                │                       │
+│           ▼                                ▼                       │
+│  ┌──────────────────┐              ┌──────────────┐               │
+│  │waiting_verification│            │  cancelled   │               │
+│  └────────┬─────────┘              └──────────────┘               │
+│           │                                                        │
+│           ▼                                                        │
+│  ┌──────────────────┐                                              │
+│  │       paid       │ ──→ Queue Number Assigned                   │
+│  └────────┬─────────┘                                              │
+│           │                                                        │
+│           ▼                                                        │
+│  ┌──────────────────┐    ┌─────────────┐                          │
+│  │    preparing     │───→│   Kitchen   │                          │
+│  └────────┬─────────┘    └─────────────┘                          │
+│           │                                                        │
+│           ▼                                                        │
+│  ┌──────────────────┐    ┌─────────────────────────────┐          │
+│  │      ready       │───→│ Context-Aware Label:        │          │
+│  └────────┬─────────┘    │ • Dine-in:  Siap Disajikan  │          │
+│           │              │ • Takeaway: Siap Diambil    │          │
+│           │              │ • Delivery: Siap Diantar    │          │
+│           │              └─────────────────────────────┘          │
+│           │                                                        │
+│           ├─────────────┬──────────────────────────┐              │
+│           │             │                          │              │
+│           ▼             ▼                          │              │
+│  ┌──────────────────┐ ┌──────────────────┐        │              │
+│  │ out_for_delivery │ │    completed     │◄───────┘              │
+│  │   (Delivery only)│ │                  │                       │
+│  └────────┬─────────┘ └──────────────────┘                       │
+│           │               ▲                                       │
+│           └───────────────┘                                       │
+│                    Driver                                         │
+│                                                                   │
+└───────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## API Integration
+
+### Order Status Update Endpoint
+
+```javascript
+// PATCH /api/orders/:id/status
+{
+  "status": "out_for_delivery" // or any valid status
+}
+```
+
+### Response Format
+
+```javascript
+{
+  "success": true,
+  "order": {
+    "id": "uuid",
+    "order_number": "BSO/202603/1234",
+    "status": "out_for_delivery",
+    "queue_number": 15,
+    // ... other fields
+  }
+}
+```
+
+### Socket Events
+
+```javascript
+// Listen for order updates
+subscribeToOrderUpdates((data) => {
+  if (data.order_id === orderId) {
+    // Refresh order data
+  }
+});
+
+// Emit staff status update (kitchen/driver)
+emitStaffStatusUpdate(userId, 'online', 'kitchen'); // or 'driver'
+```
+
+---
+
+## Files Reference
+
+| Component | File Path | Purpose |
+|-----------|-----------|---------|
+| Customer Orders | `frontend/src/pages/OrdersPage.jsx` | Order list with context-aware labels |
+| **Customer Order Detail** | `frontend/src/pages/CustomerOrderDetail.jsx` | **Clean, compact order tracking** |
+| Admin Orders | `frontend/src/pages/admin/Orders.jsx` | Admin order management |
+| Admin Order Detail | `frontend/src/pages/admin/OrderDetail.jsx` | Full order detail with status transitions |
+| Kitchen View | `frontend/src/pages/kitchen/KitchenView.jsx` | Kitchen order processing |
+| Driver View | `frontend/src/pages/driver/DriverView.jsx` | Delivery management |
+| Utils | `frontend/src/lib/utils.js` | `getStatusLabel`, `getStatusColor` |
+| API | `frontend/src/lib/api.js` | Order API calls |
+| Socket | `frontend/src/lib/socket.js` | Real-time updates |
+
+---
+
+## Customer Order Detail Page Specification
+
+### Design Principles
+
+1. **Clean & Compact** - Minimal visual clutter, focus on essential info
+2. **Status-First** - Order status and progress prominently displayed
+3. **Context-Aware** - Labels adapt based on order type
+4. **Mobile-Optimized** - Touch-friendly, easy to scan
+
+### Layout Structure
+
+```
+┌─────────────────────────────────────┐
+│  Header (Sticky)                    │
+│  ← Back | Order # | Status Badge    │
+├─────────────────────────────────────┤
+│  Progress Card                      │
+│  ○──○──○──○──○  (Timeline)         │
+├─────────────────────────────────────┤
+│  [Type] [Queue #]                   │
+├─────────────────────────────────────┤
+│  Delivery Address (if delivery)     │
+├─────────────────────────────────────┤
+│  Order Items                        │
+│  - Item 1 (2x) ......... Rp 50.000  │
+│  - Item 2 (1x) ......... Rp 25.000  │
+├─────────────────────────────────────┤
+│  Payment Summary                    │
+│  Subtotal, Discount, Total          │
+├─────────────────────────────────────┤
+│  Customer Info (optional)           │
+└─────────────────────────────────────┘
+```
+
+### Component Specifications
+
+**Header:**
+- Back button: `w-10 h-10 rounded-xl`
+- Order number: `text-lg font-bold`
+- Status badge: `text-xs px-3 py-1.5`
+
+**Progress Timeline:**
+- 6 steps: Order → Paid → Prep → Ready → Deliver → Done
+- Circle size: `w-6 h-6`
+- Active step: `ring-2 ring-blue-500/30 scale-110`
+- Labels: `text-[10px] font-medium`
+
+**Info Cards:**
+- Padding: `p-3`
+- Icon containers: `w-8 h-8 rounded-xl`
+- Section titles: `text-sm font-bold`
+- Content labels: `text-[10px] uppercase tracking-wide`
+
+**Order Items:**
+- Quantity badge: `w-8 h-8 rounded-lg text-[10px]`
+- Product name: `text-sm font-semibold truncate`
+- Price: `text-sm font-bold text-orange-600`
+- Notes: `text-[10px] text-gray-500`
+
+**Payment Summary:**
+- Line items: `text-sm`
+- Total: `text-lg font-bold text-orange-600`
+- Divider: `border-t-2 border-dashed`
+
+### Status Display Logic
+
+```javascript
+// Context-aware status label
+if (status === 'ready') {
+  if (orderType === 'takeaway') return 'Siap Diambil';
+  if (orderType === 'dine-in') return 'Siap Disajikan';
+  return 'Siap Diantar';
+}
+```
+
+### Progress Timeline Steps
+
+| Step | Label | Icon | Color |
+|------|-------|------|-------|
+| 1 | Order | 📄 | Gray |
+| 2 | Paid | 💳 | Blue |
+| 3 | Prep | 👨‍🍳 | Blue |
+| 4 | Ready | ✅ | Green |
+| 5 | Deliver | 🛵 | Green (delivery only) |
+| 6 | Done | 🎉 | Green |
+
+### Color Palette
+
+| Element | Light Mode | Dark Mode |
+|---------|------------|-----------|
+| Background | `bg-gray-50` | `bg-gray-900` |
+| Cards | `bg-white` | `bg-gray-800` |
+| Borders | `border-gray-100` | `border-gray-700` |
+| Primary | `text-orange-600` | `text-orange-400` |
+| Success | `text-green-600` | `text-green-400` |
+
+### Typography Scale
+
+| Element | Size | Weight |
+|---------|------|--------|
+| Page Title | `text-lg` | `font-bold` |
+| Section Title | `text-sm` | `font-bold` |
+| Content Label | `text-[10px]` | `font-medium` |
+| Content Value | `text-sm` | `font-semibold` |
+| Price/Total | `text-sm-lg` | `font-bold` |
+
+### Interactive Elements
+
+**Track Order Button:**
+- Full width card
+- Gradient background
+- `hover:scale-[1.02]`
+- Navigation icon
+
+**Contact Buttons:**
+- WhatsApp link for phone
+- Email link for email
+- Hover: `bg-green-50` / `bg-orange-50`
+
+### Responsive Design
+
+- Single column layout
+- Sticky header for navigation
+- Bottom padding for mobile navigation bar
+- Touch-friendly tap targets (min 44x44px)
+
+### Real-time Updates
+
+```javascript
+useEffect(() => {
+  const unsubscribe = subscribeToOrderUpdates((data) => {
+    if (data.order_id === id || data.orderId === id) {
+      loadOrder();
+    }
+  });
+  return () => unsubscribe();
+}, [id]);
+```
+
+---

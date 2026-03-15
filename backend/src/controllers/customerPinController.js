@@ -2,6 +2,7 @@ const { User } = require('../models');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const { sendPINResetEmail } = require('../utils/emailService');
+const { trackFailedPINAttempt, resetPINAttempts } = require('../middleware/twoFactorAuth');
 
 // Set PIN for customer/staff
 exports.setPIN = async (req, res) => {
@@ -29,22 +30,34 @@ exports.setPIN = async (req, res) => {
     const pinHash = await bcrypt.hash(pin, 10);
     user.pin_hash = pinHash;
     user.is_pin_set = true;
-    
+
     // For staff: Set PIN expiry (1 month from now)
+    // For customer: Set PIN expiry (3 months from now)
     const isStaff = ['admin', 'kitchen', 'driver'].includes(user.role);
+    const isCustomer = user.role === 'customer';
+    
+    const pinExpiryDate = new Date();
     if (isStaff) {
-      const oneMonthFromNow = new Date();
-      oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
-      user.pin_reset_expires = oneMonthFromNow;
-      console.log(`📅 Staff PIN set for ${user.role}. Expires: ${user.pin_reset_expires}`);
+      pinExpiryDate.setMonth(pinExpiryDate.getMonth() + 1); // 1 month for staff
+      console.log(`📅 Staff PIN set for ${user.role}. Expires: ${pinExpiryDate}`);
+    } else if (isCustomer) {
+      pinExpiryDate.setMonth(pinExpiryDate.getMonth() + 3); // 3 months for customer
+      console.log(`📅 Customer PIN set. Expires: ${pinExpiryDate}`);
     }
     
+    user.pin_reset_expires = pinExpiryDate;
+
     await user.save();
+
+    // Reset failed attempts on successful PIN set
+    resetPINAttempts(user.phone);
 
     res.json({
       success: true,
       message: 'PIN berhasil diatur',
-      pin_expires: isStaff ? user.pin_reset_expires : null
+      pin_expires: user.pin_reset_expires,
+      is_staff: isStaff,
+      expiry_months: isStaff ? 1 : 3,
     });
   } catch (error) {
     console.error('Set PIN error:', error);
@@ -95,14 +108,29 @@ exports.verifyPIN = async (req, res) => {
     // Verify PIN
     const isValid = await bcrypt.compare(pin, user.pin_hash);
     if (!isValid) {
-      return res.status(401).json({ error: 'PIN salah' });
+      // Track failed attempt with rate limiting
+      const attemptInfo = trackFailedPINAttempt(phone);
+      
+      console.log(`❌ Failed PIN attempt for ${phone}. Remaining: ${attemptInfo.remaining}, Locked: ${attemptInfo.locked}`);
+      
+      return res.status(401).json({ 
+        error: 'PIN salah',
+        attempts_remaining: attemptInfo.remaining,
+        locked: attemptInfo.locked,
+        locked_until: attemptInfo.lockedUntil,
+      });
     }
 
-    // Check PIN expiry for staff (1 month reset policy)
+    // Reset attempts on successful login
+    resetPINAttempts(phone);
+
+    // Check PIN expiry (different for staff vs customer)
     const isStaff = ['admin', 'kitchen', 'driver'].includes(user.role);
+    const isCustomer = user.role === 'customer';
     let pinExpired = false;
-    
-    if (isStaff && user.pin_reset_expires) {
+    let expiryMonths = isStaff ? 1 : 3;
+
+    if (user.pin_reset_expires) {
       const now = new Date();
       if (user.pin_reset_expires < now) {
         pinExpired = true;
@@ -113,12 +141,14 @@ exports.verifyPIN = async (req, res) => {
         user.pin_reset_expires = null;
         user.pin_reset_attempts = 0;
         await user.save();
+
+        const expiryText = isStaff ? '1 bulan' : '3 bulan';
         
         return res.status(403).json({
           success: false,
           requires_pin_setup: true,
           pin_expired: true,
-          message: 'PIN Anda sudah kadaluarsa (reset 1 bulan). Silakan atur PIN baru.',
+          message: `PIN Anda sudah kadaluarsa (reset ${expiryMonths} bulan). Silakan atur PIN baru.`,
           user: {
             id: user.id,
             phone: user.phone,

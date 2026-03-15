@@ -46,6 +46,7 @@ const Order = sequelize.define('order', {
       'paid',
       'preparing',
       'ready',
+      'out_for_pickup',
       'out_for_delivery',
       'completed',
       'rejected',

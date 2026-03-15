@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { CheckCircle, XCircle, Clock, Upload, Search, Eye, RefreshCw, DollarSign, CreditCard, Wallet, TrendingUp } from 'lucide-react';
 import { paymentAPI } from '../../lib/api';
 import { Card, Button, Badge, LoadingSpinner, Input, Pagination } from '../../components/ui/BaseComponents';
+import { AdminLoadingOverlay } from '../../components/ui/AdminLoading';
 import { formatRupiah, formatDate } from '../../lib/utils';
 import { subscribeToPaymentUpdates } from '../../lib/socket';
 
 export default function AdminPayments() {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [adminLoading, setAdminLoading] = useState(false);
   const [verifying, setVerifying] = useState(null);
   const [filter, setFilter] = useState('pending');
   const [searchQuery, setSearchQuery] = useState('');
@@ -55,14 +57,22 @@ export default function AdminPayments() {
 
   const loadPayments = async () => {
     try {
-      setLoading(true);
+      setAdminLoading(true);
       let response;
-      
+
       if (filter === 'pending') {
         response = await paymentAPI.getPendingPayments();
         const data = response.data.payments || [];
         setPayments(data);
         setTotalCount(data.length);
+      } else if (filter === 'all') {
+        response = await paymentAPI.getAllPayments({
+          limit: pageSize,
+          offset: (currentPage - 1) * pageSize,
+        });
+        const data = response.data.payments || response.data.rows || [];
+        setPayments(data);
+        setTotalCount(response.data.count || data.length);
       } else {
         response = await paymentAPI.getAllPayments({
           status: filter,
@@ -76,6 +86,7 @@ export default function AdminPayments() {
     } catch (error) {
       console.error('Failed to load payments:', error);
     } finally {
+      setAdminLoading(false);
       setLoading(false);
     }
   };
@@ -84,14 +95,17 @@ export default function AdminPayments() {
     if (!confirm(`Verifikasi pembayaran ini sebagai ${status}?`)) return;
 
     setVerifying(paymentId);
+    setAdminLoading(true);
     try {
       await paymentAPI.verifyPayment(paymentId, status, rejectionReason);
+      alert(`✅ Pembayaran ${status === 'verified' ? 'diverifikasi' : 'ditolak'}`);
       loadPayments();
       loadStats();
     } catch (error) {
       alert(error.response?.data?.error || 'Gagal verifikasi pembayaran');
     } finally {
       setVerifying(null);
+      setAdminLoading(false);
     }
   };
 
@@ -138,6 +152,8 @@ export default function AdminPayments() {
 
   return (
     <div className="space-y-4 pb-6">
+      {/* Admin Loading Overlay */}
+      <AdminLoadingOverlay isLoading={adminLoading} text="Memuat data..." />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

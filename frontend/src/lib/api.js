@@ -45,11 +45,14 @@ api.interceptors.response.use(
 // Auth API
 export const authAPI = {
   customerAuth: (name, phone) => api.post('/auth/customer', { name, phone }),
-  staffLogin: (phone, passwordOrPin) => api.post('/auth/staff', { 
-    phone, 
-    password: passwordOrPin,
-    pin: passwordOrPin
-  }),
+  staffLogin: (phone, passwordOrPin) => {
+    // Check if it's a 6-digit PIN (numeric only)
+    const isPin = /^\d{6}$/.test(passwordOrPin);
+    return api.post('/auth/staff', {
+      phone,
+      ...(isPin ? { pin: passwordOrPin } : { password: passwordOrPin })
+    });
+  },
   getProfile: () => api.get('/profile'),
   updateProfile: (data) => api.put('/profile', data),
   getUsers: (params) => api.get('/users', { params }),
@@ -60,7 +63,15 @@ export const authAPI = {
 // Customer PIN API
 export const customerPINAPI = {
   verifyPIN: (phone, pin) => api.post('/customer-pin/verify', { phone, pin }),
-  setPIN: (pin) => api.post('/customer-pin/set', { pin }),
+  
+  // Set PIN - accepts optional token parameter for setup token
+  setPIN: (pin, token) => {
+    const headers = token 
+      ? { headers: { Authorization: `Bearer ${token}` } }
+      : {};
+    return api.post('/customer-pin/set', { pin }, headers);
+  },
+  
   forgotPIN: (phone, email) => api.post('/customer-pin/forgot', { phone, email }),
   resetPIN: (token, email, new_pin) => api.post('/customer-pin/reset', { token, email, new_pin }),
   checkStatus: () => api.get('/customer-pin/status'),

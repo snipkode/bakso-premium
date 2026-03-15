@@ -65,6 +65,8 @@ export default function OrdersPage() {
       }));
     } catch (error) {
       console.error('Failed to load orders:', error);
+      alert('Gagal memuat pesanan. Silakan refresh halaman.');
+      setOrders([]);
     } finally {
       setLoading(false);
     }
@@ -81,14 +83,14 @@ export default function OrdersPage() {
     { value: 'pending_payment', label: 'Belum Bayar', icon: '⏳' },
     { value: 'paid', label: 'Dibayar', icon: '✅' },
     { value: 'preparing', label: 'Disiapkan', icon: '👨‍🍳' },
-    { value: 'ready', label: 'Siap', icon: '🍜' },
-    { value: 'delivering', label: 'Dikirim', icon: '🛵' },
+    { value: 'ready', label: 'Siap', icon: '🍽️' }, // Dynamic: 🍽️ ready, 🛵 out_for_delivery
+    { value: 'out_for_delivery', label: 'Dikirim', icon: '🛵' },
     { value: 'completed', label: 'Selesai', icon: '🎉' },
   ];
 
   // Get orders that can be tracked (active orders)
   const trackableOrders = orders.filter(
-    (order) => ['pending_payment', 'paid', 'preparing', 'ready', 'delivering'].includes(order.status)
+    (order) => ['pending_payment', 'paid', 'preparing', 'ready', 'out_for_delivery'].includes(order.status)
   );
 
   const getStatusIcon = (status) => {
@@ -97,19 +99,25 @@ export default function OrdersPage() {
       paid: <CheckCircle className="w-5 h-5" />,
       preparing: <ChefHat className="w-5 h-5" />,
       ready: <ShoppingBag className="w-5 h-5" />,
-      delivering: <Truck className="w-5 h-5" />,
+      out_for_delivery: <Truck className="w-5 h-5" />,
       completed: <CheckCircle className="w-5 h-5" />,
     };
     return icons[status] || <Clock className="w-5 h-5" />;
   };
 
-  const getStatusLabelShort = (status) => {
+  const getStatusLabelShort = (status, orderType) => {
+    // Context-aware status labels based on order type
+    if (status === 'ready') {
+      if (orderType === 'takeaway') return 'Siap Diambil';
+      if (orderType === 'dine-in') return 'Siap Disajikan';
+      return 'Siap Diantar';
+    }
+    if (status === 'out_for_delivery') return 'Dikirim';
+    
     const labels = {
       pending_payment: 'Belum Bayar',
       paid: 'Dibayar',
       preparing: 'Disiapkan',
-      ready: 'Siap Diantar',
-      delivering: 'Dikirim',
       completed: 'Selesai',
     };
     return labels[status] || getStatusLabel(status);
@@ -141,7 +149,7 @@ export default function OrdersPage() {
         gradient: 'from-green-500 to-emerald-500',
         icon: <ShoppingBag className="w-6 h-6" />,
       },
-      delivering: {
+      out_for_delivery: {
         title: 'Lacak Pesanan',
         subtitle: 'Sedang dikirim',
         gradient: 'from-primary to-purple-500',
@@ -151,15 +159,21 @@ export default function OrdersPage() {
     return configs[status] || configs.pending_payment;
   };
 
-  const getTrackCardText = (status) => {
+  const getTrackCardText = (status, orderType) => {
+    // Context-aware status text based on order type
+    if (status === 'ready') {
+      if (orderType === 'takeaway') return 'Siap diambil';
+      if (orderType === 'dine-in') return 'Siap disajikan';
+      return 'Siap diantrar';
+    }
+    if (status === 'out_for_delivery') return 'Sedang dikirim';
+    
     const texts = {
       pending_payment: 'Perlu pembayaran',
       paid: 'Menunggu verifikasi',
       preparing: 'Sedang disiapkan',
-      ready: 'Siap diantrar',
-      delivering: 'Sedang dikirim',
     };
-    return texts[status] || getStatusLabelShort(status);
+    return texts[status] || getStatusLabelShort(status, orderType);
   };
 
   if (loading) {
@@ -190,7 +204,7 @@ export default function OrdersPage() {
             </p>
           </div>
           <IconButton
-            onClick={() => navigate('/menu')}
+            onClick={() => navigate('/')}
             className="bg-gradient-to-r from-primary to-orange-500 text-white hover:shadow-lg"
           >
             <ShoppingBag className="w-5 h-5" />
@@ -199,23 +213,23 @@ export default function OrdersPage() {
       </div>
 
       {/* Track Active Order Card */}
-      {trackableOrders.length > 0 && (
+      {trackableOrders.length > 0 && trackableOrders[0] && (
         <div className="px-4 py-4">
           <Card
             onClick={() => navigate(`/track/${trackableOrders[0].id}`)}
-            className={`p-4 bg-gradient-to-r ${getTrackCardConfig(trackableOrders[0].status).gradient} text-white cursor-pointer hover:shadow-xl transition-all transform hover:scale-[1.02]`}
+            className={`p-4 bg-gradient-to-r ${getTrackCardConfig(trackableOrders[0].status)?.gradient || 'from-primary to-orange-500'} text-white cursor-pointer hover:shadow-xl transition-all transform hover:scale-[1.02]`}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
-                  {getTrackCardConfig(trackableOrders[0].status).icon}
+                  {getTrackCardConfig(trackableOrders[0].status)?.icon || <ShoppingBag className="w-6 h-6" />}
                 </div>
                 <div>
                   <h3 className="font-bold text-lg">
-                    {getTrackCardConfig(trackableOrders[0].status).title}
+                    {getTrackCardConfig(trackableOrders[0].status)?.title || 'Lacak Pesanan'}
                   </h3>
                   <p className="text-sm text-white/90">
-                    #{trackableOrders[0].order_number} - {getTrackCardText(trackableOrders[0].status)}
+                    #{trackableOrders[0].order_number} - {getTrackCardText(trackableOrders[0].status, trackableOrders[0].order_type)}
                   </p>
                 </div>
               </div>
@@ -396,7 +410,7 @@ export default function OrdersPage() {
                   Mulai pesan bakso favoritmu dan nikmati kelezatannya!
                 </p>
                 <Button
-                  onClick={() => navigate('/menu')}
+                  onClick={() => navigate('/')}
                   className="bg-gradient-to-r from-primary to-orange-500 hover:from-primary/90 hover:to-orange-500/90 shadow-lg shadow-primary/30 py-3 px-6 rounded-full font-semibold"
                 >
                   <ShoppingBag className="w-4 h-4 mr-2 inline" />
@@ -513,11 +527,19 @@ function OrderItemCard({ order, onClick, getStatusIcon }) {
     paid: { bg: 'from-blue-50 to-cyan-50', border: 'border-blue-200', text: 'text-blue-600' },
     preparing: { bg: 'from-orange-50 to-amber-50', border: 'border-orange-200', text: 'text-orange-600' },
     ready: { bg: 'from-green-50 to-emerald-50', border: 'border-green-200', text: 'text-green-600' },
-    delivering: { bg: 'from-purple-50 to-pink-50', border: 'border-purple-200', text: 'text-purple-600' },
+    out_for_delivery: { bg: 'from-purple-50 to-pink-50', border: 'border-purple-200', text: 'text-purple-600' },
     completed: { bg: 'from-gray-50 to-slate-50', border: 'border-gray-200', text: 'text-gray-600' },
   };
 
   const config = statusConfig[order.status] || statusConfig.pending_payment;
+
+  // Get context-aware status label
+  let statusLabel = getStatusLabel(order.status);
+  if (order.status === 'ready') {
+    if (order.order_type === 'takeaway') statusLabel = 'Siap Diambil';
+    else if (order.order_type === 'dine-in') statusLabel = 'Siap Disajikan';
+    else statusLabel = 'Siap Diantar';
+  }
 
   return (
     <Card
@@ -531,7 +553,7 @@ function OrderItemCard({ order, onClick, getStatusIcon }) {
               #{order.order_number}
             </span>
             <Badge variant={getStatusColor(order.status)} className="text-[10px] px-2 py-0.5">
-              {getStatusLabel(order.status)}
+              {statusLabel}
             </Badge>
           </div>
           <h3 className="font-bold text-gray-900 dark:text-white">

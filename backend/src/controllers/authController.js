@@ -1,13 +1,35 @@
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const { User } = require('../models');
 const { Op } = require('sequelize');
+const { trackFailedPINAttempt, resetPINAttempts } = require('../middleware/twoFactorAuth');
 
 // Generate JWT token
-const generateToken = (user) => {
+const generateToken = (user, options = {}) => {
+  const payload = { 
+    id: user.id, 
+    role: user.role, 
+    phone: user.phone,
+    ...options 
+  };
+  
+  return jwt.sign(payload, process.env.JWT_SECRET, { 
+    expiresIn: options.expiresIn || '30d' 
+  });
+};
+
+// Generate limited-scope setup token (for 2FA setup only)
+const generateSetupToken = (user) => {
   return jwt.sign(
-    { id: user.id, role: user.role, phone: user.phone },
+    { 
+      id: user.id, 
+      role: user.role, 
+      phone: user.phone,
+      scope: 'pin_setup_only',
+      is_pin_setup: true
+    },
     process.env.JWT_SECRET,
-    { expiresIn: '30d' }
+    { expiresIn: '10m' } // 10 minutes only
   );
 };
 
@@ -161,6 +183,33 @@ exports.staffLogin = async (req, res) => {
     user.last_active = new Date();
     await user.save();
 
+    // Check if 2FA is required (STAFF ONLY)
+    const isStaff = ['admin', 'kitchen', 'driver'].includes(user.role);
+    const needsPIN = isStaff && !user.is_pin_set;
+    const needsPasswordSetup = isStaff && (!user.password || user.password.trim() === '');
+    const requires2FASetup = needsPIN || needsPasswordSetup;
+
+    if (requires2FASetup) {
+      // STAFF: Return LIMITED setup token - can ONLY be used for PIN/password setup
+      const setupToken = generateSetupToken(user);
+      
+      return res.json({
+        success: true,
+        requires_2fa_setup: true,
+        setup_token: setupToken, // Limited token - 10 min expiry, pin_setup_only scope
+        user: {
+          id: user.id,
+          name: user.name,
+          phone: user.phone,
+          email: user.email,
+          role: user.role,
+          is_pin_set: user.is_pin_set,
+          needs_password_setup: needsPasswordSetup,
+        },
+      });
+    }
+
+    // STAFF with 2FA complete OR CUSTOMER: Return full access token
     const token = generateToken(user);
 
     res.json({
@@ -173,6 +222,9 @@ exports.staffLogin = async (req, res) => {
         email: user.email,
         role: user.role,
         is_pin_set: user.is_pin_set,
+        // For customers, include PIN expiry info
+        pin_expires: user.pin_reset_expires,
+        needs_password_setup: false,
       },
     });
   } catch (error) {

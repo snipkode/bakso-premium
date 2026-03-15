@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, LogOut, ChefHat, Clock, CheckCircle, Play, AlertCircle, Truck } from 'lucide-react';
+import { LogOut, ChefHat, Clock, CheckCircle, Play, AlertCircle, Truck } from 'lucide-react';
 import { orderAPI } from '../../lib/api';
 import { useAuthStore } from '../../store';
 import { connectSocket } from '../../lib/socket';
@@ -116,14 +116,6 @@ export default function KitchenView() {
         <div className="px-3 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate(-1)}
-                className="p-2 h-auto"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
               <div>
                 <h1 className="text-lg font-bold text-gray-900 dark:text-white">Kitchen View</h1>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Manage orders</p>

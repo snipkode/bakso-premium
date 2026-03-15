@@ -306,25 +306,26 @@ async function scenario5_PaymentProcessing() {
 
 async function scenario6_AdminOrderManagement() {
   logStep('Scenario 6: Admin Order Management');
-  
+
   const results = [];
-  
+
   results.push(await test('Admin can view all orders', async () => {
     const response = await axios.get(`${API_URL}/orders`, {
       params: { limit: 10 },
       headers: { Authorization: `Bearer ${state.adminToken}` },
     });
-    
+
     const orders = response.data.orders || response.data.rows || [];
     assert(orders.length > 0, 'Should have orders');
-    
+
     const ourOrder = orders.find(o => o.id === state.order.id);
     assert(ourOrder, 'Should find our test order');
-    
+
     log(`      Total orders: ${orders.length}`);
     log(`      Found order: ${ourOrder.order_number}`);
+    log(`      Order Type: ${ourOrder.order_type}`);
   }));
-  
+
   results.push(await test('Admin can update order status', async () => {
     // Update to preparing
     await axios.patch(`${API_URL}/orders/${state.order.id}/status`, {
@@ -332,29 +333,39 @@ async function scenario6_AdminOrderManagement() {
     }, {
       headers: { Authorization: `Bearer ${state.adminToken}` },
     });
-    
+
     log(`      Status: paid → preparing`);
-    
+
     // Update to ready
     await axios.patch(`${API_URL}/orders/${state.order.id}/status`, {
       status: 'ready',
     }, {
       headers: { Authorization: `Bearer ${state.adminToken}` },
     });
-    
+
     log(`      Status: preparing → ready`);
-    
+
+    // For delivery orders, test out_for_delivery step
+    if (state.order.order_type === 'delivery') {
+      await axios.patch(`${API_URL}/orders/${state.order.id}/status`, {
+        status: 'out_for_delivery',
+      }, {
+        headers: { Authorization: `Bearer ${state.adminToken}` },
+      });
+      log(`      Status: ready → out_for_delivery (delivery only)`);
+    }
+
     // Update to completed
     const response = await axios.patch(`${API_URL}/orders/${state.order.id}/status`, {
       status: 'completed',
     }, {
       headers: { Authorization: `Bearer ${state.adminToken}` },
     });
-    
+
     assert(response.data.success, 'Should return success');
-    log(`      Status: ready → completed`);
+    log(`      Status: ${state.order.order_type === 'delivery' ? 'out_for_delivery' : 'ready'} → completed`);
   }));
-  
+
   return results;
 }
 

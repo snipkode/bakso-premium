@@ -102,7 +102,7 @@ export const useAuthStore = create(
         try {
           // Determine if it's password or PIN login
           const isPinLogin = /^\d{6}$/.test(passwordOrPin);
-          
+
           const { data } = await authAPI.staffLogin(phone, passwordOrPin, isPinLogin);
 
           // Validate user data
@@ -110,6 +110,16 @@ export const useAuthStore = create(
             throw new Error('Invalid user data from server');
           }
 
+          // 🔐 Check if 2FA setup is required
+          if (data.requires_2fa_setup) {
+            // Don't save token yet - user needs to setup PIN first
+            set({
+              isLoading: false,
+            });
+            return data; // Return to LoginPage for 2FA setup
+          }
+
+          // 2FA complete - save token and login
           set({
             user: data.user,
             token: data.token,

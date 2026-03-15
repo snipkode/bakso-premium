@@ -12,6 +12,7 @@ import CheckoutPage from '@/pages/CheckoutPage';
 import OrderSuccessPage from '@/pages/OrderSuccessPage';
 import OrdersPage from '@/pages/OrdersPage';
 import OrderDetailPage from '@/pages/OrderDetailPage';
+import CustomerOrderDetail from '@/pages/CustomerOrderDetail';
 import TrackOrderPage from '@/pages/TrackOrderPage';
 import ProfilePage from '@/pages/ProfilePage';
 import LoginPage from '@/pages/LoginPage';
@@ -31,6 +32,7 @@ import NotFoundPage from '@/pages/NotFoundPage';
 // Components
 import { BottomNav } from '@/components/BottomNav';
 import { Toaster } from '@/components/Toaster';
+import { ToastProvider } from '@/components/Toast';
 
 function App() {
   const { isAuthenticated, user, token, validateToken } = useAuthStore();
@@ -77,8 +79,9 @@ function App() {
   };
 
   return (
-    <BrowserRouter>
-      <div className="min-h-screen bg-background pb-20">
+    <ToastProvider>
+      <BrowserRouter>
+        <div className="min-h-screen bg-background pb-20">
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
@@ -103,7 +106,7 @@ function App() {
             path="/orders/:id"
             element={
               <ProtectedRoute roles={['customer']}>
-                <OrderDetailPage />
+                <CustomerOrderDetail />
               </ProtectedRoute>
             }
           />
@@ -168,11 +171,12 @@ function App() {
 
         {/* Bottom Navigation for Customer */}
         {isAuthenticated && user?.role === 'customer' && <BottomNav />}
-        
+
         {/* Toast notifications */}
         <Toaster />
       </div>
-    </BrowserRouter>
+      </BrowserRouter>
+    </ToastProvider>
   );
 }
 

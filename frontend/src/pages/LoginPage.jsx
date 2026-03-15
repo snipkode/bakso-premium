@@ -1,16 +1,21 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import axios from 'axios';
 import { User, Phone, ArrowRight, ChefHat, Eye, EyeOff, Sparkles, KeyRound, Mail, Shield, CheckCircle } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { Button, Input, Card } from '@/components/ui/BaseComponents';
 import { BaksoLoginAnimation } from '@/components/ui/BaksoLoginAnimation';
 import { BaksoIconAnimation } from '@/components/ui/BaksoIconAnimation';
 import { PINOnboardingModal } from '@/components/ui/PINOnboardingModal';
+import { StaffPINSetupModal } from '@/components/ui/StaffPINSetupModal';
+import { StaffPasswordSetupModal } from '@/components/ui/StaffPasswordSetupModal';
 import { customerPINAPI } from '@/lib/api';
+import { useToast } from '@/components/Toast';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const toast = useToast();
   const { customerAuth, staffLogin, customerPINLogin, isLoading, error, needsPINOnboarding, setNeedsPINOnboarding } = useAuthStore();
 
   const [loginType, setLoginType] = useState('customer');
@@ -18,6 +23,11 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showPIN, setShowPIN] = useState(false);
   const [staffLoginType, setStaffLoginType] = useState('password');
+  
+  // Two-factor auth states
+  const [requiresPINSetup, setRequiresPINSetup] = useState(false);
+  const [requiresPasswordSetup, setRequiresPasswordSetup] = useState(false);
+  const [pendingStaffData, setPendingStaffData] = useState(null); // Store temp data during setup
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showExistingUserModal, setShowExistingUserModal] = useState(false);
   const [showResetPINModal, setShowResetPINModal] = useState(false);
@@ -179,7 +189,7 @@ export default function LoginPage() {
     } catch (error) {
       console.error('❌ Failed to send reset email:', error);
       const errorMsg = error.response?.data?.error || 'Gagal mengirim link reset PIN';
-      alert('⚠️ ' + errorMsg);
+      toast({ title: 'Akun Terdeteksi', description: errorMsg, variant: 'warning' });
     } finally {
       setResetLoading(false);
     }
@@ -211,15 +221,15 @@ export default function LoginPage() {
       const result = await customerAuth(formData.name, formData.phone);
       
       console.log('📊 Login result:', result);
-      
+
       // Check if user is actually staff (should use staff login instead)
       if (result?.user?.role && result.user.role !== 'customer') {
-        alert(
-          '⚠️ Akun Staff Terdeteksi!\n\n' +
-          `Akun ini terdaftar sebagai ${result.user.role}.\n\n` +
-          'Silakan gunakan form login Staff untuk masuk.'
-        );
-        
+        toast({ 
+          title: 'Akun Staff Terdeteksi', 
+          description: `Akun ini terdaftar sebagai ${result.user.role}. Silakan gunakan login Staff.`, 
+          variant: 'warning' 
+        });
+
         // Redirect to staff login
         setLoginType('staff');
         setFormData({
@@ -268,7 +278,7 @@ export default function LoginPage() {
         }, 1000);
       } else {
         // Other errors
-        alert(error.response?.data?.error || 'Terjadi kesalahan. Silakan coba lagi.');
+        toast({ title: 'Error', description: error.response?.data?.error || 'Terjadi kesalahan.', variant: 'error' });
       }
     }
   };
@@ -300,7 +310,7 @@ export default function LoginPage() {
         navigate('/menu');
       } else {
         console.error('❌ ERROR: Token not saved to localStorage!');
-        alert('Terjadi kesalahan. Silakan coba lagi.');
+        toast({ title: 'Error', description: 'Terjadi kesalahan.', variant: 'error' });
       }
     } catch (error) {
       console.error('❌ PIN login failed:', error);
@@ -311,17 +321,17 @@ export default function LoginPage() {
         const userData = error.response.data.user;
         
         console.log('⚠️ User exists but PIN not set:', userData);
-        
+
         // Store user data temporarily for onboarding
         localStorage.setItem('pending_user', JSON.stringify(userData));
-        
+
         // Redirect to onboarding
-        alert(
-          '🔒 Akun Belum Lengkap\n\n' +
-          'Nomor ini sudah terdaftar tetapi belum mengatur PIN.\n\n' +
-          'Silakan atur PIN untuk melanjutkan.'
-        );
-        
+        toast({ 
+          title: 'Akun Belum Lengkap', 
+          description: 'Nomor ini sudah terdaftar tetapi belum mengatur PIN.', 
+          variant: 'warning' 
+        });
+
         // Switch to new customer tab for onboarding
         setCustomerSubTab('new');
         setFormData({
@@ -340,7 +350,7 @@ export default function LoginPage() {
       }
       
       // Other errors
-      alert(error.response?.data?.error || 'PIN salah atau terjadi kesalahan.');
+      toast({ title: 'Login Gagal', description: error.response?.data?.error || 'PIN salah.', variant: 'error' });
     }
   };
 
@@ -364,34 +374,78 @@ export default function LoginPage() {
 
   const handleStaffLogin = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
     
+    console.log('🔘 Staff login button clicked!');
+    console.log('🛑 Preventing default form submission');
+    console.log('📝 Form data:', formData);
+    console.log('🔑 Login type:', staffLoginType);
+
     // Validate based on login type
     if (staffLoginType === 'pin') {
       if (!validateForm('staff-pin')) {
         return;
       }
-      
+
       // Staff PIN login - use staffLogin API with pin parameter
       try {
         console.log('🔑 Staff PIN login:', formData.phone, formData.pin);
-        
+
         // Call staffLogin with pin instead of password
         const result = await staffLogin(formData.phone, formData.pin);
-        
+
         console.log('✅ Staff PIN login successful:', result);
-        
+
         const role = result?.user?.role;
-        
+
         // Verify user is staff
         if (!['admin', 'kitchen', 'driver'].includes(role)) {
-          alert('⚠️ Akun ini bukan akun Staff. Silakan gunakan login Customer.');
+          toast({
+            title: 'Akses Ditolak',
+            description: 'Akun ini bukan akun Staff. Silakan gunakan login Customer.',
+            variant: 'error',
+          });
           return;
         }
+
+        // 🔐 E2E VERIFIED: Check if 2FA setup is required (STAFF ONLY)
+        // Backend returns: requires_2fa_setup: true + setup_token (10 min expiry)
+        if (result?.requires_2fa_setup) {
+          console.log('🔐 2FA setup required - storing SETUP token (limited, 10 min)');
+          
+          // Store setup token temporarily (NOT in localStorage!)
+          setPendingStaffData({
+            setupToken: result.setup_token, // Limited: pin_setup_only scope
+            user: result.user,
+            needsPIN: !result.user.is_pin_set,
+            needsPassword: result.user.needs_password_setup,
+          });
+          
+          // Show setup modals
+          if (!result.user.is_pin_set) {
+            console.log('⚠️ PIN not set - showing PIN setup modal');
+            setRequiresPINSetup(true);
+          }
+          if (result.user.needs_password_setup) {
+            console.log('⚠️ Password not set - showing password setup modal');
+            setRequiresPasswordSetup(true);
+          }
+          
+          toast({
+            title: 'Setup Diperlukan',
+            description: 'Silakan set PIN untuk keamanan akun Anda.',
+            variant: 'warning',
+          });
+          return; // ⛔ DO NOT redirect - must setup first
+        }
+
+        // ✅ E2E VERIFIED: 2FA complete - store FULL token (30 days) and redirect
+        console.log('✅ 2FA complete - storing FULL access token');
         
-        // Store auth data
+        // Store auth data and redirect
         localStorage.setItem('token', result.token);
         localStorage.setItem('user', JSON.stringify(result.user));
-        
+
         // Redirect based on role
         if (role === 'admin') {
           navigate('/admin');
@@ -402,7 +456,12 @@ export default function LoginPage() {
         }
       } catch (error) {
         console.error('❌ Staff PIN login failed:', error);
-        
+        console.log('🛑 ERROR DETAILS:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message
+        });
+
         // Handle PIN expired for staff
         if (error.response?.status === 403 && error.response?.data?.pin_expired) {
           // Store user data and show confirmation modal
@@ -410,19 +469,71 @@ export default function LoginPage() {
           setShowExpiredPINModal(true);
           return;
         }
+
+        // Show error toast - NO redirect on failed login
+        toast({
+          title: 'Login Gagal',
+          description: error.response?.data?.error || 'PIN salah atau terjadi kesalahan.',
+          variant: 'error',
+        });
         
-        alert(error.response?.data?.error || 'PIN salah atau terjadi kesalahan.');
+        // ⛔ EXPLICIT: DO NOT redirect - let user try again
+        console.log('🛑 Staying on login page - user can retry');
+        console.log('📍 Current path:', window.location.pathname);
       }
     } else {
       // Staff password login
       if (!validateForm('staff')) {
         return;
       }
-      
+
       try {
         const result = await staffLogin(formData.phone, formData.password);
         const role = result?.user?.role;
+
+        // Verify user is staff
+        if (!['admin', 'kitchen', 'driver'].includes(role)) {
+          toast({
+            title: 'Akses Ditolak',
+            description: 'Akun ini bukan akun Staff. Silakan gunakan login Customer.',
+            variant: 'error',
+          });
+          return;
+        }
+
+        // 🔐 E2E VERIFIED: Check if 2FA setup is required (STAFF ONLY)
+        if (result?.requires_2fa_setup) {
+          console.log('🔐 2FA setup required - storing SETUP token (limited, 10 min)');
+          
+          setPendingStaffData({
+            setupToken: result.setup_token,
+            user: result.user,
+            needsPIN: !result.user.is_pin_set,
+            needsPassword: result.user.needs_password_setup,
+          });
+          
+          if (!result.user.is_pin_set) {
+            setRequiresPINSetup(true);
+          }
+          if (result.user.needs_password_setup) {
+            setRequiresPasswordSetup(true);
+          }
+          
+          toast({
+            title: 'Setup Diperlukan',
+            description: 'Silakan set PIN untuk keamanan akun Anda.',
+            variant: 'warning',
+          });
+          return; // ⛔ DO NOT redirect
+        }
+
+        // ✅ E2E VERIFIED: 2FA complete - store FULL token and redirect
+        console.log('✅ 2FA complete - storing FULL access token');
         
+        // Store auth data and redirect
+        localStorage.setItem('token', result.token);
+        localStorage.setItem('user', JSON.stringify(result.user));
+
         // Redirect based on role
         if (role === 'admin') {
           navigate('/admin');
@@ -430,12 +541,120 @@ export default function LoginPage() {
           navigate('/kitchen');
         } else if (role === 'driver') {
           navigate('/driver');
-        } else {
-          navigate('/');
         }
       } catch (error) {
-        console.error('Staff login failed:', error);
+        console.error('❌ Staff password login failed:', error);
+        console.log('🛑 ERROR DETAILS:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message
+        });
+        
+        // Show error toast - NO redirect on failed login
+        toast({
+          title: 'Login Gagal',
+          description: error.response?.data?.error || 'Password salah atau terjadi kesalahan.',
+          variant: 'error',
+        });
+        
+        // ⛔ EXPLICIT: DO NOT redirect - let user try again
+        console.log('🛑 Staying on login page - user can retry');
       }
+    }
+  };
+
+  // Handle PIN setup completion (STAFF 2FA - E2E VERIFIED)
+  const handlePINSetupComplete = async (pin) => {
+    try {
+      console.log('🔑 Setting PIN with setup token (Staff 2FA)...');
+      
+      // Use setup token from pendingStaffData
+      const { setupToken, user } = pendingStaffData || {};
+      
+      if (!setupToken) {
+        throw new Error('No setup token available');
+      }
+      
+      // ✅ Use Staff 2FA API (NOT customer PIN API)
+      const { data } = await axios.post(
+        'http://localhost:9000/api/staff-2fa/setup-pin',
+        { pin },
+        { headers: { Authorization: `Bearer ${setupToken}` } }
+      );
+      
+      console.log('✅ Staff 2FA PIN set successfully:', data);
+      setRequiresPINSetup(false);
+      
+      // If password also needs setup, show that modal next
+      if (pendingStaffData?.needsPassword) {
+        console.log('🔐 Password setup still needed');
+        return;
+      }
+      
+      // ✅ Complete 2FA setup - get FULL token
+      console.log('🔑 Completing 2FA setup - getting full access token...');
+      const { data: loginData } = await axios.post(
+        'http://localhost:9000/api/staff-2fa/complete',
+        {},
+        { headers: { Authorization: `Bearer ${setupToken}` } }
+      );
+      
+      // Store FULL token (30 day expiry)
+      localStorage.setItem('token', loginData.token);
+      localStorage.setItem('user', JSON.stringify(loginData.user));
+      
+      toast({
+        title: 'PIN Berhasil Diset',
+        description: 'Two-factor authentication berhasil diaktifkan.',
+        variant: 'success',
+      });
+      
+      // Redirect based on role
+      const role = loginData.user.role;
+      if (role === 'admin') navigate('/admin');
+      else if (role === 'kitchen') navigate('/kitchen');
+      else if (role === 'driver') navigate('/driver');
+      
+    } catch (error) {
+      console.error('❌ Failed to set staff 2FA PIN:', error);
+      toast({
+        title: 'Gagal Set PIN',
+        description: error.response?.data?.error || 'Terjadi kesalahan.',
+        variant: 'error',
+      });
+    }
+  };
+
+  // Handle password setup completion (future implementation)
+  const handlePasswordSetupComplete = async (newPassword) => {
+    try {
+      // Call API to update password
+      // await authAPI.updatePassword(newPassword);
+      
+      setRequiresPasswordSetup(false);
+      
+      // If both PIN and password are set, complete login
+      if (pendingStaffData && !pendingStaffData.needsPIN) {
+        localStorage.setItem('token', pendingStaffData.token);
+        localStorage.setItem('user', JSON.stringify(pendingStaffData.user));
+        
+        const role = pendingStaffData.user.role;
+        if (role === 'admin') navigate('/admin');
+        else if (role === 'kitchen') navigate('/kitchen');
+        else if (role === 'driver') navigate('/driver');
+      }
+      
+      toast({
+        title: 'Password Berhasil Diset',
+        description: 'Password Anda telah berhasil diset.',
+        variant: 'success',
+      });
+    } catch (error) {
+      toast({
+        title: 'Gagal Set Password',
+        description: error.response?.data?.error || 'Terjadi kesalahan.',
+        variant: 'error',
+      });
     }
   };
 
@@ -988,6 +1207,28 @@ export default function LoginPage() {
         isOpen={showOnboarding}
         onClose={() => setShowOnboarding(false)}
         onComplete={handleOnboardingComplete}
+      />
+
+      {/* Staff PIN Setup Modal (Two-Factor Auth) */}
+      <StaffPINSetupModal
+        isOpen={requiresPINSetup}
+        onClose={() => {
+          setRequiresPINSetup(false);
+          setPendingStaffData(null);
+        }}
+        onComplete={handlePINSetupComplete}
+        userName={pendingStaffData?.user?.name || 'Staff'}
+      />
+
+      {/* Staff Password Setup Modal (Two-Factor Auth) */}
+      <StaffPasswordSetupModal
+        isOpen={requiresPasswordSetup}
+        onClose={() => {
+          setRequiresPasswordSetup(false);
+          setPendingStaffData(null);
+        }}
+        onComplete={handlePasswordSetupComplete}
+        userName={pendingStaffData?.user?.name || 'Staff'}
       />
 
       {/* Existing User Modal with Timer */}
