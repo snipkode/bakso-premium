@@ -238,18 +238,42 @@ export default function ProfilePage() {
 
           <div className="relative z-10">
             <div className="flex items-center gap-4 mb-4">
-              <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-2xl font-bold border-2 border-white/30 shadow-lg">
+              <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-2xl font-bold border-2 border-white/30 shadow-lg relative">
                 {user?.name?.charAt(0).toUpperCase()}
+                {/* Verified Badge */}
+                {user?.email ? (
+                  <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-green-500 rounded-full border-4 border-primary flex items-center justify-center shadow-lg" title="Akun Terverifikasi">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                ) : (
+                  <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-red-500 rounded-full border-4 border-primary flex items-center justify-center shadow-lg" title="Belum Terverifikasi">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </div>
+                )}
               </div>
               <div className="flex-1">
-                <h2 className="text-xl font-bold mb-1">{user?.name || 'User'}</h2>
+                <h2 className="text-xl font-bold mb-1 flex items-center gap-2">
+                  {user?.name || 'User'}
+                  {user?.email && (
+                    <span className="text-xs bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      Verified
+                    </span>
+                  )}
+                </h2>
                 <p className="text-sm text-white/90 flex items-center gap-1">
                   <Phone className="w-3 h-3" />
                   {user?.phone || 'Belum diatur'}
                 </p>
                 <p className="text-xs text-white/70 mt-1 flex items-center gap-1">
                   <Mail className="w-3 h-3" />
-                  {user?.email || 'Belum diatur'}
+                  {user?.email || <span className="text-red-300">Belum diatur</span>}
                 </p>
               </div>
               <IconButton
