@@ -53,12 +53,12 @@ export const authAPI = {
       ...(isPin ? { pin: passwordOrPin } : { password: passwordOrPin })
     });
   },
-  getProfile: () => api.get('/profile'),
-  updateProfile: (data) => api.put('/profile', data),
+  getProfile: () => api.get('/auth/profile'),
+  updateProfile: (data) => api.put('/auth/profile', data),
   sendVerificationEmail: () => api.post('/auth/send-verification-email'),
-  getUsers: (params) => api.get('/users', { params }),
-  updateUserStatus: (id, status) => api.put(`/users/${id}/status`, { status }),
-  deleteUser: (id) => api.delete(`/users/${id}`),
+  getUsers: (params) => api.get('/auth/users', { params }),
+  updateUserStatus: (id, status) => api.put(`/auth/users/${id}/status`, { status }),
+  deleteUser: (id) => api.delete(`/auth/users/${id}`),
 };
 
 // Customer PIN API
