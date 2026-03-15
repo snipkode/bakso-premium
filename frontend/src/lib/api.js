@@ -55,6 +55,7 @@ export const authAPI = {
   },
   getProfile: () => api.get('/profile'),
   updateProfile: (data) => api.put('/profile', data),
+  sendVerificationEmail: () => api.post('/auth/send-verification-email'),
   getUsers: (params) => api.get('/users', { params }),
   updateUserStatus: (id, status) => api.put(`/users/${id}/status`, { status }),
   deleteUser: (id) => api.delete(`/users/${id}`),
