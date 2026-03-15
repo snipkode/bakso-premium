@@ -5,7 +5,7 @@ import { Card, Button, Badge } from '@/components/ui/BaseComponents';
 import {
   FileText, Download, Calendar, BarChart3, TrendingUp, DollarSign,
   ShoppingBag, Package, Users, ArrowUpRight, ArrowDownRight,
-  Filter, RefreshCw, FileSpreadsheet, Clock, CheckCircle,
+  Filter, RefreshCw, FileSpreadsheet, Clock, CheckCircle, Tag, Percent,
 } from 'lucide-react';
 
 export default function ReportsPage() {
@@ -243,6 +243,60 @@ export default function ReportsPage() {
               </p>
             </motion.div>
           </div>
+        )}
+
+        {/* Voucher Analytics */}
+        {stats && stats.voucherUsage && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700 mb-6"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-green-500/30">
+                <Tag className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Voucher Analytics</h2>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Voucher usage and discount statistics</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                <div className="flex items-center gap-2 mb-2">
+                  <Tag className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <span className="text-xs font-medium text-blue-700 dark:text-blue-300">Total Used</span>
+                </div>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {stats.voucherUsage.totalUsed || 0}
+                </p>
+                <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">vouchers redeemed</p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                <div className="flex items-center gap-2 mb-2">
+                  <DollarSign className="w-4 h-4 text-green-600 dark:text-green-400" />
+                  <span className="text-xs font-medium text-green-700 dark:text-green-300">Total Discount</span>
+                </div>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                  Rp {(stats.voucherUsage.totalDiscount || 0).toLocaleString('id-ID')}
+                </p>
+                <p className="text-xs text-green-600 dark:text-green-400 mt-1">given to customers</p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800">
+                <div className="flex items-center gap-2 mb-2">
+                  <Percent className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                  <span className="text-xs font-medium text-purple-700 dark:text-purple-300">Avg. Discount</span>
+                </div>
+                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                  {stats.voucherUsage.avgDiscount || 0}%
+                </p>
+                <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">per transaction</p>
+              </div>
+            </div>
+          </motion.div>
         )}
 
         {/* Generate Reports Section */}

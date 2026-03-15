@@ -1,15 +1,15 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Tag, X } from 'lucide-react';
 import { useCartStore, useAuthStore } from '../store';
 import { Button, Input, Card } from '../components/ui/BaseComponents';
 import { formatRupiah } from '../lib/utils';
-import { useState } from 'react';
-import { orderAPI, paymentAPI } from '../lib/api';
+import { useState, useEffect } from 'react';
+import { orderAPI, paymentAPI, voucherAPI } from '../lib/api';
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
   const { user, updateUser } = useAuthStore();
-  const { items, getSubtotal, orderType, notes, voucherCode, clearCart, setOrderType } = useCartStore();
+  const { items, getSubtotal, orderType, notes, voucherCode, clearCart, setOrderType, setVoucherCode } = useCartStore();
 
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
@@ -18,6 +18,13 @@ export default function CheckoutPage() {
   const [eWalletType, setEWalletType] = useState('GoPay');
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [tableNumber, setTableNumber] = useState('');
+  
+  // Voucher state
+  const [voucherInput, setVoucherInput] = useState('');
+  const [appliedVoucher, setAppliedVoucher] = useState(null);
+  const [voucherLoading, setVoucherLoading] = useState(false);
+  const [voucherError, setVoucherError] = useState('');
+  const [discount, setDiscount] = useState(0);
 
   // Customer data fields (for guest checkout or update)
   const [customerName, setCustomerName] = useState(user?.name || '');
@@ -25,7 +32,41 @@ export default function CheckoutPage() {
 
   const subtotal = getSubtotal();
   const deliveryFee = orderType === 'delivery' ? 15000 : 0;
-  const total = subtotal + deliveryFee;
+  const total = subtotal + deliveryFee - discount;
+
+  // Validate voucher
+  const handleValidateVoucher = async () => {
+    if (!voucherInput.trim()) return;
+    
+    try {
+      setVoucherLoading(true);
+      setVoucherError('');
+      
+      const { data } = await voucherAPI.validateVoucher(voucherInput.toUpperCase(), subtotal);
+      
+      if (data.valid) {
+        setAppliedVoucher(data.voucher);
+        setDiscount(data.discount);
+        setVoucherCode(data.voucher.code);
+        setVoucherInput('');
+      }
+    } catch (error) {
+      setVoucherError(error.response?.data?.error || 'Voucher tidak valid');
+      setAppliedVoucher(null);
+      setDiscount(0);
+      setVoucherCode(null);
+    } finally {
+      setVoucherLoading(false);
+    }
+  };
+
+  const handleRemoveVoucher = () => {
+    setAppliedVoucher(null);
+    setDiscount(0);
+    setVoucherCode(null);
+    setVoucherInput('');
+    setVoucherError('');
+  };
 
   const handlePlaceOrder = async () => {
     // Validation - Customer Data
@@ -66,6 +107,7 @@ export default function CheckoutPage() {
           notes: item.notes || '',
         })),
         notes,
+        voucher_code: appliedVoucher?.code || undefined,
       };
 
       const orderResponse = await orderAPI.createOrder(orderData);
@@ -327,6 +369,56 @@ export default function CheckoutPage() {
           />
         </Card>
 
+        {/* Voucher Code */}
+        <Card className="p-4">
+          <h3 className="font-semibold mb-3 flex items-center gap-2">
+            <Tag className="w-5 h-5 text-primary" />
+            Kode Voucher
+          </h3>
+          {appliedVoucher ? (
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-3">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <p className="font-bold text-green-800 dark:text-green-300">{appliedVoucher.name}</p>
+                  <p className="text-xs text-green-600 dark:text-green-400">{appliedVoucher.code}</p>
+                </div>
+                <button
+                  onClick={handleRemoveVoucher}
+                  className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                >
+                  <X className="w-4 h-4 text-red-600 dark:text-red-400" />
+                </button>
+              </div>
+              <p className="text-sm text-green-700 dark:text-green-400">
+                Discount: {appliedVoucher.type === 'percentage' ? `${appliedVoucher.value}%` : formatRupiah(appliedVoucher.value)}
+                {appliedVoucher.type === 'percentage' && appliedVoucher.max_discount && (
+                  <span className="text-xs ml-1">(Max: {formatRupiah(appliedVoucher.max_discount)})</span>
+                )}
+              </p>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <Input
+                placeholder="Masukkan kode voucher"
+                value={voucherInput}
+                onChange={(e) => setVoucherInput(e.target.value.toUpperCase())}
+                className="flex-1"
+              />
+              <Button
+                onClick={handleValidateVoucher}
+                isLoading={voucherLoading}
+                disabled={!voucherInput.trim()}
+                className="bg-gradient-to-r from-primary to-orange-500"
+              >
+                Pakai
+              </Button>
+            </div>
+          )}
+          {voucherError && (
+            <p className="text-xs text-red-600 dark:text-red-400 mt-2">{voucherError}</p>
+          )}
+        </Card>
+
         {/* Summary */}
         <Card className="p-4 bg-gradient-to-r from-orange-50 to-orange-100/50 dark:from-gray-800 dark:to-gray-700 border-orange-200 dark:border-gray-600">
           <h3 className="font-semibold mb-3">Ringkasan Pembayaran</h3>
@@ -339,6 +431,12 @@ export default function CheckoutPage() {
               <div className="flex justify-between text-sm">
                 <span className="text-text-secondary">Ongkir</span>
                 <span className="text-text-primary font-medium">{formatRupiah(deliveryFee)}</span>
+              </div>
+            )}
+            {discount > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-green-600 dark:text-green-400">Discount</span>
+                <span className="text-green-600 dark:text-green-400 font-medium">-{formatRupiah(discount)}</span>
               </div>
             )}
             <div className="border-t border-orange-100 dark:border-gray-600 pt-2 flex justify-between items-center">

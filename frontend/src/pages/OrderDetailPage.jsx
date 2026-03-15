@@ -675,6 +675,18 @@ export default function OrderDetailPage() {
                 </span>
               </div>
 
+              {order.voucher_code && (
+                <div className="flex justify-between items-center py-3 px-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900/30">
+                  <div className="flex items-center gap-2">
+                    <Tag className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    <span className="text-sm font-semibold text-blue-700 dark:text-blue-400">Voucher</span>
+                  </div>
+                  <span className="text-sm font-bold text-blue-600 dark:text-blue-400 font-mono">
+                    {order.voucher_code}
+                  </span>
+                </div>
+              )}
+
               {order.discount > 0 && (
                 <div className="flex justify-between items-center py-3 px-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900/30">
                   <span className="text-sm font-semibold text-green-700 dark:text-green-400">Diskon</span>
