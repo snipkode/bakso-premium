@@ -27,6 +27,8 @@ export default function ProfilePage() {
   const [resetLoading, setResetLoading] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
+  const [sendingVerification, setSendingVerification] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
 
   useEffect(() => {
     fetchStats();
@@ -110,6 +112,43 @@ export default function ProfilePage() {
     // Show reset confirmation modal
     setResetEmail(user.email);
     setShowResetModal(true);
+  };
+
+  const handleSendVerificationEmail = async () => {
+    try {
+      setSendingVerification(true);
+      setVerificationSent(false);
+      
+      await authAPI.sendVerificationEmail();
+      
+      setVerificationSent(true);
+      
+      // Show success toast
+      const toastEvent = new CustomEvent('show-toast', {
+        detail: {
+          title: '✅ Email Verifikasi Terkirim',
+          description: 'Cek inbox Anda dan klik link verifikasi. Bonus 50 poin akan ditambahkan setelah verifikasi!',
+          variant: 'success',
+          duration: 8000,
+        },
+      });
+      window.dispatchEvent(toastEvent);
+      
+    } catch (error) {
+      console.error('Failed to send verification email:', error);
+      
+      const toastEvent = new CustomEvent('show-toast', {
+        detail: {
+          title: '❌ Gagal Mengirim Email',
+          description: error.response?.data?.error || 'Terjadi kesalahan. Silakan coba lagi.',
+          variant: 'error',
+        },
+      });
+      window.dispatchEvent(toastEvent);
+      
+    } finally {
+      setSendingVerification(false);
+    }
   };
 
   const handleConfirmResetPIN = async () => {
@@ -271,10 +310,45 @@ export default function ProfilePage() {
                   <Phone className="w-3 h-3" />
                   {user?.phone || 'Belum diatur'}
                 </p>
-                <p className="text-xs text-white/70 mt-1 flex items-center gap-1">
+                <div className="flex items-center gap-2 mt-1">
                   <Mail className="w-3 h-3" />
-                  {user?.email || <span className="text-red-300">Belum diatur</span>}
-                </p>
+                  {user?.email ? (
+                    <div className="flex items-center gap-2">
+                      <span>{user.email}</span>
+                      {user.email_verified ? (
+                        <span className="text-xs text-green-300 flex items-center gap-1">
+                          <CheckCircle className="w-3 h-3" />
+                          Verified
+                        </span>
+                      ) : (
+                        <button
+                          onClick={handleSendVerificationEmail}
+                          disabled={sendingVerification || verificationSent}
+                          className="text-xs bg-white/20 hover:bg-white/30 disabled:bg-white/10 px-2 py-0.5 rounded-full flex items-center gap-1 transition-all"
+                        >
+                          {sendingVerification ? (
+                            <>
+                              <RefreshCw className="w-3 h-3 animate-spin" />
+                              Mengirim...
+                            </>
+                          ) : verificationSent ? (
+                            <>
+                              <CheckCircle className="w-3 h-3" />
+                              Terkirim
+                            </>
+                          ) : (
+                            <>
+                              <Mail className="w-3 h-3" />
+                              Verifikasi (+50 pts)
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-red-300">Belum diatur</span>
+                  )}
+                </div>
               </div>
               <IconButton
                 onClick={handleEditClick}
