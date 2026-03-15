@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { KeyRound, CheckCircle, XCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { Button, Card } from '@/components/ui/BaseComponents';
 import { customerPINAPI } from '@/lib/api';
 
 export default function ResetPINPage() {
-  const { token, email } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   
   const [step, setStep] = useState('validating'); // validating, reset, success, error
   const [newPin, setNewPin] = useState(['', '', '', '', '', '']);
@@ -15,6 +15,10 @@ export default function ResetPINPage() {
   const [showPin, setShowPin] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  // Get token and email from query parameters
+  const token = searchParams.get('token');
+  const email = searchParams.get('email');
   const [emailDecoded, setEmailDecoded] = useState('');
 
   useEffect(() => {
@@ -23,17 +27,22 @@ export default function ResetPINPage() {
       setEmailDecoded(decodeURIComponent(email));
     }
 
-    // Validate token
+    // Validate token exists
     validateToken();
   }, [token, email]);
 
   const validateToken = async () => {
     try {
-      // Token validation happens on backend when submitting
-      // For now, just check if token exists
-      if (!token || token.length !== 64) {
+      // Check if token and email exist
+      if (!token || token.length < 10) {
         setStep('error');
         setError('Link reset PIN tidak valid atau sudah kadaluarsa.');
+        return;
+      }
+      
+      if (!email) {
+        setStep('error');
+        setError('Email tidak ditemukan dalam link reset.');
         return;
       }
       
