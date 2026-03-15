@@ -1,4 +1,4 @@
-const { body, validationResult } = require('express-validator');
+const { body, query, param, validationResult } = require('express-validator');
 
 // Validation error handler
 const handleValidationErrors = (req, res, next) => {
@@ -194,5 +194,90 @@ exports.validateUpdateUserPassword = [
     .isLength({ min: 6, max: 128 })
     .withMessage('Password minimal 6 karakter dan maksimal 128 karakter'),
   
+  handleValidationErrors,
+];
+
+// ==================== PRODUCT VALIDATIONS ====================
+
+exports.validateCreateProduct = [
+  body('name').trim().isLength({ min: 3, max: 255 }).withMessage('Nama produk minimal 3 karakter'),
+  body('price').isInt({ min: 0 }).withMessage('Harga harus angka >= 0'),
+  body('category_id').isUUID().withMessage('Category ID harus UUID valid'),
+  handleValidationErrors,
+];
+
+exports.validateUpdateProduct = [
+  body('name').optional({ checkFalsy: true }).trim().isLength({ min: 3, max: 255 }),
+  body('price').optional().isInt({ min: 0 }),
+  body('is_available').optional().isBoolean(),
+  handleValidationErrors,
+];
+
+// ==================== ORDER VALIDATIONS ====================
+
+exports.validateCreateOrder = [
+  body('order_type').isIn(['dine-in', 'takeaway', 'delivery']),
+  body('items').isArray({ min: 1 }),
+  body('items.*.product_id').isUUID(),
+  body('items.*.quantity').isInt({ min: 1, max: 100 }),
+  handleValidationErrors,
+];
+
+exports.validateUpdateOrderStatus = [
+  body('status').isIn(['pending_payment', 'waiting_verification', 'paid', 'preparing', 'ready', 'out_for_delivery', 'completed', 'rejected', 'cancelled']),
+  handleValidationErrors,
+];
+
+// ==================== PAYMENT VALIDATIONS ====================
+
+exports.validateCreatePayment = [
+  body('order_id').isUUID(),
+  body('method').isIn(['bank_transfer', 'qris', 'e_wallet', 'cod']),
+  handleValidationErrors,
+];
+
+exports.validateVerifyPayment = [
+  body('status').isIn(['verified', 'rejected']),
+  handleValidationErrors,
+];
+
+// ==================== REVIEW VALIDATIONS ====================
+
+exports.validateCreateReview = [
+  body('order_id').isUUID(),
+  body('product_id').isUUID(),
+  body('rating').isInt({ min: 1, max: 5 }),
+  handleValidationErrors,
+];
+
+// ==================== VOUCHER VALIDATIONS ====================
+
+exports.validateCreateVoucher = [
+  body('code').trim().isLength({ min: 3, max: 50 }).matches(/^[A-Z0-9]+$/),
+  body('name').trim().isLength({ min: 3, max: 255 }),
+  body('type').isIn(['percentage', 'fixed']),
+  body('value').isInt({ min: 1 }),
+  handleValidationErrors,
+];
+
+// ==================== LOYALTY VALIDATIONS ====================
+
+exports.validateRedeemLoyaltyPoints = [
+  body('points').isInt({ min: 1 }),
+  handleValidationErrors,
+];
+
+// ==================== QUEUE VALIDATIONS ====================
+
+exports.validateResetQueue = [
+  body('date').optional().isISO8601(),
+  handleValidationErrors,
+];
+
+// ==================== PUSH NOTIFICATION VALIDATIONS ====================
+
+exports.validateSavePushSubscription = [
+  body('endpoint').trim().notEmpty(),
+  body('keys').isObject(),
   handleValidationErrors,
 ];

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/productController');
 const { auth, authorize } = require('../middleware/auth');
+const { validateCreateProduct, validateUpdateProduct } = require('../middleware/validators');
 
 // Public routes
 router.get('/categories', productController.getCategories);
@@ -14,8 +15,8 @@ router.post('/categories', auth, authorize('admin'), productController.createCat
 router.put('/categories/:id', auth, authorize('admin'), productController.updateCategory);
 router.delete('/categories/:id', auth, authorize('admin'), productController.deleteCategory);
 
-router.post('/products', auth, authorize('admin'), productController.createProduct);
-router.put('/products/:id', auth, authorize('admin'), productController.updateProduct);
+router.post('/products', auth, authorize('admin'), validateCreateProduct, productController.createProduct);
+router.put('/products/:id', auth, authorize('admin'), validateUpdateProduct, productController.updateProduct);
 router.delete('/products/:id', auth, authorize('admin'), productController.deleteProduct);
 router.patch('/products/:id/availability', auth, authorize('admin'), productController.toggleProductAvailability);
 
