@@ -304,32 +304,33 @@ export default function LoginPage() {
       const storedUser = localStorage.getItem('user');
       console.log('💾 Token in localStorage:', storedToken ? 'Yes' : 'No');
       console.log('💾 User in localStorage:', storedUser ? 'Yes' : 'No');
-      
-      if (storedToken) {
+
+      if (storedToken && storedUser) {
         console.log('✅ Authentication ready! Navigating to menu...');
         navigate('/menu');
       } else {
         console.error('❌ ERROR: Token not saved to localStorage!');
-        toast({ title: 'Error', description: 'Terjadi kesalahan.', variant: 'error' });
+        toast({ title: 'Error', description: 'Gagal menyimpan sesi login.', variant: 'error' });
+        // ⛔ DO NOT redirect - stay on login page
       }
     } catch (error) {
       console.error('❌ PIN login failed:', error);
       console.error('Error response:', error.response);
-      
+
       // Handle special case: User exists but PIN not set (403)
       if (error.response?.status === 403 && error.response?.data?.requires_pin_setup) {
         const userData = error.response.data.user;
-        
+
         console.log('⚠️ User exists but PIN not set:', userData);
 
         // Store user data temporarily for onboarding
         localStorage.setItem('pending_user', JSON.stringify(userData));
 
         // Redirect to onboarding
-        toast({ 
-          title: 'Akun Belum Lengkap', 
-          description: 'Nomor ini sudah terdaftar tetapi belum mengatur PIN.', 
-          variant: 'warning' 
+        toast({
+          title: 'Akun Belum Lengkap',
+          description: 'Nomor ini sudah terdaftar tetapi belum mengatur PIN.',
+          variant: 'warning'
         });
 
         // Switch to new customer tab for onboarding
@@ -340,17 +341,19 @@ export default function LoginPage() {
           phone: userData.phone || '',
           pin: ''
         });
-        
+
         // Show onboarding after alert
         setTimeout(() => {
           setShowOnboarding(true);
         }, 100);
-        
+
         return;
       }
-      
-      // Other errors
+
+      // ❌ Other errors - STAY on login page, DO NOT redirect
+      console.log('🛑 Staying on login page - user can retry');
       toast({ title: 'Login Gagal', description: error.response?.data?.error || 'PIN salah.', variant: 'error' });
+      // ⛔ NO redirect - let user retry
     }
   };
 
@@ -1156,27 +1159,6 @@ export default function LoginPage() {
                   >
                     Login Staff
                   </motion.button>
-
-                  <div className="mt-6 p-4 bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-2xl border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Sparkles className="w-4 h-4 text-amber-500" />
-                      <p className="text-sm font-bold text-gray-900 dark:text-white">Demo Login:</p>
-                    </div>
-                    <div className="space-y-2 text-xs">
-                      <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                        <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white font-bold text-xs">A</div>
-                        <span className="font-mono">081234567890 / admin123</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                        <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold text-xs">K</div>
-                        <span className="font-mono">081234567891 / kitchen123</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                        <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xs">D</div>
-                        <span className="font-mono">081234567892 / driver123</span>
-                      </div>
-                    </div>
-                  </div>
                 </motion.form>
               )}
             </AnimatePresence>
