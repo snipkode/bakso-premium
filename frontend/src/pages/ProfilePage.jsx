@@ -25,6 +25,8 @@ export default function ProfilePage() {
   });
   const [updating, setUpdating] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
 
   useEffect(() => {
     fetchStats();
@@ -105,49 +107,54 @@ export default function ProfilePage() {
       return;
     }
 
-    // Confirm before sending
-    const confirmed = confirm(
-      '📧 Reset PIN via Email\n\n' +
-      'Link reset PIN akan dikirim ke:\n' +
-      `${user.email}\n\n` +
-      'Link ini hanya berlaku selama 1 jam.\n\n' +
-      'Lanjutkan?'
-    );
+    // Show reset confirmation modal
+    setResetEmail(user.email);
+    setShowResetModal(true);
+  };
 
-    if (!confirmed) return;
-
+  const handleConfirmResetPIN = async () => {
+    setShowResetModal(false);
+    
     try {
       setResetLoading(true);
       console.log('📧 Sending reset PIN request...');
       console.log('📊 Phone:', user.phone);
       console.log('📊 Email:', user.email);
-      
+
       // Send phone and email for validation
       const response = await customerPINAPI.forgotPIN(user.phone, user.email);
       console.log('✅ Reset email sent:', response.data);
-      
+
       const attemptsRemaining = response.data.attempts_remaining;
       const backendMessage = response.data.message || 'Link reset PIN telah dikirim ke email Anda';
-      
-      alert(
-        '✅ ' + backendMessage + '\n\n' +
-        `Email: ${user.email}\n\n` +
-        (attemptsRemaining !== undefined 
-          ? `Percobaan tersisa: ${attemptsRemaining}/5 dalam 24 jam\n\n`
-          : '') +
-        'Cek inbox dan spam folder Anda.\n' +
-        'Link berlaku selama 1 jam.'
-      );
+
+      // Show success toast
+      const toastEvent = new CustomEvent('show-toast', {
+        detail: {
+          title: '✅ Email Terkirim',
+          description: backendMessage,
+          variant: 'success',
+        },
+      });
+      window.dispatchEvent(toastEvent);
+
+      console.log('📧 Reset PIN email sent to:', user.email);
+      if (attemptsRemaining !== undefined) {
+        console.log('📊 Attempts remaining:', attemptsRemaining);
+      }
     } catch (error) {
       console.error('❌ Failed to send reset email:', error);
       const errorMsg = error.response?.data?.error || 'Gagal mengirim link reset PIN';
-      
-      // Handle rate limiting
-      if (error.response?.status === 429) {
-        alert('⚠️ ' + errorMsg);
-      } else {
-        alert(errorMsg);
-      }
+
+      // Show error toast
+      const errorToast = new CustomEvent('show-toast', {
+        detail: {
+          title: error.response?.status === 429 ? '⚠️ Terlalu Banyak Percobaan' : '❌ Gagal Reset PIN',
+          description: errorMsg,
+          variant: 'error',
+        },
+      });
+      window.dispatchEvent(errorToast);
     } finally {
       setResetLoading(false);
     }
@@ -462,6 +469,76 @@ export default function ProfilePage() {
               </div>
             </div>
           </Card>
+        </div>
+      )}
+
+      {/* Reset PIN Confirmation Modal */}
+      {showResetModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden"
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-orange-500 to-amber-500 p-6 text-white">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                  <Mail className="w-7 h-7 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold">Reset PIN via Email</h2>
+                  <p className="text-sm text-white/90">Konfirmasi pengiriman link reset</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              {/* Info Box */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800 mb-4">
+                <p className="text-sm text-blue-800 dark:text-blue-300">
+                  <strong>📧 Email:</strong> {resetEmail}
+                </p>
+                <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                  Link reset PIN akan dikirim ke email di atas. Link ini hanya berlaku selama 1 jam.
+                </p>
+              </div>
+
+              {/* Warning */}
+              <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-xl border border-amber-200 dark:border-amber-800 mb-4">
+                <p className="text-xs text-amber-800 dark:text-amber-300">
+                  ⚠️ Pastikan email yang dimasukkan benar. Cek inbox dan spam folder Anda setelah mengirim.
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowResetModal(false)}
+                  className="flex-1"
+                  disabled={resetLoading}
+                >
+                  Batal
+                </Button>
+                <Button
+                  onClick={handleConfirmResetPIN}
+                  isLoading={resetLoading}
+                  className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg shadow-orange-500/30"
+                >
+                  {resetLoading ? (
+                    'Mengirim...'
+                  ) : (
+                    <>
+                      <Mail className="w-4 h-4 mr-2 inline" />
+                      Kirim Link Reset
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </motion.div>
         </div>
       )}
     </div>
