@@ -249,34 +249,241 @@ exports.getProfile = async (req, res) => {
 // Update profile
 exports.updateProfile = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, phone, email, password } = req.body;
+    const userId = req.user.id;
 
-    const user = await User.findByPk(req.user.id);
+    // Validate request body
+    if (!name && !phone && !email && !password) {
+      return res.status(400).json({
+        error: 'Minimal satu field harus diisi (name, phone, email, atau password)',
+        required_fields: ['name', 'phone', 'email', 'password'],
+        message: 'Setidaknya satu field harus diisi untuk update profile'
+      });
+    }
 
-    if (name) user.name = name;
-    if (email) user.email = email;
-    
-    // Hash password if provided
-    if (password) {
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User tidak ditemukan' });
+    }
+
+    // Validate and update name
+    if (name !== undefined) {
+      if (!name || name.trim().length === 0) {
+        return res.status(400).json({
+          error: 'Nama tidak boleh kosong',
+          field: 'name',
+          validation: {
+            min_length: 1,
+            max_length: 255,
+            required: true
+          }
+        });
+      }
+      if (name.length < 3) {
+        return res.status(400).json({
+          error: 'Nama minimal 3 karakter',
+          field: 'name',
+          validation: {
+            min_length: 3,
+            current_length: name.length
+          }
+        });
+      }
+      if (name.length > 255) {
+        return res.status(400).json({
+          error: 'Nama maksimal 255 karakter',
+          field: 'name',
+          validation: {
+            max_length: 255,
+            current_length: name.length
+          }
+        });
+      }
+      user.name = name.trim();
+    }
+
+    // Validate and update phone
+    if (phone !== undefined) {
+      if (!phone || phone.trim().length === 0) {
+        return res.status(400).json({
+          error: 'Nomor telepon tidak boleh kosong',
+          field: 'phone',
+          validation: {
+            required: true,
+            format: '08xxxxxxxxxx (10-13 digit)'
+          }
+        });
+      }
+      
+      // Remove any non-digit characters for validation
+      const cleanPhone = phone.replace(/\D/g, '');
+      
+      if (cleanPhone.length < 10 || cleanPhone.length > 13) {
+        return res.status(400).json({
+          error: 'Nomor telepon harus 10-13 digit',
+          field: 'phone',
+          validation: {
+            min_digits: 10,
+            max_digits: 13,
+            current_digits: cleanPhone.length,
+            format: '08xxxxxxxxxx'
+          }
+        });
+      }
+      
+      if (!/^08[0-9]{8,11}$/.test(cleanPhone)) {
+        return res.status(400).json({
+          error: 'Nomor telepon harus diawali dengan 08',
+          field: 'phone',
+          validation: {
+            format: '08xxxxxxxxxx',
+            example: '081234567890'
+          }
+        });
+      }
+      
+      // Check if phone is already used by another user
+      const existingUser = await User.findOne({
+        where: {
+          phone: cleanPhone,
+          id: { [Op.ne]: userId } // Exclude current user
+        }
+      });
+      
+      if (existingUser) {
+        return res.status(409).json({
+          error: 'Nomor telepon sudah digunakan oleh akun lain',
+          field: 'phone',
+          validation: {
+            unique: true,
+            duplicate: true
+          }
+        });
+      }
+      
+      user.phone = cleanPhone;
+    }
+
+    // Validate and update email
+    if (email !== undefined) {
+      if (email === null || email === '') {
+        // Allow clearing email
+        user.email = null;
+      } else {
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          return res.status(400).json({
+            error: 'Format email tidak valid',
+            field: 'email',
+            validation: {
+              format: 'user@example.com',
+              regex: '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$'
+            }
+          });
+        }
+        
+        if (email.length > 255) {
+          return res.status(400).json({
+            error: 'Email maksimal 255 karakter',
+            field: 'email',
+            validation: {
+              max_length: 255,
+              current_length: email.length
+            }
+          });
+        }
+        
+        // Check if email is already used by another user
+        const existingUser = await User.findOne({
+          where: {
+            email: email,
+            id: { [Op.ne]: userId } // Exclude current user
+          }
+        });
+        
+        if (existingUser) {
+          return res.status(409).json({
+            error: 'Email sudah digunakan oleh akun lain',
+            field: 'email',
+            validation: {
+              unique: true,
+              duplicate: true
+            }
+          });
+        }
+        
+        user.email = email.toLowerCase().trim();
+      }
+    }
+
+    // Validate and update password
+    if (password !== undefined && password !== null && password !== '') {
+      if (password.length < 6) {
+        return res.status(400).json({
+          error: 'Password minimal 6 karakter',
+          field: 'password',
+          validation: {
+            min_length: 6,
+            current_length: password.length,
+            required: true
+          }
+        });
+      }
+      
+      if (password.length > 128) {
+        return res.status(400).json({
+          error: 'Password maksimal 128 karakter',
+          field: 'password',
+          validation: {
+            max_length: 128,
+            current_length: password.length
+          }
+        });
+      }
+      
       const bcrypt = require('bcryptjs');
       user.password = await bcrypt.hash(password, 10);
     }
 
     await user.save();
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
+      message: 'Profile berhasil diupdate',
       user: {
         id: user.id,
         name: user.name,
         email: user.email,
         phone: user.phone,
         role: user.role,
+        is_pin_set: user.is_pin_set,
+        updated_at: user.updatedAt,
+      },
+      changes: {
+        name: name !== undefined ? 'updated' : 'unchanged',
+        phone: phone !== undefined ? 'updated' : 'unchanged',
+        email: email !== undefined ? 'updated' : 'unchanged',
+        password: password !== undefined ? 'updated' : 'unchanged',
       }
     });
   } catch (error) {
     console.error('Update profile error:', error);
-    res.status(500).json({ error: 'Failed to update profile' });
+    
+    // Handle database errors
+    if (error.name === 'SequelizeDatabaseError') {
+      return res.status(500).json({
+        error: 'Database error',
+        message: 'Terjadi kesalahan pada database',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+    
+    res.status(500).json({ 
+      error: 'Failed to update profile',
+      message: 'Terjadi kesalahan saat mengupdate profile',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 
