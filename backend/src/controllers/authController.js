@@ -4,7 +4,164 @@ const { User } = require('../models');
 const { Op } = require('sequelize');
 const { trackFailedPINAttempt, resetPINAttempts } = require('../middleware/twoFactorAuth');
 
-// Generate JWT token
+// Generate email verification token
+const generateEmailToken = (email) => {
+  const jwt = require('jsonwebtoken');
+  return jwt.sign(
+    { email, type: 'email_verification' },
+    process.env.JWT_SECRET,
+    { expiresIn: '24h' }
+  );
+};
+
+// Send email verification email
+exports.sendVerificationEmail = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const user = await User.findByPk(userId);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    if (user.email_verified) {
+      return res.status(400).json({ 
+        error: 'Email sudah terverifikasi',
+        already_verified: true
+      });
+    }
+    
+    if (!user.email) {
+      return res.status(400).json({ 
+        error: 'Email belum diatur',
+        requires_email: true
+      });
+    }
+    
+    // Generate verification token
+    const token = generateEmailToken(user.email);
+    const verificationLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email?token=${token}&email=${encodeURIComponent(user.email)}`;
+    
+    // Send email
+    const { sendVerificationEmail: sendEmail } = require('../utils/emailService');
+    await sendEmail(user.email, verificationLink, user.name);
+    
+    res.json({
+      success: true,
+      message: 'Email verifikasi telah dikirim',
+      email: user.email,
+      expires_in: '24 hours'
+    });
+    
+  } catch (error) {
+    console.error('Send verification email error:', error);
+    res.status(500).json({ error: 'Gagal mengirim email verifikasi' });
+  }
+};
+
+// Verify email with token
+exports.verifyEmail = async (req, res) => {
+  try {
+    const { token, email } = req.query;
+    
+    if (!token || !email) {
+      return res.status(400).json({ 
+        error: 'Token dan email diperlukan',
+        invalid_link: true
+      });
+    }
+    
+    // Verify token
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    if (decoded.type !== 'email_verification') {
+      throw new Error('Invalid token type');
+    }
+    
+    if (decoded.email !== email) {
+      throw new Error('Email mismatch');
+    }
+    
+    // Find user by email
+    const user = await User.findOne({ where: { email } });
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User tidak ditemukan' });
+    }
+    
+    // Update verification status
+    user.email_verified = true;
+    user.email_verified_at = new Date();
+    await user.save();
+    
+    res.json({
+      success: true,
+      message: 'Email berhasil diverifikasi',
+      user: {
+        id: user.id,
+        email: user.email,
+        email_verified: user.email_verified,
+        email_verified_at: user.email_verified_at
+      }
+    });
+    
+  } catch (error) {
+    console.error('Verify email error:', error);
+    
+    if (error.name === 'TokenExpiredError') {
+      return res.status(400).json({ 
+        error: 'Token sudah kadaluarsa',
+        expired: true,
+        message: 'Silakan request email verifikasi baru'
+      });
+    }
+    
+    res.status(400).json({ 
+      error: 'Link verifikasi tidak valid',
+      invalid_link: true
+    });
+  }
+};
+
+// Admin toggle phone verification
+exports.togglePhoneVerification = async (req, res) => {
+  try {
+    const { userId, phone_verified } = req.body;
+    
+    if (userId === undefined || phone_verified === undefined) {
+      return res.status(400).json({
+        error: 'userId dan phone_verified diperlukan',
+        required_fields: ['userId', 'phone_verified']
+      });
+    }
+    
+    const user = await User.findByPk(userId);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User tidak ditemukan' });
+    }
+    
+    // Update phone verification
+    user.phone_verified = phone_verified ? 1 : 0;
+    await user.save();
+    
+    res.json({
+      success: true,
+      message: `Phone verification ${phone_verified ? 'enabled' : 'disabled'}`,
+      user: {
+        id: user.id,
+        phone: user.phone,
+        phone_verified: user.phone_verified,
+        updated_at: user.updatedAt
+      }
+    });
+    
+  } catch (error) {
+    console.error('Toggle phone verification error:', error);
+    res.status(500).json({ error: 'Gagal update phone verification' });
+  }
+};
 const generateToken = (user, options = {}) => {
   const payload = { 
     id: user.id, 
@@ -302,6 +459,67 @@ exports.updateProfile = async (req, res) => {
       user.name = name.trim();
     }
 
+    // Validate and update email
+    if (email !== undefined) {
+      if (email === null || email === '') {
+        // Allow clearing email
+        user.email = null;
+        user.email_verified = false;
+        user.email_verified_at = null;
+      } else {
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          return res.status(400).json({
+            error: 'Format email tidak valid',
+            field: 'email',
+            validation: {
+              format: 'user@example.com',
+              regex: '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$'
+            }
+          });
+        }
+        
+        if (email.length > 255) {
+          return res.status(400).json({
+            error: 'Email maksimal 255 karakter',
+            field: 'email',
+            validation: {
+              max_length: 255,
+              current_length: email.length
+            }
+          });
+        }
+        
+        // Reset verification if email changed
+        if (user.email !== email) {
+          user.email_verified = false;
+          user.email_verified_at = null;
+        }
+        
+        // Check if email is already used by another user
+        const existingUser = await User.findOne({
+          where: {
+            email: email,
+            id: { [Op.ne]: userId } // Exclude current user
+          }
+        });
+        
+        if (existingUser) {
+          return res.status(409).json({
+            error: 'Email sudah digunakan oleh akun lain',
+            field: 'email',
+            validation: {
+              unique: true,
+              duplicate: true
+            }
+          });
+        }
+        
+        user.email = email.toLowerCase().trim();
+      }
+    }
+
     // Validate and update phone
     if (phone !== undefined) {
       if (!phone || phone.trim().length === 0) {
@@ -342,6 +560,11 @@ exports.updateProfile = async (req, res) => {
         });
       }
       
+      // Reset verification if phone changed
+      if (user.phone !== cleanPhone) {
+        user.phone_verified = false;
+      }
+      
       // Check if phone is already used by another user
       const existingUser = await User.findOne({
         where: {
@@ -362,59 +585,6 @@ exports.updateProfile = async (req, res) => {
       }
       
       user.phone = cleanPhone;
-    }
-
-    // Validate and update email
-    if (email !== undefined) {
-      if (email === null || email === '') {
-        // Allow clearing email
-        user.email = null;
-      } else {
-        // Validate email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-          return res.status(400).json({
-            error: 'Format email tidak valid',
-            field: 'email',
-            validation: {
-              format: 'user@example.com',
-              regex: '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$'
-            }
-          });
-        }
-        
-        if (email.length > 255) {
-          return res.status(400).json({
-            error: 'Email maksimal 255 karakter',
-            field: 'email',
-            validation: {
-              max_length: 255,
-              current_length: email.length
-            }
-          });
-        }
-        
-        // Check if email is already used by another user
-        const existingUser = await User.findOne({
-          where: {
-            email: email,
-            id: { [Op.ne]: userId } // Exclude current user
-          }
-        });
-        
-        if (existingUser) {
-          return res.status(409).json({
-            error: 'Email sudah digunakan oleh akun lain',
-            field: 'email',
-            validation: {
-              unique: true,
-              duplicate: true
-            }
-          });
-        }
-        
-        user.email = email.toLowerCase().trim();
-      }
     }
 
     // Validate and update password
@@ -455,7 +625,10 @@ exports.updateProfile = async (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email,
+        email_verified: user.email_verified,
+        email_verified_at: user.email_verified_at,
         phone: user.phone,
+        phone_verified: user.phone_verified,
         role: user.role,
         is_pin_set: user.is_pin_set,
         updated_at: user.updatedAt,

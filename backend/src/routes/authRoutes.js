@@ -7,10 +7,13 @@ const { auth, authorize } = require('../middleware/auth');
 router.post('/auth/customer', authController.customerAuth);
 router.post('/auth/staff', authController.staffLogin);
 
+// Email verification (public - from email link)
+router.get('/verify-email', authController.verifyEmail);
+
 // Protected routes
 router.get('/profile', auth, authController.getProfile);
 router.put('/profile', auth, authController.updateProfile);
-router.post('/password/update', auth, authController.updatePassword);
+router.post('/send-verification-email', auth, authController.sendVerificationEmail);
 
 // Admin routes
 router.get('/users', auth, authorize('admin'), authController.getAllUsers);
@@ -19,5 +22,6 @@ router.put('/users/:id', auth, authorize('admin'), authController.updateUser);
 router.patch('/users/:id/status', auth, authorize('admin'), authController.updateUserStatus);
 router.delete('/users/:id', auth, authorize('admin'), authController.deleteUser);
 router.post('/users/:id/password', auth, authorize('admin'), authController.adminUpdateUserPassword);
+router.put('/users/:id/phone-verified', auth, authorize('admin'), authController.togglePhoneVerification);
 
 module.exports = router;

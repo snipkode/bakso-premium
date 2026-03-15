@@ -33,6 +33,20 @@ const User = sequelize.define('user', {
     type: DataTypes.ENUM('active', 'inactive', 'blocked'),
     defaultValue: 'active',
   },
+  // Email verification
+  email_verified: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  email_verified_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  // Phone verification (manual by admin)
+  phone_verified: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
   completed_orders: {
     type: DataTypes.INTEGER,
     defaultValue: 0,
